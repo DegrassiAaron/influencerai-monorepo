@@ -20,11 +20,15 @@ function parseRedisUrl(url?: string) {
   }
 }
 
+const extraImports = process.env.NODE_ENV === 'test' ? [] : [
+  BullModule.forRoot({ connection: parseRedisUrl(process.env.REDIS_URL) }),
+];
+
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     PrismaModule,
-    BullModule.forRoot({ connection: parseRedisUrl(process.env.REDIS_URL) }),
+    ...extraImports,
     JobsModule,
   ],
   controllers: [AppController],
