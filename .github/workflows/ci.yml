@@ -1,0 +1,63 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'apps/**'
+      - 'packages/**'
+      - 'infra/**'
+      - 'scripts/**'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+      - '.github/workflows/ci.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'apps/**'
+      - 'packages/**'
+      - 'infra/**'
+      - 'scripts/**'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+
+permissions:
+  contents: read
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.17.1
+          run_install: false
+
+      - name: Install dependencies (workspace)
+        run: pnpm -w install
+
+      - name: Lint Web
+        run: pnpm --filter @influencerai/web lint
+
+      - name: Test Web (unit)
+        run: pnpm --filter @influencerai/web test
+
+      - name: Test API (unit)
+        run: pnpm --filter @influencerai/api test
+
+      - name: Test API (e2e)
+        env:
+          # Provide a safe default for Prisma during tests
+          DATABASE_URL: postgresql://user:pass@localhost:5432/db?schema=public
+        run: pnpm --filter @influencerai/api test:e2e
+
