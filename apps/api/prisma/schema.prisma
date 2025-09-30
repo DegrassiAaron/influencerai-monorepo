@@ -1,0 +1,74 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Tenant {
+  id          String       @id @default(cuid())
+  name        String
+  influencers Influencer[]
+  datasets    Dataset[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model Influencer {
+  id        String   @id @default(cuid())
+  tenantId  String
+  name      String
+  persona   Json
+  datasetId String?
+  Tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId])
+}
+
+model Dataset {
+  id        String   @id @default(cuid())
+  tenantId  String
+  kind      String
+  path      String
+  meta      Json
+  status    String   @default("pending")
+  Tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId])
+}
+
+model Job {
+  id         String    @id @default(cuid())
+  type       String
+  status     String    @default("pending")
+  payload    Json
+  result     Json?
+  costTok    Int?
+  startedAt  DateTime?
+  finishedAt DateTime?
+  assets     Asset[]
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@index([status])
+  @@index([type])
+}
+
+model Asset {
+  id        String   @id @default(cuid())
+  jobId     String
+  type      String
+  url       String
+  meta      Json
+  Job       Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([jobId])
+}
