@@ -1,0 +1,67 @@
+name: Pre-PR Gate (Codex)
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: "Branch con le modifiche generate da Codex"
+        required: true
+      pr_title:
+        description: "Titolo PR"
+        required: true
+      pr_body:
+        description: "Descrizione PR"
+        required: false
+  repository_dispatch:
+    types: [codex-pre-pr]  # opzionale se preferisci chiamata via API
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  test-and-pr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.branch || github.event.client_payload.branch }}
+
+      # Node / TypeScript
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - name: Install & Test (TS)
+        run: |
+          if [ -f package-lock.json ] || [ -f package.json ]; then
+            npm ci
+            npm run build --if-present
+            npm test
+          fi
+
+      # .NET / C#
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Restore/Build/Test (.NET)
+        run: |
+          if ls **/*.sln 1> /dev/null 2>&1; then
+            dotnet restore
+            dotnet build --nologo --configuration Release
+            dotnet test --nologo --configuration Release --collect:"XPlat Code Coverage"
+          fi
+
+      - name: Create PR if green
+        if: ${{ success() }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          BRANCH="${{ github.event.inputs.branch || github.event.client_payload.branch }}"
+          TITLE="${{ github.event.inputs.pr_title || github.event.client_payload.pr_title }}"
+          BODY="${{ github.event.inputs.pr_body || github.event.client_payload.pr_body }}"
+          # Target di default main; cambia se usi develop
+          gh pr create --head "$BRANCH" --base "main" --title "$TITLE" --body "${BODY:-"PR generata da Codex dopo test verdi."}" --draft=false

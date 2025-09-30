@@ -1,0 +1,270 @@
+issues:
+- title: 'API: Bootstrap Prisma connection module'
+  body: '### Contesto
+
+    La NestJS API espone solo un controller di test e non ha ancora una connessione
+    attiva verso Postgres. Serve un modulo Prisma condiviso e configurato con il datasource
+    della monorepo per poter implementare le feature successive.
+
+
+    ### DoD
+
+    - [ ] Aggiunto PrismaModule/PrismaService con lifecycle hook (OnModuleInit, OnModuleDestroy).
+
+    - [ ] Connessione letta da variabile DATABASE_URL e validazione in fase di boot.
+
+    - [ ] Logger di bootstrap che segnala successo/fallimento della connessione.
+
+    - [ ] Test manuale: pnpm --filter @influencerai/api start:dev si avvia e stampa
+    URL.
+
+    '
+  labels:
+  - area:api
+  - type:feat
+  - priority:P1
+  priority: P1
+  impact: High
+  estimate: M
+- title: 'Worker: Sincronizzare stato job con l''API'
+  body: '### Contesto
+
+    Il worker logga i job ma non aggiorna il database. Serve un client verso l''API
+    per cambiare status, memorizzare result e costi e gestire failure automatiche.
+
+
+    ### DoD
+
+    - [ ] Client REST o SDK per PATCH /jobs/:id con status/result.
+
+    - [ ] Aggiornamento stato su start, success e failure.
+
+    - [ ] Backoff configurabile (BullMQ) per retry.
+
+    - [ ] Test end-to-end con Redis locale che verifica roundtrip.
+
+    '
+  labels:
+  - area:worker
+  - type:feat
+  - priority:P1
+  priority: P1
+  impact: High
+  estimate: M
+  depends_on:
+  - 'API: Esporre CRUD dei job e integrazione con BullMQ'
+- title: 'Web: Implementare autenticazione e sessione'
+  body: '### Contesto
+
+    Il frontend Next.js è statico. Serve login, gestione token e protezione delle
+    route usando le API che verranno introdotte.
+
+
+    ### DoD
+
+    - [ ] Pagina /login con form e chiamata a /auth/login.
+
+    - [ ] Salvataggio token (httpOnly cookie o storage sicuro) e provider contesto.
+
+    - [ ] Middleware per proteggere route e redirect.
+
+    - [ ] Test component/integration con Playwright o React Testing Library.
+
+    '
+  labels:
+  - area:web
+  - type:feat
+  - priority:P1
+  priority: P1
+  impact: High
+  estimate: M
+  depends_on:
+  - 'API: Autenticazione multi-tenant con JWT'
+- title: 'API: Modellare schema Prisma per tenant, influencer, dataset e job'
+  body: '### Contesto
+
+    Lo schema Prisma è assente ma la README documenta entità come Tenant, Influencer,
+    Dataset, Job e Asset. Va codificato lo schema completo con relazioni e campi obbligatori
+    per supportare code di generazione e storage asset.
+
+
+    ### DoD
+
+    - [ ] schema.prisma aggiornato con modelli Tenant, Influencer, Dataset, Job, Asset.
+
+    - [ ] Migrazione iniziale generata e applicata localmente (pnpm prisma migrate
+    dev).
+
+    - [ ] Script prisma generate aggiunto agli script dell''app API.
+
+    - [ ] Documentata nella README API la procedura per applicare le migrazioni.
+
+    '
+  labels:
+  - area:api
+  - type:feat
+  - priority:P1
+  priority: P1
+  impact: High
+  estimate: L
+  depends_on:
+  - 'API: Bootstrap Prisma connection module'
+- title: 'API: Esporre CRUD dei job e integrazione con BullMQ'
+  body: '### Contesto
+
+    Il client SDK presuppone endpoint /jobs ma l''API non li implementa. Occorre creare
+    controller, DTO e service che salvano i job in Postgres, li inseriscono in coda
+    su BullMQ e restituiscono stato/risultato.
+
+
+    ### DoD
+
+    - [ ] Endpoint POST /jobs con validazione Zod/DTO e enqueue in coda content-generation
+    o lora-training.
+
+    - [ ] Endpoint GET /jobs con filtri base (status, type) e paginazione.
+
+    - [ ] Endpoint GET /jobs/:id che restituisce metadata, payload e result.
+
+    - [ ] Test e2e o integration che verifica roundtrip con Redis locale.
+
+    '
+  labels:
+  - area:api
+  - type:feat
+  - priority:P1
+  priority: P1
+  impact: High
+  estimate: L
+  depends_on:
+  - 'API: Bootstrap Prisma connection module'
+  - 'API: Modellare schema Prisma per tenant, influencer, dataset e job'
+- title: 'API: Endpoint Content Plan con integrazione OpenRouter'
+  body: '### Contesto
+
+    Il pacchetto @influencerai/prompts fornisce template ma l''API non ha endpoint
+    per generare e salvare ContentPlan. Serve orchestrare la chiamata a OpenRouter,
+    validare la risposta e persisterla.
+
+
+    ### DoD
+
+    - [ ] POST /content-plans che accetta persona/tema, invoca OpenRouter con prompt
+    dedicato.
+
+    - [ ] Persistenza del piano con timestamp e associazione a influencer/tenant.
+
+    - [ ] Endpoint GET /content-plans/:id e /content-plans (lista filtrabile).
+
+    - [ ] Test che stubba OpenRouter e verifica parsing + salvataggio.
+
+    '
+  labels:
+  - area:api
+  - type:feat
+  - priority:P1
+  priority: P1
+  impact: High
+  estimate: L
+  depends_on:
+  - 'API: Bootstrap Prisma connection module'
+  - 'API: Modellare schema Prisma per tenant, influencer, dataset e job'
+- title: 'API: Dataset ingestion e storage su MinIO'
+  body: '### Contesto
+
+    La piattaforma richiede upload e tracciamento dei dataset per il training LoRA
+    ma manca qualsiasi endpoint. Serve integrare MinIO (S3 compatibile) e salvare
+    metadati nel database.
+
+
+    ### DoD
+
+    - [ ] Service S3 basato su MinIO configurato via variabili S3_*.
+
+    - [ ] Endpoint POST /datasets per creare record e ottenere URL di upload presignato.
+
+    - [ ] Endpoint PATCH /datasets/:id/status per aggiornare stato (es. READY, PROCESSING).
+
+    - [ ] Integrazione test con MinIO locale via docker compose.
+
+    '
+  labels:
+  - area:api
+  - type:feat
+  - priority:P1
+  priority: P1
+  impact: High
+  estimate: L
+  depends_on:
+  - 'API: Modellare schema Prisma per tenant, influencer, dataset e job'
+- title: 'API: Autenticazione multi-tenant con JWT'
+  body: "### Contesto\nAl momento l'API è pubblica. Per rispettare il modello multi-tenant\
+    \ descritto nella README servono login, gestione tenant e guard per proteggere\
+    \ le route.\n\n### DoD\n- [ ] Endpoint /auth/login con email+password o token\
+    \ magic e generazione JWT.\n- [ ] Middleware/guard che applica \tenantId alle\
+    \ query Prisma.\n- [ ] Seed iniziale di un tenant admin per sviluppo.\n- [ ] Test\
+    \ e2e che verifica accesso negato senza token.\n"
+  labels:
+  - area:api
+  - type:feat
+  - priority:P1
+  priority: P1
+  impact: High
+  estimate: L
+  depends_on:
+  - 'API: Modellare schema Prisma per tenant, influencer, dataset e job'
+- title: 'Worker: Implementare processor content-generation'
+  body: '### Contesto
+
+    La coda content-generation è un TODO. Serve orchestrare chiamate a OpenRouter,
+    generare caption/script e creare job figlio per asset visivi.
+
+
+    ### DoD
+
+    - [ ] Implementato processor che richiama OpenRouter usando prompts.
+
+    - [ ] Salvataggio output testuale su S3/Asset e collegamento al job.
+
+    - [ ] Gestione errori con retry e logging strutturato.
+
+    - [ ] Test unit/integration con mock OpenRouter.
+
+    '
+  labels:
+  - area:worker
+  - type:feat
+  - priority:P1
+  priority: P1
+  impact: High
+  estimate: L
+  depends_on:
+  - 'Worker: Sincronizzare stato job con l''API'
+- title: 'Web: Dashboard operativo con stato code'
+  body: '### Contesto
+
+    Serve una vista unica che mostri job attivi, successi/fallimenti e stato dei servizi
+    per dare feedback agli operatori.
+
+
+    ### DoD
+
+    - [ ] Pagina /dashboard con widget job queue (attivi, pending, failed).
+
+    - [ ] Card health basata sui nuovi endpoint /healthz//readyz.
+
+    - [ ] Grafico andamento ultimi job (es. area chart) con TanStack Query.
+
+    - [ ] Stato reattivo (polling o websocket) documentato.
+
+    '
+  labels:
+  - area:web
+  - type:feat
+  - priority:P1
+  priority: P1
+  impact: High
+  estimate: L
+  depends_on:
+  - 'API: Esporre CRUD dei job e integrazione con BullMQ'
+  - 'API: Health & readiness con check Postgres/Redis/MinIO'

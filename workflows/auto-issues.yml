@@ -1,0 +1,116 @@
+name: Auto-create Top10 Issues
+
+on:
+  push:
+    branches: ["backlog/auto"]
+    paths:
+      - "backlog/issues.yaml"
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  create-top10-issues:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install yq
+        uses: mikefarah/yq@v4.44.3
+
+      - name: Write tools
+        run: |
+          cat > tools/select_top10.py <<'PY'
+          #!/usr/bin/env python3
+          import sys, yaml
+
+          PRIORITY_ORDER = {"P1": 0, "P2": 1, "P3": 2}
+          IMPACT_ORDER = {"High": 0, "Medium": 1, "Low": 2}
+          EST_ORDER = {"XS": 0, "S": 1, "M": 2, "L": 3, "XL": 4}
+
+          def norm_priority(labels):
+              if not labels:
+                  return "P3"
+              for p in ["P1","P2","P3"]:
+                  if any(l.endswith(p) or l == p or f"priority:{p}" in l for l in labels):
+                      return p
+              return "P3"
+
+          def norm_impact(issue):
+              return (issue.get("impact") or "Low").title()
+
+          def norm_est(issue):
+              e = (issue.get("estimate") or "M").upper()
+              return e if e in EST_ORDER else "M"
+
+          def sort_key(issue):
+              p = norm_priority(issue.get("labels"))
+              i = norm_impact(issue)
+              e = norm_est(issue)
+              return (PRIORITY_ORDER.get(p,2), IMPACT_ORDER.get(i,2), EST_ORDER.get(e,2))
+
+          def main(inp, outp):
+              data = yaml.safe_load(open(inp, "r", encoding="utf-8"))
+              issues = data.get("issues", [])
+              issues_sorted = sorted(issues, key=sort_key)
+              top10 = issues_sorted[:10]
+              yaml.safe_dump({"issues": top10}, open(outp, "w", encoding="utf-8"), sort_keys=False, allow_unicode=True)
+
+          if __name__ == "__main__":
+              if len(sys.argv) < 3:
+                  print("Usage: select_top10.py <input_yaml> <output_yaml>")
+                  sys.exit(1)
+              main(sys.argv[1], sys.argv[2])
+
+          PY
+          chmod +x tools/select_top10.py
+
+          cat > tools/create_issues.sh <<'SH'
+          #!/usr/bin/env bash
+          set -euo pipefail
+
+          file="${1:-backlog/top10.yaml}"
+
+          if ! command -v yq >/dev/null 2>&1; then
+            echo "yq non installato. Installa con: https://github.com/mikefarah/yq"
+            exit 1
+          fi
+
+          count=$(yq '.issues | length' "$file")
+          if [ "$count" -eq 0 ]; then
+            echo "Nessuna issue nel file $file"
+            exit 0
+          fi
+
+          for i in $(seq 0 $((count-1))); do
+            title=$(yq -r ".issues[$i].title" "$file")
+            body=$(yq -r ".issues[$i].body" "$file")
+            labels=$(yq -r ".issues[$i].labels | select(. != null) | join(\",\")" "$file")
+            assignees=$(yq -r ".issues[$i].assignees | select(. != null) | join(\",\")" "$file")
+            milestone=$(yq -r ".issues[$i].milestone // \"\"" "$file")
+
+            cmd=(gh issue create --title "$title" --body "$body")
+            [ -n "${labels:-}" ] && cmd+=(--label "$labels")
+            [ -n "${assignees:-}" ] && cmd+=(--assignee "$assignees")
+            [ -n "${milestone:-}" ] && cmd+=(--milestone "$milestone")
+
+            echo "Creating: $title"
+            "${cmd[@]}"
+          done
+
+          SH
+          chmod +x tools/create_issues.sh
+
+      - name: Generate Top10
+        run: python tools/select_top10.py backlog/issues.yaml backlog/top10.yaml
+
+      - name: Create issues (Top10)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bash tools/create_issues.sh backlog/top10.yaml
