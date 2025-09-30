@@ -31,10 +31,17 @@ Questo starter consente di:
 
 Puoi adattare `select_top10.py` per modificare i pesi.
 
+## Convenzione codici issue
+- Ogni issue deve includere il campo `code` e avere un titolo nel formato `<code>: <descrizione azionabile>`.
+- Il prefisso deriva dalla label area: `area:api`->`API`, `area:worker`->`WORK`, `area:web`->`WEB`, `area:sdk`->`SDK`, `area:packages`->`PKG`, `area:n8n`->`N8N`; se manca la label usa `GEN`.
+- Il suffisso è numerico a due cifre e progressivo per area (`API-01`, `API-02`, ...).
+- `select_top10.py` preserva codice e prefisso quando genera `backlog/top10.yaml`, quindi aggiorna il campo `code` prima di lanciare la pipeline.
+
 ## Schema YAML atteso
 ```yaml
 issues:
-  - title: "Titolo azionabile"
+  - code: "API-01"
+    title: "API-01: Titolo azionabile"
     body: |-
       ### Contesto
       ...
@@ -59,7 +66,8 @@ issues:
 ### Esempio minimo `backlog/issues.yaml`
 ```yaml
 issues:
-  - title: "Fix: race condition in /apps/web/hooks/useAuth"
+  - code: "WEB-01"
+    title: "WEB-01: Fix race condition in /apps/web/hooks/useAuth"
     body: |
       ### Contesto
       ...
@@ -69,7 +77,8 @@ issues:
     estimate: "S"
     impact: "High"
 
-  - title: "Feat: add zod schema for /auth/login"
+  - code: "API-02"
+    title: "API-02: Add zod schema for /auth/login"
     body: |
       ### Contesto
       ...

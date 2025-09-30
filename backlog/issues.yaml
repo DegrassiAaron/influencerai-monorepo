@@ -1,14 +1,24 @@
 issues:
-- title: 'API: Bootstrap Prisma connection module'
-  body: |
-    ### Contesto
-    La NestJS API espone solo un controller di test e non ha ancora una connessione attiva verso Postgres. Serve un modulo Prisma condiviso e configurato con il datasource della monorepo per poter implementare le feature successive.
+- title: 'API-01: Bootstrap Prisma connection module'
+  body: '### Contesto
+
+    La NestJS API espone solo un controller di test e non ha ancora una connessione
+    attiva verso Postgres. Serve un modulo Prisma condiviso e configurato con il datasource
+    della monorepo per poter implementare le feature successive.
+
 
     ### DoD
-    - [ ] Aggiunto PrismaModule/PrismaService con lifecycle hook (OnModuleInit, OnModuleDestroy).
-    - [ ] Connessione letta da variabile DATABASE_URL e validazione in fase di boot.
-    - [ ] Logger di bootstrap che segnala successo/fallimento della connessione.
-    - [ ] Test manuale: pnpm --filter @influencerai/api start:dev si avvia e stampa URL.
+
+    - [x] Aggiunto PrismaModule/PrismaService con lifecycle hook (OnModuleInit, OnModuleDestroy).
+
+    - [x] Connessione letta da variabile DATABASE_URL e validazione in fase di boot.
+
+    - [x] Logger di bootstrap che segnala successo/fallimento della connessione.
+
+    - [ ] Test manuale: pnpm --filter @influencerai/api start:dev si avvia e stampa
+    URL.
+
+    '
   labels:
   - area:api
   - type:feat
@@ -16,16 +26,32 @@ issues:
   priority: P1
   impact: High
   estimate: M
-- title: 'API: Modellare schema Prisma per tenant, influencer, dataset e job'
-  body: |
-    ### Contesto
-    Lo schema Prisma è assente ma la README documenta entità come Tenant, Influencer, Dataset, Job e Asset. Va codificato lo schema completo con relazioni e campi obbligatori per supportare code di generazione e storage asset.
+  code: API-01
+- title: 'API-02: Modellare schema Prisma per tenant, influencer, dataset e job'
+  body: '### Contesto
+
+    Lo schema Prisma è assente ma la README documenta entità come Tenant, Influencer,
+    Dataset, Job e Asset. Va codificato lo schema completo con relazioni e campi obbligatori
+    per supportare code di generazione e storage asset.
+
 
     ### DoD
+
     - [ ] schema.prisma aggiornato con modelli Tenant, Influencer, Dataset, Job, Asset.
-    - [ ] Migrazione iniziale generata e applicata localmente (pnpm prisma migrate dev).
-    - [ ] Script prisma generate aggiunto agli script dell'app API.
+
+    - [ ] Migrazione iniziale generata e applicata localmente (pnpm prisma migrate
+    dev).
+
+    - [ ] Script prisma generate aggiunto agli script dell''app API.
+
     - [ ] Documentata nella README API la procedura per applicare le migrazioni.
+
+
+    ### Dipendenze
+
+    - [API-01] Bootstrap Prisma connection module
+
+    '
   labels:
   - area:api
   - type:feat
@@ -34,17 +60,35 @@ issues:
   impact: High
   estimate: L
   depends_on:
-  - 'API: Bootstrap Prisma connection module'
-- title: 'API: Esporre CRUD dei job e integrazione con BullMQ'
-  body: |
-    ### Contesto
-    Il client SDK presuppone endpoint /jobs ma l'API non li implementa. Occorre creare controller, DTO e service che salvano i job in Postgres, li inseriscono in coda su BullMQ e restituiscono stato/risultato.
+  - API-01
+  code: API-02
+- title: 'API-03: Esporre CRUD dei job e integrazione con BullMQ'
+  body: '### Contesto
+
+    Il client SDK presuppone endpoint /jobs ma l''API non li implementa. Occorre creare
+    controller, DTO e service che salvano i job in Postgres, li inseriscono in coda
+    su BullMQ e restituiscono stato/risultato.
+
 
     ### DoD
-    - [ ] Endpoint POST /jobs con validazione Zod/DTO e enqueue in coda content-generation o lora-training.
+
+    - [ ] Endpoint POST /jobs con validazione Zod/DTO e enqueue in coda content-generation
+    o lora-training.
+
     - [ ] Endpoint GET /jobs con filtri base (status, type) e paginazione.
+
     - [ ] Endpoint GET /jobs/:id che restituisce metadata, payload e result.
+
     - [ ] Test e2e o integration che verifica roundtrip con Redis locale.
+
+
+    ### Dipendenze
+
+    - [API-01] Bootstrap Prisma connection module
+
+    - [API-02] Modellare schema Prisma per tenant, influencer, dataset e job
+
+    '
   labels:
   - area:api
   - type:feat
@@ -53,18 +97,36 @@ issues:
   impact: High
   estimate: L
   depends_on:
-  - 'API: Bootstrap Prisma connection module'
-  - 'API: Modellare schema Prisma per tenant, influencer, dataset e job'
-- title: 'API: Endpoint Content Plan con integrazione OpenRouter'
-  body: |
-    ### Contesto
-    Il pacchetto @influencerai/prompts fornisce template ma l'API non ha endpoint per generare e salvare ContentPlan. Serve orchestrare la chiamata a OpenRouter, validare la risposta e persisterla.
+  - API-01
+  - API-02
+  code: API-03
+- title: 'API-04: Endpoint Content Plan con integrazione OpenRouter'
+  body: '### Contesto
+
+    Il pacchetto @influencerai/prompts fornisce template ma l''API non ha endpoint
+    per generare e salvare ContentPlan. Serve orchestrare la chiamata a OpenRouter,
+    validare la risposta e persisterla.
+
 
     ### DoD
-    - [ ] POST /content-plans che accetta persona/tema, invoca OpenRouter con prompt dedicato.
+
+    - [ ] POST /content-plans che accetta persona/tema, invoca OpenRouter con prompt
+    dedicato.
+
     - [ ] Persistenza del piano con timestamp e associazione a influencer/tenant.
+
     - [ ] Endpoint GET /content-plans/:id e /content-plans (lista filtrabile).
+
     - [ ] Test che stubba OpenRouter e verifica parsing + salvataggio.
+
+
+    ### Dipendenze
+
+    - [API-01] Bootstrap Prisma connection module
+
+    - [API-02] Modellare schema Prisma per tenant, influencer, dataset e job
+
+    '
   labels:
   - area:api
   - type:feat
@@ -73,18 +135,33 @@ issues:
   impact: High
   estimate: L
   depends_on:
-  - 'API: Bootstrap Prisma connection module'
-  - 'API: Modellare schema Prisma per tenant, influencer, dataset e job'
-- title: 'API: Dataset ingestion e storage su MinIO'
-  body: |
-    ### Contesto
-    La piattaforma richiede upload e tracciamento dei dataset per il training LoRA ma manca qualsiasi endpoint. Serve integrare MinIO (S3 compatibile) e salvare metadati nel database.
+  - API-01
+  - API-02
+  code: API-04
+- title: 'API-05: Dataset ingestion e storage su MinIO'
+  body: '### Contesto
+
+    La piattaforma richiede upload e tracciamento dei dataset per il training LoRA
+    ma manca qualsiasi endpoint. Serve integrare MinIO (S3 compatibile) e salvare
+    metadati nel database.
+
 
     ### DoD
+
     - [ ] Service S3 basato su MinIO configurato via variabili S3_*.
+
     - [ ] Endpoint POST /datasets per creare record e ottenere URL di upload presignato.
+
     - [ ] Endpoint PATCH /datasets/:id/status per aggiornare stato (es. READY, PROCESSING).
+
     - [ ] Integrazione test con MinIO locale via docker compose.
+
+
+    ### Dipendenze
+
+    - [API-02] Modellare schema Prisma per tenant, influencer, dataset e job
+
+    '
   labels:
   - area:api
   - type:feat
@@ -93,14 +170,16 @@ issues:
   impact: High
   estimate: L
   depends_on:
-  - 'API: Modellare schema Prisma per tenant, influencer, dataset e job'
-- title: 'API: Autenticazione multi-tenant con JWT'
+  - API-02
+  code: API-05
+- title: 'API-06: Autenticazione multi-tenant con JWT'
   body: "### Contesto\nAl momento l'API è pubblica. Per rispettare il modello multi-tenant\
     \ descritto nella README servono login, gestione tenant e guard per proteggere\
     \ le route.\n\n### DoD\n- [ ] Endpoint /auth/login con email+password o token\
     \ magic e generazione JWT.\n- [ ] Middleware/guard che applica \tenantId alle\
     \ query Prisma.\n- [ ] Seed iniziale di un tenant admin per sviluppo.\n- [ ] Test\
-    \ e2e che verifica accesso negato senza token.\n"
+    \ e2e che verifica accesso negato senza token.\n\n### Dipendenze\n- [API-02] Modellare\
+    \ schema Prisma per tenant, influencer, dataset e job\n"
   labels:
   - area:api
   - type:feat
@@ -109,17 +188,31 @@ issues:
   impact: High
   estimate: L
   depends_on:
-  - 'API: Modellare schema Prisma per tenant, influencer, dataset e job'
-- title: 'API: Health & readiness con check Postgres/Redis/MinIO'
-  body: |
-    ### Contesto
-    L'endpoint /health restituisce solo uno status statico. Serve una versione che controlli lo stato delle dipendenze per supportare orchestrazione e monitoraggio.
+  - API-02
+  code: API-06
+- title: 'API-07: Health & readiness con check Postgres/Redis/MinIO'
+  body: '### Contesto
+
+    L''endpoint /health restituisce solo uno status statico. Serve una versione che
+    controlli lo stato delle dipendenze per supportare orchestrazione e monitoraggio.
+
 
     ### DoD
+
     - [ ] GET /healthz con checks individuali per DB, Redis e MinIO.
+
     - [ ] GET /readyz pensato per probe di Kubernetes/docker compose.
+
     - [ ] Output JSON con dettagli su latenza e stato.
+
     - [ ] Test che mocka disservizi e verifica risposta corretta.
+
+
+    ### Dipendenze
+
+    - [API-01] Bootstrap Prisma connection module
+
+    '
   labels:
   - area:api
   - type:chore
@@ -128,17 +221,26 @@ issues:
   impact: Medium
   estimate: M
   depends_on:
-  - 'API: Bootstrap Prisma connection module'
-- title: 'API: Validazione config env con Zod'
-  body: |
-    ### Contesto
-    Attualmente ConfigModule carica le variabili senza validarle. Occorre evitare errori a runtime introducendo uno schema di validazione con fallback sicuri.
+  - API-01
+  code: API-07
+- title: 'API-08: Validazione config env con Zod'
+  body: '### Contesto
+
+    Attualmente ConfigModule carica le variabili senza validarle. Occorre evitare
+    errori a runtime introducendo uno schema di validazione con fallback sicuri.
+
 
     ### DoD
+
     - [ ] Schema di validazione (Zod) per tutte le variabili richieste nel README.
+
     - [ ] Fallback ragionati (es. porta default) documentati.
+
     - [ ] Failing fast se una variabile obbligatoria manca.
+
     - [ ] Test unitario che copre il caso di variabile assente.
+
+    '
   labels:
   - area:api
   - type:chore
@@ -146,16 +248,30 @@ issues:
   priority: P2
   impact: Medium
   estimate: S
-- title: 'Worker: Sincronizzare stato job con l''API'
-  body: |
-    ### Contesto
-    Il worker logga i job ma non aggiorna il database. Serve un client verso l'API per cambiare status, memorizzare result e costi e gestire failure automatiche.
+  code: API-08
+- title: 'WORK-01: Sincronizzare stato job con l''API'
+  body: '### Contesto
+
+    Il worker logga i job ma non aggiorna il database. Serve un client verso l''API
+    per cambiare status, memorizzare result e costi e gestire failure automatiche.
+
 
     ### DoD
+
     - [ ] Client REST o SDK per PATCH /jobs/:id con status/result.
+
     - [ ] Aggiornamento stato su start, success e failure.
+
     - [ ] Backoff configurabile (BullMQ) per retry.
+
     - [ ] Test end-to-end con Redis locale che verifica roundtrip.
+
+
+    ### Dipendenze
+
+    - [API-03] Esporre CRUD dei job e integrazione con BullMQ
+
+    '
   labels:
   - area:worker
   - type:feat
@@ -164,17 +280,31 @@ issues:
   impact: High
   estimate: M
   depends_on:
-  - 'API: Esporre CRUD dei job e integrazione con BullMQ'
-- title: 'Worker: Implementare processor content-generation'
-  body: |
-    ### Contesto
-    La coda content-generation è un TODO. Serve orchestrare chiamate a OpenRouter, generare caption/script e creare job figlio per asset visivi.
+  - API-03
+  code: WORK-01
+- title: 'WORK-02: Implementare processor content-generation'
+  body: '### Contesto
+
+    La coda content-generation è un TODO. Serve orchestrare chiamate a OpenRouter,
+    generare caption/script e creare job figlio per asset visivi.
+
 
     ### DoD
+
     - [ ] Implementato processor che richiama OpenRouter usando prompts.
+
     - [ ] Salvataggio output testuale su S3/Asset e collegamento al job.
+
     - [ ] Gestione errori con retry e logging strutturato.
+
     - [ ] Test unit/integration con mock OpenRouter.
+
+
+    ### Dipendenze
+
+    - [WORK-01] Sincronizzare stato job con l''API
+
+    '
   labels:
   - area:worker
   - type:feat
@@ -183,17 +313,33 @@ issues:
   impact: High
   estimate: L
   depends_on:
-  - 'Worker: Sincronizzare stato job con l''API'
-- title: 'Worker: Orchestrare training LoRA'
-  body: |
-    ### Contesto
-    Serve un processor dedicato che lanci kohya_ss con i parametri definiti nello schema LoRA e monitori il progresso, aggiornando il job e gli asset prodotti.
+  - WORK-01
+  code: WORK-02
+- title: 'WORK-03: Orchestrare training LoRA'
+  body: '### Contesto
+
+    Serve un processor dedicato che lanci kohya_ss con i parametri definiti nello
+    schema LoRA e monitori il progresso, aggiornando il job e gli asset prodotti.
+
 
     ### DoD
+
     - [ ] Script wrapper che lancia kohya_ss con dataset e config dal DB.
+
     - [ ] Streaming dei log e update progressivo del job.
+
     - [ ] Upload degli output .safetensors su MinIO.
+
     - [ ] Test manuale documentato (dry-run) e logging degli errori.
+
+
+    ### Dipendenze
+
+    - [WORK-01] Sincronizzare stato job con l''API
+
+    - [API-05] Dataset ingestion e storage su MinIO
+
+    '
   labels:
   - area:worker
   - type:feat
@@ -202,15 +348,18 @@ issues:
   impact: High
   estimate: L
   depends_on:
-  - 'Worker: Sincronizzare stato job con l''API'
-  - 'API: Dataset ingestion e storage su MinIO'
-- title: 'Worker: Pipeline video con ComfyUI e FFmpeg'
+  - WORK-01
+  - API-05
+  code: WORK-03
+- title: 'WORK-04: Pipeline video con ComfyUI e FFmpeg'
   body: "### Contesto\nLa README descrive generazione video ma il worker non integra\
     \ ComfyUI né FFmpeg. Va creato un processor che interagisce con le API locali\
-    \ di ComfyUI e normalizza i file video finali.\n\n### DoD\n- [ ] Job \video-generation\
+    \ di ComfyUI e normalizza i file video finali.\n\n### DoD\n- [ ] Job \nideo-generation\
     \ che chiama ComfyUI REST e gestisce il polling dello stato.\n- [ ] Post-processing\
     \ FFmpeg (aspect ratio, audio leveling) configurabile.\n- [ ] Asset video caricati\
-    \ su MinIO e registrati nel DB.\n- [ ] Test manuale con ComfyUI locale documentato.\n"
+    \ su MinIO e registrati nel DB.\n- [ ] Test manuale con ComfyUI locale documentato.\n\
+    \n### Dipendenze\n- [WORK-01] Sincronizzare stato job con l'API\n- [API-05] Dataset\
+    \ ingestion e storage su MinIO\n"
   labels:
   - area:worker
   - type:feat
@@ -219,18 +368,28 @@ issues:
   impact: High
   estimate: L
   depends_on:
-  - 'Worker: Sincronizzare stato job con l''API'
-  - 'API: Dataset ingestion e storage su MinIO'
-- title: 'Worker: Metriche, alert e Bull Board'
-  body: |
-    ### Contesto
-    Per gestire carichi di generazione servono metriche e visibilità. Va aggiunta una dashboard (Bull Board o simile), esportazione metriche Prometheus e alert via log o webhook.
+  - WORK-01
+  - API-05
+  code: WORK-04
+- title: 'WORK-05: Metriche, alert e Bull Board'
+  body: '### Contesto
+
+    Per gestire carichi di generazione servono metriche e visibilità. Va aggiunta
+    una dashboard (Bull Board o simile), esportazione metriche Prometheus e alert
+    via log o webhook.
+
 
     ### DoD
+
     - [ ] Setup Bull Board accessibile via autenticazione basic.
+
     - [ ] Metriche chiave (job in attesa, falliti, durata media) esportate.
+
     - [ ] Alert su failure consecutive inviati a webhook n8n o Slack.
+
     - [ ] Documentazione su come avviare la dashboard.
+
+    '
   labels:
   - area:worker
   - type:chore
@@ -238,16 +397,30 @@ issues:
   priority: P3
   impact: Medium
   estimate: M
-- title: 'Web: Implementare autenticazione e sessione'
-  body: |
-    ### Contesto
-    Il frontend Next.js è statico. Serve login, gestione token e protezione delle route usando le API che verranno introdotte.
+  code: WORK-05
+- title: 'WEB-01: Implementare autenticazione e sessione'
+  body: '### Contesto
+
+    Il frontend Next.js è statico. Serve login, gestione token e protezione delle
+    route usando le API che verranno introdotte.
+
 
     ### DoD
+
     - [ ] Pagina /login con form e chiamata a /auth/login.
+
     - [ ] Salvataggio token (httpOnly cookie o storage sicuro) e provider contesto.
+
     - [ ] Middleware per proteggere route e redirect.
+
     - [ ] Test component/integration con Playwright o React Testing Library.
+
+
+    ### Dipendenze
+
+    - [API-06] Autenticazione multi-tenant con JWT
+
+    '
   labels:
   - area:web
   - type:feat
@@ -256,17 +429,33 @@ issues:
   impact: High
   estimate: M
   depends_on:
-  - 'API: Autenticazione multi-tenant con JWT'
-- title: 'Web: Dashboard operativo con stato code'
-  body: |
-    ### Contesto
-    Serve una vista unica che mostri job attivi, successi/fallimenti e stato dei servizi per dare feedback agli operatori.
+  - API-06
+  code: WEB-01
+- title: 'WEB-02: Dashboard operativo con stato code'
+  body: '### Contesto
+
+    Serve una vista unica che mostri job attivi, successi/fallimenti e stato dei servizi
+    per dare feedback agli operatori.
+
 
     ### DoD
+
     - [ ] Pagina /dashboard con widget job queue (attivi, pending, failed).
+
     - [ ] Card health basata sui nuovi endpoint /healthz//readyz.
+
     - [ ] Grafico andamento ultimi job (es. area chart) con TanStack Query.
+
     - [ ] Stato reattivo (polling o websocket) documentato.
+
+
+    ### Dipendenze
+
+    - [API-03] Esporre CRUD dei job e integrazione con BullMQ
+
+    - [API-07] Health & readiness con check Postgres/Redis/MinIO
+
+    '
   labels:
   - area:web
   - type:feat
@@ -275,18 +464,32 @@ issues:
   impact: High
   estimate: L
   depends_on:
-  - 'API: Esporre CRUD dei job e integrazione con BullMQ'
-  - 'API: Health & readiness con check Postgres/Redis/MinIO'
-- title: 'Web: Gestione dataset con upload verso API'
-  body: |
-    ### Contesto
-    Gli operatori devono caricare dataset e seguirne lo stato. Serve una UI per upload, lista e progress.
+  - API-03
+  - API-07
+  code: WEB-02
+- title: 'WEB-03: Gestione dataset con upload verso API'
+  body: '### Contesto
+
+    Gli operatori devono caricare dataset e seguirne lo stato. Serve una UI per upload,
+    lista e progress.
+
 
     ### DoD
+
     - [ ] Pagina /datasets con tabella e stati.
+
     - [ ] Form/modal per creare dataset e ottenere URL presignato.
+
     - [ ] Barra di avanzamento per upload (S3 multipart) e update via API.
+
     - [ ] Test end-to-end (Playwright) che copre upload fittizio.
+
+
+    ### Dipendenze
+
+    - [API-05] Dataset ingestion e storage su MinIO
+
+    '
   labels:
   - area:web
   - type:feat
@@ -295,17 +498,31 @@ issues:
   impact: High
   estimate: L
   depends_on:
-  - 'API: Dataset ingestion e storage su MinIO'
-- title: 'Web: Wizard Content Plan e approvazione'
-  body: |
-    ### Contesto
-    Il team marketing necessita di un flusso guidato per generare e approvare piani editoriali con anteprima dei post.
+  - API-05
+  code: WEB-03
+- title: 'WEB-04: Wizard Content Plan e approvazione'
+  body: '### Contesto
+
+    Il team marketing necessita di un flusso guidato per generare e approvare piani
+    editoriali con anteprima dei post.
+
 
     ### DoD
+
     - [ ] Wizard multi-step (persona, tema, parametri prompt) che chiama /content-plans.
+
     - [ ] Preview dei post generati con possibilità di rigenerare.
-    - [ ] Stato "Approved"/"Rejected" sincronizzato con l'API.
+
+    - [ ] Stato "Approved"/"Rejected" sincronizzato con l''API.
+
     - [ ] Test componenti principali e snapshot prompt.
+
+
+    ### Dipendenze
+
+    - [API-04] Endpoint Content Plan con integrazione OpenRouter
+
+    '
   labels:
   - area:web
   - type:feat
@@ -314,17 +531,26 @@ issues:
   impact: High
   estimate: L
   depends_on:
-  - 'API: Endpoint Content Plan con integrazione OpenRouter'
-- title: 'Web: Shell applicativa e design system shadcn/ui'
-  body: |
-    ### Contesto
-    L'app web non utilizza ancora shadcn/ui né ha una navigazione consistente. Serve impostare layout, sidebar, theming e componentistica condivisa.
+  - API-04
+  code: WEB-04
+- title: 'WEB-05: Shell applicativa e design system shadcn/ui'
+  body: '### Contesto
+
+    L''app web non utilizza ancora shadcn/ui né ha una navigazione consistente. Serve
+    impostare layout, sidebar, theming e componentistica condivisa.
+
 
     ### DoD
+
     - [ ] Configurato shadcn/ui con palette brand e dark mode.
+
     - [ ] Layout principale con sidebar, header e breadcrumb.
+
     - [ ] Componenti base (Button, Card, Badge) centralizzati.
-    - [ ] Documentazione sull'uso dei componenti custom.
+
+    - [ ] Documentazione sull''uso dei componenti custom.
+
+    '
   labels:
   - area:web
   - type:feat
@@ -332,16 +558,34 @@ issues:
   priority: P3
   impact: Medium
   estimate: M
-- title: 'SDK: Estendere client con job, dataset e content plan'
-  body: |
-    ### Contesto
-    Il client SDK espone solo pochi metodi e presume endpoint non implementati. Serve allinearlo alle nuove route e gestire errori/coercizione tipi.
+  code: WEB-05
+- title: 'SDK-01: Estendere client con job, dataset e content plan'
+  body: '### Contesto
+
+    Il client SDK espone solo pochi metodi e presume endpoint non implementati. Serve
+    allinearlo alle nuove route e gestire errori/coercizione tipi.
+
 
     ### DoD
+
     - [ ] Metodi listJobs, updateJob, listDatasets, createDataset, getContentPlan.
+
     - [ ] Gestione errori HTTP con traduzione in eccezioni typed.
+
     - [ ] Test unitari con msw o fetch mock.
+
     - [ ] Pubblicazione interna (pnpm build) per consumo web/worker.
+
+
+    ### Dipendenze
+
+    - [API-03] Esporre CRUD dei job e integrazione con BullMQ
+
+    - [API-05] Dataset ingestion e storage su MinIO
+
+    - [API-04] Endpoint Content Plan con integrazione OpenRouter
+
+    '
   labels:
   - area:sdk
   - type:feat
@@ -350,16 +594,18 @@ issues:
   impact: Medium
   estimate: M
   depends_on:
-  - 'API: Esporre CRUD dei job e integrazione con BullMQ'
-  - 'API: Dataset ingestion e storage su MinIO'
-  - 'API: Endpoint Content Plan con integrazione OpenRouter'
-- title: 'SDK: Hooks React con TanStack Query'
+  - API-03
+  - API-05
+  - API-04
+  code: SDK-01
+- title: 'SDK-02: Hooks React con TanStack Query'
   body: "### Contesto\nIl frontend usa TanStack Query ma manca un set di hook typed\
     \ che incapsulano il client. Servono per riuso e cache coerente.\n\n### DoD\n\
     - [ ] Implementati hook (useJobs, useJob, useCreateJob, useDatasets, ...).\n-\
     \ [ ] Provider che espone InfluencerAIClient e configura il \baseUrl.\n- [ ] Test\
     \ dei hook con React Testing Library + msw.\n- [ ] Documentazione veloce in README\
-    \ web su come usarli.\n"
+    \ web su come usarli.\n\n### Dipendenze\n- [SDK-01] Estendere client con job,\
+    \ dataset e content plan\n"
   labels:
   - area:sdk
   - type:feat
@@ -368,17 +614,26 @@ issues:
   impact: Medium
   estimate: M
   depends_on:
-  - 'SDK: Estendere client con job, dataset e content plan'
-- title: 'Packages: Test Zod schemas e prompt regressions'
-  body: |
-    ### Contesto
-    Le definizioni in @influencerai/core-schemas e i prompt non hanno copertura. Serve introdurre test per prevenire regressioni su shape e output dei template.
+  - SDK-01
+  code: SDK-02
+- title: 'PKG-01: Test Zod schemas e prompt regressions'
+  body: '### Contesto
+
+    Le definizioni in @influencerai/core-schemas e i prompt non hanno copertura. Serve
+    introdurre test per prevenire regressioni su shape e output dei template.
+
 
     ### DoD
+
     - [ ] Test unitari per JobSpecSchema, ContentPlanSchema, DatasetSpecSchema, LoRAConfigSchema.
+
     - [ ] Snapshot dei prompt principali con input di esempio.
+
     - [ ] Aggiunta al workflow CI esistente (lint/test).
+
     - [ ] Documentato come eseguire i test (pnpm test nel pacchetto).
+
+    '
   labels:
   - area:packages
   - type:test
@@ -386,14 +641,14 @@ issues:
   priority: P3
   impact: Medium
   estimate: S
-- title: 'n8n: Versionare workflow end-to-end'
-  body: "            ### Contesto\n            La cartella \apps/n8n contiene solo\
-    \ un .gitkeep. Servono i workflow base descritti nella README per orchestrare\
-    \ plan, training e autopost.\n\n            ### DoD\n            - [ ] Esportati\
-    \ i workflow principali (plan-generate, content-run, publish).\n            -\
-    \ [ ] Documentate le variabili richieste e credenziali da configurare.\n     \
-    \       - [ ] Script per import automazione (\n8n import:workflow).\n        \
-    \    - [ ] Verifica manuale di un run in locale con API stub.\n"
+  code: PKG-01
+- title: 'N8N-01: Versionare workflow end-to-end'
+  body: "### Contesto\nLa cartella \apps/n8n contiene solo un .gitkeep. Servono i\
+    \ workflow base descritti nella README per orchestrare plan, training e autopost.\n\
+    \n### DoD\n- [ ] Esportati i workflow principali (plan-generate, content-run,\
+    \ publish).\n- [ ] Documentate le variabili richieste e credenziali da configurare.\n\
+    - [ ] Script per import automazione (\n8n import:workflow).\n- [ ] Verifica manuale\
+    \ di un run in locale con API stub.\n"
   labels:
   - area:n8n
   - type:feat
@@ -401,3 +656,4 @@ issues:
   priority: P2
   impact: High
   estimate: M
+  code: N8N-01
