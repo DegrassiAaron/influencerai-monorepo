@@ -30,7 +30,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'pnpm'
+          # Do not use setup-node pnpm cache to avoid pnpm lookup at this step
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
