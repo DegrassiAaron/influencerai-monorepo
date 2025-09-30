@@ -312,3 +312,15 @@ pnpm -w install
 - Giorno 5: integrazione Leonardo + Asset manager.  
 - Giorno 6: worker video locale con ComfyUI.  
 - Giorno 7: workflow n8n end-to-end.
+
+## API Endpoints (summary)
+
+- POST /jobs
+  - Body: { "type": "content-generation|lora-training|video-generation", "payload": { ... }, "priority": 1 }
+  - Returns created Job (status pending) and enqueues on BullMQ
+- GET /jobs?status=&type=&take=&skip=
+  - Lists recent jobs
+- GET /jobs/:id
+  - Fetches a job by id
+
+Swagger: http://localhost:3001/api
