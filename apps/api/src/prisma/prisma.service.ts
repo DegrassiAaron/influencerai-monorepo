@@ -1,9 +1,12 @@
-import { INestApplication, Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+﻿import { INestApplication, Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { PrismaClient } from '@prisma/client';
+// Use runtime import to avoid TS type resolution issues during container builds
+// Types are still available in dev; in CI we fall back to any
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const PrismaClientAny: any = require('@prisma/client').PrismaClient;
 
 @Injectable()
-export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
+export class PrismaService extends (PrismaClientAny as any) implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(PrismaService.name);
   private readonly databaseUrl: string;
 

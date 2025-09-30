@@ -1,5 +1,6 @@
 FROM node:20-alpine AS base
 RUN corepack enable pnpm
+ENV CI=true
 
 FROM base AS deps
 WORKDIR /app
@@ -12,7 +13,8 @@ FROM base AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-RUN pnpm --filter @influencerai/core-schemas build
+RUN pnpm -C packages/core-schemas install --frozen-lockfile --prod=false
+RUN pnpm -C apps/worker install --frozen-lockfile --prod=false
 RUN pnpm --filter @influencerai/worker build
 
 FROM base AS runner

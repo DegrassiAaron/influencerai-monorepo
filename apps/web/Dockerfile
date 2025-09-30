@@ -1,5 +1,6 @@
-FROM node:20-alpine AS base
+﻿FROM node:20-alpine AS base
 RUN corepack enable pnpm
+ENV CI=true
 
 FROM base AS deps
 WORKDIR /app
@@ -13,9 +14,9 @@ FROM base AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-RUN pnpm --filter @influencerai/core-schemas build
-RUN pnpm --filter @influencerai/sdk build
-RUN pnpm --filter @influencerai/web build
+# Ensure the web package has local node_modules symlinks so Next binary resolves
+RUN pnpm -C apps/web install --frozen-lockfile --prod=false
+RUN pnpm --filter @influencerai/web run build
 
 FROM base AS runner
 WORKDIR /app
@@ -28,3 +29,4 @@ COPY --from=builder /app/apps/web/public ./apps/web/public
 WORKDIR /app/apps/web
 EXPOSE 3000
 CMD ["node", "server.js"]
+

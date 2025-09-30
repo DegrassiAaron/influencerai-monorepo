@@ -111,6 +111,51 @@ volumes:
   minio:
 ```
 
+## Avvio rapido (tutto-in-uno)
+
+Per avviare l'intero stack (Postgres, Redis, MinIO, n8n, API, worker, Web UI) con un solo comando dalla root del repo:
+
+- Bash (macOS/Linux/Git Bash):
+  
+  ```bash
+  bash scripts/start-all.sh
+  ```
+
+- PowerShell (Windows):
+  
+  ```powershell
+  powershell -ExecutionPolicy Bypass -File scripts/start-all.ps1
+  ```
+
+Il comando richiama `docker compose -f infra/docker-compose.yml`, crea `.env` dal template se assente, costruisce le immagini e avvia i servizi.
+
+Endpoint utili dopo l'avvio:
+- Web UI: `http://localhost:3000`
+- API Swagger: `http://localhost:3001/api`
+- n8n: `http://localhost:5678`
+- MinIO Console: `http://localhost:9001` (S3 su `http://localhost:9000`)
+
+Per stoppare manualmente dalla root: `docker compose -f infra/docker-compose.yml down`
+
+## Stop rapido e pulizia
+
+- Bash:
+  - Stop: `bash scripts/stop-all.sh`
+  - Stop + purge volumi: `bash scripts/stop-all.sh --purge`
+- PowerShell:
+  - Stop: `powershell -ExecutionPolicy Bypass -File scripts/stop-all.ps1`
+  - Stop + purge volumi: `powershell -ExecutionPolicy Bypass -File scripts/stop-all.ps1 --purge`
+
+## Troubleshooting
+
+- Verifica log di un servizio: `cd infra && docker compose logs -f api` (o `web`, `worker`, `postgres`, `redis`, `minio`, `n8n`).
+- Ricostruzione forzata: `cd infra && docker compose build --no-cache && docker compose up -d`.
+- Volumi corrotti o schema DB incoerente: esegui lo stop con purge e riparti
+  - `bash scripts/stop-all.sh --purge` (o PowerShell equivalente), poi `bash scripts/start-all.sh`.
+- Variabili mancanti: assicurati che `.env` esista nella root (il comando di start lo crea da `.env.example` se presente).
+- Porte occupate: chiudi le app in conflitto o cambia il mapping in `infra/docker-compose.yml`.
+
+
 ---
 
 ## Variabili ambiente (.env)

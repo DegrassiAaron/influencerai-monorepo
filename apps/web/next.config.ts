@@ -1,7 +1,10 @@
-import type { NextConfig } from "next";
+import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Build a standalone server bundle for Docker runtime
+  output: 'standalone',
+  // Ensure workspace packages are transpiled by Next.js
+  transpilePackages: ['@influencerai/core-schemas', '@influencerai/sdk'],
 };
 
 export default nextConfig;

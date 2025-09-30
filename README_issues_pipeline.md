@@ -1,43 +1,55 @@
 # Issue Bot Starter (Top-10 to GitHub)
 
 Questo starter consente di:
+
 1. **Prendere** un file `backlog/issues.yaml` generato da Claude Code (o altro).
 2. **Selezionare** automaticamente le 10 issue più importanti.
 3. **Creare** le issue su GitHub via `gh` CLI.
 4. **Automatizzare** il tutto con una GitHub Action al push sul branch `backlog/auto`.
 
 ## Requisiti
+
 - `gh` CLI autenticato (`gh auth login`).
 - `yq` (per lo script bash) **oppure** Python 3.10+ (per lo script Python).
 - Permessi `issues:write` per il token in CI.
 
 ## Workflow locale (manuale/semi-auto)
+
 1. Colloca (o genera) `backlog/issues.yaml` secondo lo **schema** riportato più sotto.
 2. Esegui:
+
    ```bash
    python tools/select_top10.py backlog/issues.yaml backlog/top10.yaml
    bash tools/create_issues.sh backlog/top10.yaml
    ```
 
 ## Automazione con GitHub Actions
+
 - Pusha su `backlog/auto` il file `backlog/issues.yaml`.
 - La workflow `.github/workflows/auto-issues.yml`:
   - Esegue `select_top10.py` per generare `backlog/top10.yaml`.
   - Crea su GitHub le 10 issue tramite `create_issues.sh`.
 
 ## Criteri di ranking (default)
+
 - Ordina per `priority` (P1 > P2 > P3), poi `impact` (High > Medium > Low), poi stima (`estimate`: XS < S < M < L < XL).
 - In assenza di campi, si applicano default conservativi: `P3`, `Low`, `M`.
 
 Puoi adattare `select_top10.py` per modificare i pesi.
 
 ## Convenzione codici issue
+
 - Ogni issue deve includere il campo `code` e avere un titolo nel formato `<code>: <descrizione azionabile>`.
+- Il campo `code` segue la convenzione: prefisso dall’area (`API`, `WORK`, `WEB`, `SDK`, `PKG`, `N8N`, `GEN`) e suffisso numerico progressivo a due cifre per area (es. `API-01`, `WEB-02`).
+- Il titolo deve iniziare con il codice, seguito da una descrizione chiara e azionabile (es. `API-01: Implement login endpoint`).
+- Il campo `code` viene preservato e aggiornato da `select_top10.py` durante la generazione di `backlog/top10.yaml`.
+- Prima di lanciare la pipeline, assicurati che il campo `code` sia corretto e coerente con la convenzione.
 - Il prefisso deriva dalla label area: `area:api`->`API`, `area:worker`->`WORK`, `area:web`->`WEB`, `area:sdk`->`SDK`, `area:packages`->`PKG`, `area:n8n`->`N8N`; se manca la label usa `GEN`.
 - Il suffisso è numerico a due cifre e progressivo per area (`API-01`, `API-02`, ...).
 - `select_top10.py` preserva codice e prefisso quando genera `backlog/top10.yaml`, quindi aggiorna il campo `code` prima di lanciare la pipeline.
 
 ## Schema YAML atteso
+
 ```yaml
 issues:
   - code: "API-01"
@@ -57,6 +69,7 @@ issues:
 ```
 
 ## Sicurezza e limiti
+
 - **Non** inserire segreti nel YAML.
 - **Verifica** titoli e contenuti prima della creazione massiva.
 - **Dry-run:** modifica `create_issues.sh` per echo dei comandi se vuoi simulare.
@@ -64,6 +77,7 @@ issues:
 ---
 
 ### Esempio minimo `backlog/issues.yaml`
+
 ```yaml
 issues:
   - code: "WEB-01"
