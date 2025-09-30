@@ -8,18 +8,13 @@ on:
       - 'packages/**'
       - 'infra/**'
       - 'scripts/**'
+      - 'docs/**'
+      - 'README.md'
       - 'pnpm-lock.yaml'
       - 'pnpm-workspace.yaml'
       - '.github/workflows/ci.yml'
   pull_request:
     branches: [ main ]
-    paths:
-      - 'apps/**'
-      - 'packages/**'
-      - 'infra/**'
-      - 'scripts/**'
-      - 'pnpm-lock.yaml'
-      - 'pnpm-workspace.yaml'
 
 permissions:
   contents: read
