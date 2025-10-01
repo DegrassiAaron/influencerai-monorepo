@@ -190,14 +190,14 @@ issues:
 
     ### DoD
 
-    - [ ] POST /content-plans che accetta persona/tema, invoca OpenRouter con prompt
+    - [x] POST /content-plans che accetta persona/tema, invoca OpenRouter con prompt
     dedicato.
 
-    - [ ] Persistenza del piano con timestamp e associazione a influencer/tenant.
+    - [x] Persistenza del piano con timestamp e associazione a influencer/tenant.
 
-    - [ ] Endpoint GET /content-plans/:id e /content-plans (lista filtrabile).
+    - [x] Endpoint GET /content-plans/:id e /content-plans (lista filtrabile).
 
-    - [ ] Test che stubba OpenRouter e verifica parsing + salvataggio.
+    - [x] Test che stubba OpenRouter e verifica parsing + salvataggio.
 
 
     ### Dipendenze
@@ -834,3 +834,255 @@ issues:
   - INFRA-02
   - INFRA-03
   code: DEV-01
+- title: 'SEC-01: Verificare .env non contenga credenziali reali'
+  body: '## Contesto
+
+    Durante la code review è emerso che il file `.env` potrebbe essere tracciato
+    da git. Se contiene credenziali reali (non placeholder), queste potrebbero essere
+    esposte nella cronologia git.
+
+
+    ## Stato Attuale
+
+    - ❌ File `.env` potenzialmente tracciato in git
+
+    - ⚠️ Rischio di esposizione credenziali OpenRouter API key, database password,
+    MinIO secrets
+
+
+    ## Azioni Richieste
+
+
+    ### 1. Verifica immediata
+
+    ```bash
+
+    # Controllare se .env è tracciato
+
+    git ls-files | grep -E ''(^|/)\\.env$''
+
+
+    # Controllare se contiene credenziali reali
+
+    cat .env | grep -E ''(OPENROUTER_API_KEY|DATABASE_URL|S3_SECRET)''
+
+    ```
+
+
+    ### 2. Se contiene credenziali reali
+
+    ```bash
+
+    # Rimuovere dalla cronologia git (⚠️ operazione delicata)
+
+    git filter-branch --force --index-filter \
+
+      "git rm --cached --ignore-unmatch .env" \
+
+      --prune-empty --tag-name-filter cat -- --all
+
+
+    # Verificare .gitignore contenga .env
+
+    echo ".env" >> .gitignore
+
+    git add .gitignore
+
+    git commit -m "chore: ensure .env is gitignored"
+
+
+    # Force push (⚠️ coordinare con il team)
+
+    git push origin --force --all
+
+    ```
+
+
+    ### 3. Rotazione credenziali
+
+    - [ ] Generare nuova API key su OpenRouter
+
+    - [ ] Aggiornare password database (se esposta)
+
+    - [ ] Rigenerare secret MinIO
+
+    - [ ] Aggiornare `.env.example` con placeholder chiari
+
+
+    ## DoD
+
+    - [ ] Verificato che `.env` non è tracciato da git
+
+    - [ ] `.gitignore` contiene `.env`
+
+    - [ ] Credenziali esposte (se presenti) sono state ruotate
+
+    - [ ] `.env.example` aggiornato con placeholder sicuri
+
+    - [ ] Documentato in README.md il processo di setup `.env`
+
+
+    ## Priorità
+
+    🔴 **CRITICAL P0** - Da risolvere entro 24 ore
+
+
+    ## Note
+
+    Se `.env` contiene solo placeholder (es. `your_api_key_here`), è sufficiente
+    rimuoverlo da git senza rotazione credenziali.
+
+    '
+  labels:
+  - type:security
+  - priority:P0
+  priority: P0
+  impact: Critical
+  estimate: S
+  code: SEC-01
+- title: 'CODE-01: Aggiungere error handling a SDK client'
+  body: '## Contesto
+
+    Il `InfluencerAIClient` in `packages/sdk/src/index.ts` non gestisce errori HTTP
+    o network failures. Tutte le chiamate fetch non verificano `response.ok` e non
+    catturano eccezioni.
+
+
+    ## DoD
+
+    - [ ] Creato `APIError` class in `packages/sdk/src/fetch-utils.ts`
+
+    - [ ] Implementato `handleResponse` helper
+
+    - [ ] Aggiornati tutti i metodi del client (createJob, getJob, listJobs, etc.)
+
+    - [ ] Aggiunto timeout di 30s a tutte le chiamate
+
+    - [ ] Scritti test unitari per error handling
+
+    - [ ] Verificato che app/web gestisca correttamente APIError con TanStack Query
+
+    '
+  labels:
+  - area:sdk
+  - type:bug
+  - priority:P0
+  priority: P0
+  impact: Critical
+  estimate: M
+  code: CODE-01
+- title: 'CODE-02: Aggiungere error handling a OpenRouter API call'
+  body: '## Contesto
+
+    Il `ContentPlansService` effettua chiamate a OpenRouter API senza gestione errori.
+    Nessun controllo su rate limits, network failures, o risposte malformate.
+
+
+    ## DoD
+
+    - [ ] Aggiunto controllo `response.ok` e gestione status code
+
+    - [ ] Implementato timeout di 60s con AbortController
+
+    - [ ] Gestito rate limiting 429 con retry-after
+
+    - [ ] Validata struttura response OpenRouter
+
+    - [ ] Aggiunto logging token usage per cost tracking
+
+    - [ ] Implementato retry logic con exponential backoff
+
+    - [ ] Aggiunto error handling per timeout/network errors
+
+    - [ ] Verificato env var `OPENROUTER_API_KEY` all''avvio
+
+    - [ ] Scritti test unitari con mock fetch
+
+    - [ ] Scritto test e2e con mock OpenRouter (nock)
+
+    '
+  labels:
+  - area:api
+  - type:bug
+  - priority:P0
+  priority: P0
+  impact: Critical
+  estimate: M
+  code: CODE-02
+- title: 'CODE-03: Ridurre uso di ''any'' types e migliorare type safety'
+  body: '## Contesto
+
+    Eccessivo uso di `any` nel codebase, specialmente in `apps/api`, che bypassa
+    la type safety di TypeScript. Questo aumenta il rischio di runtime errors e
+    riduce la maintainability.
+
+
+    ## DoD
+
+    - [ ] Definito `RedisConnectionOptions` interface e funzione helper
+
+    - [ ] Rimosso `PrismaClientAny`, usare `PrismaClient` direttamente
+
+    - [ ] Usato `Prisma.InputJsonValue` per payload in jobs.service
+
+    - [ ] Definiti tipi `OpenRouterResponse` e `ContentPlanData`
+
+    - [ ] Aggiunta validazione Zod per response OpenRouter
+
+    - [ ] Fixati cast in setup-e2e.ts con `unknown`
+
+    - [ ] Verificato che TypeScript compili senza `any` warnings
+
+    - [ ] Abilitato `@typescript-eslint/no-explicit-any: ''error''` in ESLint
+
+    - [ ] Eseguito `pnpm build` su tutte le apps senza errori
+
+    '
+  labels:
+  - area:api
+  - type:bug
+  - priority:P0
+  priority: P0
+  impact: Critical
+  estimate: M
+  code: CODE-03
+- title: 'CODE-04: Sostituire console.log con logging strutturato'
+  body: '## Contesto
+
+    Presenza di 8 `console.log` statements nel codice di produzione. Il logging non
+    strutturato rende difficile debugging, monitoring, e implementazione di log levels.
+
+
+    ## DoD
+
+    - [ ] Installato `pino`, `pino-pretty`, `nestjs-pino`
+
+    - [ ] Configurato `LoggerModule` in `apps/api/src/app.module.ts`
+
+    - [ ] Sostituiti tutti i `console.log` in `apps/api/src/main.ts`
+
+    - [ ] Aggiunto logger ai services esistenti (ContentPlansService, JobsService)
+
+    - [ ] Creato `apps/worker/src/logger.ts`
+
+    - [ ] Sostituiti tutti i `console.log` in `apps/worker/src/index.ts`
+
+    - [ ] Aggiunto `LOG_LEVEL` a `.env.example`
+
+    - [ ] Verificato che log siano formattati correttamente in dev (pretty)
+
+    - [ ] Verificato che log siano JSON in produzione
+
+    - [ ] Eseguito ESLint rule per bannare `console.log`
+
+    '
+  labels:
+  - area:api
+  - area:worker
+  - type:chore
+  - priority:P1
+  priority: P1
+  impact: High
+  estimate: M
+  code: CODE-04
+
