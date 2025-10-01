@@ -1,12 +1,17 @@
-import { Controller, Get, Param, Post, Body, Query, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Param, Post, Body, Query, BadRequestException, NotFoundException } from '@nestjs/common';
 import { JobsService } from './jobs.service';
-import { CreateJobSchema, JobTypeSchema, ListJobsQuerySchema } from './dto';
+import { CreateJobSchema, ListJobsQuerySchema } from './dto';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('jobs')
 @Controller('jobs')
 export class JobsController {
   constructor(private readonly jobsService: JobsService) {}
 
   @Post()
+  @ApiOperation({ summary: 'Create a job and enqueue it' })
+  @ApiResponse({ status: 201, description: 'Job created' })
+  @ApiResponse({ status: 400, description: 'Validation error' })
   create(@Body() body: unknown) {
     const parsed = CreateJobSchema.safeParse(body);
     if (!parsed.success) {
@@ -16,6 +21,8 @@ export class JobsController {
   }
 
   @Get()
+  @ApiOperation({ summary: 'List jobs with optional filters' })
+  @ApiResponse({ status: 200, description: 'Jobs list' })
   list(
     @Query('status') status?: string,
     @Query('type') type?: string,
@@ -30,7 +37,13 @@ export class JobsController {
   }
 
   @Get(':id')
+  @ApiOperation({ summary: 'Get job by id' })
+  @ApiResponse({ status: 200, description: 'Job found' })
+  @ApiResponse({ status: 404, description: 'Job not found' })
   get(@Param('id') id: string) {
-    return this.jobsService.getJob(id);
+    return this.jobsService.getJob(id).then((job) => {
+      if (!job) throw new NotFoundException('Job not found');
+      return job;
+    });
   }
 }
