@@ -8,8 +8,8 @@ Unico costo previsto: **API OpenRouter** per generazione testi.
 
 ## Documentazione
 
-- Setup ambiente: `docs/SETUP.md`
-- Testing: `docs/TESTING.md`
+- Setup ambiente: [docs/SETUP.md](docs/SETUP.md)
+- Testing: [docs/TESTING.md](docs/TESTING.md)
 
 ---
 
