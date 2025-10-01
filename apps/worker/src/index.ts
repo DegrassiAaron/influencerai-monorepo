@@ -12,6 +12,23 @@ const connection = new Redis({
 const apiBaseUrl = process.env.API_BASE_URL || process.env.WORKER_API_URL || 'http://localhost:3001';
 const api = new InfluencerAIClient(apiBaseUrl);
 
+async function patchJobStatus(jobId: string, data: { status?: 'running' | 'succeeded' | 'failed' | 'completed'; result?: unknown; costTok?: number }) {
+  const maxAttempts = 2;
+  let lastErr: unknown = undefined;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      await api.updateJob(jobId, data);
+      return;
+    } catch (err) {
+      lastErr = err;
+      if (attempt < maxAttempts) {
+        await new Promise((r) => setTimeout(r, 200 * attempt));
+      }
+    }
+  }
+  logger.warn({ err: lastErr, jobId, data }, 'Failed to PATCH job status after retries');
+}
+
 // Content generation worker
 const contentWorker = new Worker(
   'content-generation',
@@ -28,6 +45,7 @@ const contentWorker = new Worker(
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
     const result = { success: true, result: 'Job completed' };
+
     try {
       if (jobId) await api.updateJob(jobId, { status: 'succeeded', result });
     } catch (err) {

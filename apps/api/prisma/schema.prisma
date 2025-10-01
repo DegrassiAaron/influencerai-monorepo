@@ -7,6 +7,14 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum JobStatus {
+  pending
+  running
+  succeeded
+  failed
+  completed
+}
+
 model Tenant {
   id          String       @id @default(cuid())
   name        String
@@ -46,7 +54,7 @@ model Dataset {
 model Job {
   id         String    @id @default(cuid())
   type       String
-  status     String    @default("pending")
+  status     JobStatus @default(pending)
   payload    Json
   result     Json?
   costTok    Int?

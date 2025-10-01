@@ -110,3 +110,21 @@ Note:
 - Note
   - Il test “real worker” avvia il worker con `tsx` puntando a `apps/worker/src/index.ts` e necessita che le sue dipendenze siano installate. Assicurati di aver eseguito `pnpm i` a livello root.
   - Entrambi i test usano un mock in‑memory di Prisma per evitare un database reale, ma esercitano gli endpoint `POST /jobs`, `GET /jobs/:id` e `PATCH /jobs/:id` oltre all’enqueue BullMQ.
+
+## Storage (MinIO/S3)
+
+- Variabili richieste: `S3_ENDPOINT`, `S3_KEY`, `S3_SECRET`, `S3_BUCKET` (vedi `.env.example`).
+- All'avvio del modulo, l'API verifica/crea il bucket configurato.
+- Endpoint di verifica rapida:
+  - `GET /storage/health` — controlla connettività e bucket
+  - `PUT /storage/test-object?key=connectivity.txt&content=hello` — roundtrip upload/download
+
+Con Docker Compose dello stack (`infra/docker-compose.yml`):
+- `minio` espone S3 su `http://localhost:9000` e console su `http://localhost:9001`
+- `minio-init` crea automaticamente il bucket `assets` se assente
+
+## Health & Readiness
+
+- `GET /healthz` restituisce lo stato di DB, Redis e MinIO con latenza per check.
+- `GET /readyz` come `healthz`, ma ritorna 503 se uno dei servizi è KO (per probe/container orchestrators).
+
