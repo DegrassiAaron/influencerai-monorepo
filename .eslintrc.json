@@ -19,7 +19,8 @@
         "plugin:@typescript-eslint/recommended"
       ],
       "rules": {
-        "@typescript-eslint/no-explicit-any": "error"
+        "@typescript-eslint/no-explicit-any": "error",
+        "no-console": "error"
       }
     },
     {
@@ -27,7 +28,8 @@
       "parser": "@typescript-eslint/parser",
       "plugins": ["@typescript-eslint"],
       "rules": {
-        "@typescript-eslint/no-explicit-any": "off"
+        "@typescript-eslint/no-explicit-any": "off",
+        "no-console": "off"
       }
     }
   ]

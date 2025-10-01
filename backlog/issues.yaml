@@ -1055,25 +1055,25 @@ issues:
 
     ## DoD
 
-    - [ ] Installato `pino`, `pino-pretty`, `nestjs-pino`
+    - [x] Installato `pino`, `pino-pretty`, `nestjs-pino`
 
-    - [ ] Configurato `LoggerModule` in `apps/api/src/app.module.ts`
+    - [x] Configurato `LoggerModule` in `apps/api/src/app.module.ts`
 
-    - [ ] Sostituiti tutti i `console.log` in `apps/api/src/main.ts`
+    - [x] Sostituiti tutti i `console.log` in `apps/api/src/main.ts`
 
-    - [ ] Aggiunto logger ai services esistenti (ContentPlansService, JobsService)
+    - [x] Aggiunto logger ai services esistenti (ContentPlansService, JobsService)
 
-    - [ ] Creato `apps/worker/src/logger.ts`
+    - [x] Creato `apps/worker/src/logger.ts`
 
-    - [ ] Sostituiti tutti i `console.log` in `apps/worker/src/index.ts`
+    - [x] Sostituiti tutti i `console.log` in `apps/worker/src/index.ts`
 
-    - [ ] Aggiunto `LOG_LEVEL` a `.env.example`
+    - [x] Aggiunto `LOG_LEVEL` a `.env.example`
 
-    - [ ] Verificato che log siano formattati correttamente in dev (pretty)
+    - [x] Verificato che log siano formattati correttamente in dev (pretty)
 
-    - [ ] Verificato che log siano JSON in produzione
+    - [x] Verificato che log siano JSON in produzione
 
-    - [ ] Eseguito ESLint rule per bannare `console.log`
+    - [x] Eseguito ESLint rule per bannare `console.log`
 
     '
   labels:

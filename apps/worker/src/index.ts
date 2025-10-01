@@ -1,5 +1,6 @@
 import { Worker } from 'bullmq';
 import Redis from 'ioredis';
+import { logger } from './logger';
 
 const connection = new Redis({
   host: process.env.REDIS_HOST || 'localhost',
@@ -11,8 +12,7 @@ const connection = new Redis({
 const contentWorker = new Worker(
   'content-generation',
   async (job) => {
-    console.log(`Processing job ${job.id} of type ${job.name}`);
-    console.log('Job data:', job.data);
+    logger.info({ id: job.id, name: job.name, data: job.data }, 'Processing content-generation job');
 
     // TODO: Implement job processing logic
     await new Promise(resolve => setTimeout(resolve, 1000));
@@ -26,8 +26,7 @@ const contentWorker = new Worker(
 const loraWorker = new Worker(
   'lora-training',
   async (job) => {
-    console.log(`Processing LoRA training job ${job.id}`);
-    console.log('Job data:', job.data);
+    logger.info({ id: job.id, data: job.data }, 'Processing LoRA training job');
 
     // TODO: Implement LoRA training logic
     await new Promise(resolve => setTimeout(resolve, 1000));
@@ -38,19 +37,19 @@ const loraWorker = new Worker(
 );
 
 contentWorker.on('completed', (job) => {
-  console.log(`Job ${job.id} completed successfully`);
+  logger.info({ id: job.id }, 'Job completed successfully');
 });
 
 contentWorker.on('failed', (job, err) => {
-  console.error(`Job ${job?.id} failed:`, err);
+  logger.error({ id: job?.id, err }, 'Job failed');
 });
 
 loraWorker.on('completed', (job) => {
-  console.log(`LoRA training job ${job.id} completed successfully`);
+  logger.info({ id: job.id }, 'LoRA training job completed successfully');
 });
 
 loraWorker.on('failed', (job, err) => {
-  console.error(`LoRA training job ${job?.id} failed:`, err);
+  logger.error({ id: job?.id, err }, 'LoRA training job failed');
 });
 
-console.log('Workers started and listening for jobs...');
+logger.info('Workers started and listening for jobs...');

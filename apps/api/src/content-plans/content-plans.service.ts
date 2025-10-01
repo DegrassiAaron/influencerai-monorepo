@@ -5,6 +5,7 @@ import { fetchWithTimeout, HTTPError, parseRetryAfter, shouldRetry, backoffDelay
 import { OpenRouterResponseSchema } from '../types/openrouter';
 import { ContentPlanDataSchema } from '../types/content';
 import { Prisma, Job } from '@prisma/client';
+import { Logger as NestLogger, LoggerService } from '@nestjs/common';
 
 // Minimal local prompt to avoid build coupling; align with @influencerai/prompts
 function contentPlanPrompt(persona: string, theme: string) {
@@ -13,7 +14,10 @@ function contentPlanPrompt(persona: string, theme: string) {
 
 @Injectable()
 export class ContentPlansService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly logger: LoggerService = new NestLogger(ContentPlansService.name),
+  ) {}
 
   // Extracted so tests can mock only this part
   async generatePlanPosts(persona: string, theme: string): Promise<{ caption: string; hashtags: string[] }[]> {
@@ -66,7 +70,7 @@ export class ContentPlansService {
         const data = parsed.data;
         try {
           const usage = data.usage;
-          if (usage) console.info('[OpenRouter] usage', usage);
+          if (usage) this.logger?.debug?.({ usage } as any, 'OpenRouter usage');
         } catch {}
 
         const text = data.choices?.[0]?.message?.content ?? '[]';
@@ -77,9 +81,11 @@ export class ContentPlansService {
           if (posts.success) {
             normalized = posts.data.map((p) => ({ caption: p.caption, hashtags: p.hashtags }));
           } else {
+            this.logger?.warn?.('OpenRouter posts validation failed, defaulting to empty array');
             normalized = [];
-          }
-        } catch {
+        }
+      } catch {
+          this.logger?.warn?.('OpenRouter response content is not valid JSON array, defaulting to empty array');
           normalized = [];
         }
         return normalized;
