@@ -66,6 +66,9 @@ jobs:
 
       - name: Generate Prisma Client (API)
         run: pnpm --filter @influencerai/api prisma:generate
+        
+      - name: Install dependencies (frozen lockfile)
+        run: pnpm install --frozen-lockfile
 
       - name: Lint Web
         run: pnpm --filter @influencerai/web lint
