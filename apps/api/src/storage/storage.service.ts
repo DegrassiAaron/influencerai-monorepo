@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { S3Client, HeadBucketCommand, CreateBucketCommand, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { Readable } from 'node:stream';
 
 function streamToString(stream: Readable): Promise<string> {
@@ -32,6 +33,10 @@ export class StorageService {
     });
   }
 
+  getBucketName(): string {
+    return this.bucket;
+  }
+
   async ensureBucket(): Promise<void> {
     // Allow tests or callers to skip S3 connectivity checks entirely
     if (process.env.SKIP_S3_INIT === 'true' || process.env.SKIP_S3_INIT === '1') return;
@@ -61,5 +66,12 @@ export class StorageService {
     const res = await this.client.send(new GetObjectCommand({ Bucket: this.bucket, Key: key }));
     if (!res.Body || !(res.Body instanceof Readable)) return '';
     return streamToString(res.Body as Readable);
+  }
+
+  async getPresignedPutUrl(params: { key: string; contentType?: string; expiresInSeconds?: number }): Promise<string> {
+    const { key, contentType, expiresInSeconds } = params;
+    const cmd = new PutObjectCommand({ Bucket: this.bucket, Key: key, ContentType: contentType });
+    const url = await getSignedUrl(this.client, cmd, { expiresIn: expiresInSeconds ?? 900 });
+    return url;
   }
 }

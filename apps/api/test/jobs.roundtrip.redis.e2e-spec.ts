@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { APP_GUARD } from '@nestjs/core';
 import { FastifyAdapter } from '@nestjs/platform-fastify';
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
@@ -78,6 +79,8 @@ describe('Jobs Roundtrip + Redis (e2e)', () => {
       const moduleFixture: TestingModule = await Test.createTestingModule({
         imports: [AppModule],
       })
+        .overrideProvider(APP_GUARD)
+        .useValue({ canActivate: () => true })
         .overrideProvider(PrismaService)
         .useValue(prismaMock)
         .compile();

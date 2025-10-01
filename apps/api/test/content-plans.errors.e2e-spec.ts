@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { APP_GUARD } from '@nestjs/core';
 import { INestApplication } from '@nestjs/common';
 import { FastifyAdapter } from '@nestjs/platform-fastify';
 import request from 'supertest';
@@ -21,6 +22,8 @@ describe('Content Plans Errors (e2e)', () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     })
+      .overrideProvider(APP_GUARD)
+      .useValue({ canActivate: () => true })
       .overrideProvider(ContentPlansService).useValue(svcMock)
       .overrideProvider(PrismaService).useValue({ onModuleInit: jest.fn(), onModuleDestroy: jest.fn(), enableShutdownHooks: jest.fn() })
       .compile();
@@ -56,6 +59,8 @@ describe('Content Plans Errors 5xx (e2e)', () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     })
+      .overrideProvider(APP_GUARD)
+      .useValue({ canActivate: () => true })
       .overrideProvider(ContentPlansService).useValue(svcMock)
       .overrideProvider(PrismaService).useValue({ onModuleInit: jest.fn(), onModuleDestroy: jest.fn(), enableShutdownHooks: jest.fn() })
       .compile();
@@ -93,6 +98,8 @@ describe('Content Plans Errors timeout (e2e)', () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     })
+      .overrideProvider(APP_GUARD)
+      .useValue({ canActivate: () => true })
       .overrideProvider(ContentPlansService).useValue(svcMock)
       .overrideProvider(PrismaService).useValue({ onModuleInit: jest.fn(), onModuleDestroy: jest.fn(), enableShutdownHooks: jest.fn() })
       .compile();

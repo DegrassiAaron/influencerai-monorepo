@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { APP_GUARD } from '@nestjs/core';
 import { INestApplication } from '@nestjs/common';
 import { FastifyAdapter } from '@nestjs/platform-fastify';
 import request from 'supertest';
@@ -42,6 +43,8 @@ describe('Content Plans (e2e)', () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     })
+      .overrideProvider(APP_GUARD)
+      .useValue({ canActivate: () => true })
       .overrideProvider(getQueueToken('content-generation')).useValue({ add: jest.fn(async () => null) })
       .overrideProvider(getQueueToken('lora-training')).useValue({ add: jest.fn(async () => null) })
       .overrideProvider(getQueueToken('video-generation')).useValue({ add: jest.fn(async () => null) })

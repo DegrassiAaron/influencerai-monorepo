@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { APP_GUARD } from '@nestjs/core';
 import { FastifyAdapter } from '@nestjs/platform-fastify';
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
@@ -48,6 +49,8 @@ describe('Jobs + Redis (e2e)', () => {
       const moduleFixture: TestingModule = await Test.createTestingModule({
         imports: [AppModule],
       })
+        .overrideProvider(APP_GUARD)
+        .useValue({ canActivate: () => true })
         .overrideProvider(PrismaService)
         .useValue({ onModuleInit: jest.fn(), onModuleDestroy: jest.fn(), enableShutdownHooks: jest.fn(), job: { create: jest.fn(async (data: any) => ({ id: 'job_e2e', ...data.data })) } })
         .compile();

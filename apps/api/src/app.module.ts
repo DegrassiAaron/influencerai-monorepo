@@ -12,6 +12,7 @@ import { LoggerModule } from 'nestjs-pino';
 import { StorageModule } from './storage/storage.module';
 import { HealthModule } from './health/health.module';
 import { AuthModule } from './auth/auth.module';
+import { DatasetsModule } from './datasets/datasets.module';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
 
 const enableBull = !(process.env.NODE_ENV === 'test' || ['1', 'true', 'yes'].includes(String(process.env.DISABLE_BULL).toLowerCase()));
@@ -38,6 +39,7 @@ const extraImports = enableBull
     StorageModule,
     HealthModule,
     AuthModule,
+    DatasetsModule,
   ],
   controllers: [AppController],
   providers: [
