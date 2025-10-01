@@ -39,8 +39,8 @@ jobs:
           version: 10.17.1
           run_install: false
 
-      - name: Install dependencies
-        run: pnpm install
+      - name: Install dependencies (frozen lockfile)
+        run: pnpm install --frozen-lockfile
 
       - name: Lint Web
         run: pnpm --filter @influencerai/web lint
