@@ -35,7 +35,7 @@ Unico costo previsto: **API OpenRouter** per generazione testi.
 
 ## Struttura repository
 
-```
+```bash
 influencerai/
   apps/
     web/            # Next.js dashboard
