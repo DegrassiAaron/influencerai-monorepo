@@ -45,12 +45,26 @@ jobs:
               authorization: 'Bearer ' + token,
               accept: 'application/vnd.github+json'
             }, init.headers || {});
-            const res = await fetch(url, Object.assign({}, init, { headers }));
-            if (!res.ok) {
-              const t = await res.text();
-              throw new Error(`HTTP ${res.status} ${res.statusText}: ${t}`);
+            while (true) {
+              const res = await fetch(url, Object.assign({}, init, { headers }));
+              if (res.status === 403) {
+                const remaining = Number(res.headers.get('x-ratelimit-remaining') || '0');
+                const resetSec = Number(res.headers.get('x-ratelimit-reset') || '0');
+                if (remaining === 0 && resetSec) {
+                  const waitMs = resetSec * 1000 - Date.now() + 1000;
+                  if (waitMs > 0 && waitMs < 300000) {
+                    console.log(`Rate limited. Sleeping ${waitMs}ms until reset...`);
+                    await new Promise(r => setTimeout(r, waitMs));
+                    continue;
+                  }
+                }
+              }
+              if (!res.ok) {
+                const t = await res.text();
+                throw new Error(`HTTP ${res.status} ${res.statusText}: ${t}`);
+              }
+              return res.json();
             }
-            return res.json();
           };
           const updateIssue = async (num, body) => {
             await fetchJson(`https://api.github.com/repos/${owner}/${name}/issues/${num}`, {
@@ -76,6 +90,8 @@ jobs:
               } else {
                 console.log(`No change for #${item.number} (${code})`);
               }
+              // Small throttle between requests
+              await new Promise(r => setTimeout(r, 200));
             }
           })().catch(err => { console.error(err); process.exit(1); });
           NODE
