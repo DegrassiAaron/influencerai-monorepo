@@ -136,6 +136,8 @@ Per avviare l'intero stack (Postgres, Redis, MinIO, n8n, API, worker, Web UI) co
 
 Il comando richiama `docker compose -f infra/docker-compose.yml`, crea `.env` dal template se assente, costruisce le immagini e avvia i servizi.
 
+Le migrazioni Prisma vengono applicate automaticamente al primo avvio tramite il servizio `api-migrate` (vedi `infra/docker-compose.yml`).
+
 Endpoint utili dopo l'avvio:
 - Web UI: `http://localhost:3000`
 - API Swagger: `http://localhost:3001/api`

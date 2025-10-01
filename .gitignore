@@ -44,6 +44,9 @@ data/loras/*
 data/outputs/*
 !data/**/.gitkeep
 
+# n8n runtime artifacts
+apps/n8n/crash.journal
+
 # IDE
 .idea/
 .vscode/

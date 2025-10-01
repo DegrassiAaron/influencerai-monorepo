@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { PrismaService } from '../prisma/prisma.service';
+import { ListJobsQuery } from './dto';
 
 type JobType = 'content-generation' | 'lora-training' | 'video-generation';
 
@@ -33,7 +34,7 @@ export class JobsService {
     return job;
   }
 
-  async listJobs(params: { status?: string; type?: string; take?: number; skip?: number }) {
+  async listJobs(params: ListJobsQuery) {
     const take = params.take ?? 20;
     const skip = params.skip ?? 0;
     return this.prisma.job.findMany({
@@ -64,4 +65,3 @@ export class JobsService {
     }
   }
 }
-
