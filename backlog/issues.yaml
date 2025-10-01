@@ -980,25 +980,25 @@ issues:
 
     ## DoD
 
-    - [ ] Aggiunto controllo `response.ok` e gestione status code
+    - [x] Aggiunto controllo `response.ok` e gestione status code
 
-    - [ ] Implementato timeout di 60s con AbortController
+    - [x] Implementato timeout di 60s con AbortController
 
-    - [ ] Gestito rate limiting 429 con retry-after
+    - [x] Gestito rate limiting 429 con retry-after
 
-    - [ ] Validata struttura response OpenRouter
+    - [x] Validata struttura response OpenRouter
 
-    - [ ] Aggiunto logging token usage per cost tracking
+    - [x] Aggiunto logging token usage per cost tracking
 
-    - [ ] Implementato retry logic con exponential backoff
+    - [x] Implementato retry logic con exponential backoff
 
-    - [ ] Aggiunto error handling per timeout/network errors
+    - [x] Aggiunto error handling per timeout/network errors
 
-    - [ ] Verificato env var `OPENROUTER_API_KEY` all''avvio
+    - [x] Verificato env var `OPENROUTER_API_KEY` all''avvio
 
-    - [ ] Scritti test unitari con mock fetch
+    - [x] Scritti test unitari con mock fetch
 
-    - [ ] Scritto test e2e con mock OpenRouter (nock)
+    - [x] Scritto test e2e con mock OpenRouter (fetch/undici mock)
 
     '
   labels:
@@ -1085,4 +1085,3 @@ issues:
   impact: High
   estimate: M
   code: CODE-04
-
