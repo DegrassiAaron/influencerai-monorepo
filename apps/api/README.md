@@ -1,4 +1,4 @@
-# API (NestJS) � Prisma e Migrazioni
+﻿# API (NestJS) — Prisma e Migrazioni
 
 - Schema Prisma: `apps/api/prisma/schema.prisma`
 - Client: `@prisma/client` (generato da `prisma generate`)
@@ -16,6 +16,15 @@ Richiede `DATABASE_URL` configurata (in `apps/api/.env` o nella root `.env`).
 
 - Le migrazioni vengono applicate automaticamente al primo avvio tramite il servizio `api-migrate` definito in `infra/docker-compose.yml`.
 - Avvio completo stack: vedi root `README.md` o `docs/SETUP.md` (script `scripts/start-all.*`).
+
+#### Nota su `DATABASE_URL` con Docker Compose
+
+- Se il file `.env` alla root definisce `DATABASE_URL=...localhost...`, può sovrascrivere i default del compose e far puntare i container a Postgres dell'host.
+- In ambiente container, usa `postgres:5432` come host (es. `postgresql://postgres:postgres@postgres:5432/influencerai`).
+- Opzioni consigliate:
+  - Non definire `DATABASE_URL` nel `.env` root quando usi Docker Compose.
+  - Oppure sovrascrivi la variabile nei servizi che la usano (es. `api-migrate`) con `-e DATABASE_URL=...`.
+  - Oppure mantieni due file env separati (host vs docker) e carica quello corretto.
 
 ### Troubleshooting
 
@@ -48,3 +57,4 @@ curl "http://localhost:3001/jobs?type=content-generation&status=pending&take=10&
 ```
 curl http://localhost:3001/jobs/<JOB_ID>
 ```
+

@@ -8,13 +8,13 @@ issues:
 
     ### DoD
 
-    - [ ] Migrazione iniziale generata con `prisma migrate dev --name init`.
+    - [x] Migrazione iniziale generata con `prisma migrate dev --name init`.
 
-    - [ ] Tabelle create per Tenant, Influencer, Dataset, Job, Asset.
+    - [x] Tabelle create per Tenant, Influencer, Dataset, Job, Asset.
 
-    - [ ] File di migrazione committati in `apps/api/prisma/migrations/`.
+    - [x] File di migrazione committati in `apps/api/prisma/migrations/`.
 
-    - [ ] `docker compose up api-migrate` completa con successo.
+    - [x] `docker compose up api-migrate` completa con successo.
 
     '
   labels:
