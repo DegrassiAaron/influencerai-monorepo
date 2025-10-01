@@ -1,4 +1,4 @@
-# API (NestJS) â€” Prisma e Migrazioni
+# API (NestJS) — Prisma e Migrazioni
 
 - Schema Prisma: `apps/api/prisma/schema.prisma`
 - Client: `@prisma/client` (generato da `prisma generate`)
@@ -21,3 +21,30 @@ Richiede `DATABASE_URL` configurata (in `apps/api/.env` o nella root `.env`).
 
 - Verifica che Postgres sia attivo (Docker) e che `DATABASE_URL` punti all'istanza corretta.
 - Rigenera il client dopo modifiche allo schema: `pnpm --filter @influencerai/api prisma:generate`.
+
+
+## Esempi cURL Jobs
+
+- Crea job (content-generation):
+
+```
+curl -X POST http://localhost:3001/jobs \
+  -H "Content-Type: application/json" \
+  -d '{
+    "type": "content-generation",
+    "payload": { "foo": "bar" },
+    "priority": 1
+  }'
+```
+
+- Lista job (filtri/paginazione):
+
+```
+curl "http://localhost:3001/jobs?type=content-generation&status=pending&take=10&skip=0"
+```
+
+- Dettaglio job:
+
+```
+curl http://localhost:3001/jobs/<JOB_ID>
+```
