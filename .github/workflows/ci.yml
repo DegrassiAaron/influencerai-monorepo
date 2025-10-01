@@ -52,6 +52,15 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pnpm-store-
 
+      - name: Setup Prisma cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/prisma
+          key: ${{ runner.os }}-prisma-${{ hashFiles('pnpm-lock.yaml', '**/schema.prisma') }}
+          restore-keys: |
+            ${{ runner.os }}-prisma-
+
       - name: Install dependencies (frozen lockfile)
         run: pnpm install --frozen-lockfile
 
