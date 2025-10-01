@@ -1,8 +1,10 @@
-// Flat ESLint config for Worker (TypeScript)
-import tsParser from '@typescript-eslint/parser';
-import tsPlugin from '@typescript-eslint/eslint-plugin';
+// Flat ESLint config for Worker (TypeScript) - CommonJS
+const tsParserPkg = require('@typescript-eslint/parser');
+const tsPluginPkg = require('@typescript-eslint/eslint-plugin');
+const tsParser = tsParserPkg?.default ?? tsParserPkg;
+const tsPlugin = tsPluginPkg?.default ?? tsPluginPkg;
 
-export default [
+module.exports = [
   {
     files: ['**/*.ts'],
     ignores: ['dist/**', 'node_modules/**', 'coverage*/**'],
@@ -22,4 +24,3 @@ export default [
     },
   },
 ];
-

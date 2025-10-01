@@ -1,9 +1,9 @@
 export class HTTPError extends Error {
   status: number;
-  body?: any;
+  body?: unknown;
   url?: string;
   method?: string;
-  constructor(message: string, opts: { status: number; body?: any; url?: string; method?: string }) {
+  constructor(message: string, opts: { status: number; body?: unknown; url?: string; method?: string }) {
     super(message);
     this.name = 'HTTPError';
     this.status = opts.status;

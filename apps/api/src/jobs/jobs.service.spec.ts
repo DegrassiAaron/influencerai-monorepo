@@ -1,8 +1,9 @@
 ﻿import { Test } from '@nestjs/testing';
 import { JobsService } from './jobs.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { Queue } from 'bullmq';
 
-const queueMock = { add: jest.fn().mockResolvedValue(null) } as any;
+const queueMock = { add: jest.fn().mockResolvedValue(null) } as Pick<Queue, 'add'>;
 
 describe('JobsService', () => {
   it('creates job and enqueues', async () => {

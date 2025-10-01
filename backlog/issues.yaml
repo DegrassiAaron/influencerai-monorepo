@@ -1019,23 +1019,23 @@ issues:
 
     ## DoD
 
-    - [ ] Definito `RedisConnectionOptions` interface e funzione helper
+    - [x] Definito `RedisConnectionOptions` interface e funzione helper
 
-    - [ ] Rimosso `PrismaClientAny`, usare `PrismaClient` direttamente
+    - [x] Rimosso `PrismaClientAny`, usare `PrismaClient` direttamente
 
-    - [ ] Usato `Prisma.InputJsonValue` per payload in jobs.service
+    - [x] Usato `Prisma.InputJsonValue` per payload in jobs.service
 
-    - [ ] Definiti tipi `OpenRouterResponse` e `ContentPlanData`
+    - [x] Definiti tipi `OpenRouterResponse` e `ContentPlanData`
 
-    - [ ] Aggiunta validazione Zod per response OpenRouter
+    - [x] Aggiunta validazione Zod per response OpenRouter
 
-    - [ ] Fixati cast in setup-e2e.ts con `unknown`
+    - [x] Fixati cast in setup-e2e.ts con `unknown`
 
-    - [ ] Verificato che TypeScript compili senza `any` warnings
+    - [x] Verificato che TypeScript compili senza `any` warnings
 
-    - [ ] Abilitato `@typescript-eslint/no-explicit-any: ''error''` in ESLint
+    - [x] Abilitato `@typescript-eslint/no-explicit-any: ''error''` in ESLint
 
-    - [ ] Eseguito `pnpm build` su tutte le apps senza errori
+    - [x] Eseguito `pnpm build` su tutte le apps senza errori
 
     '
   labels:

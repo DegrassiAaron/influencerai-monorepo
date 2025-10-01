@@ -19,7 +19,7 @@ export class ContentPlansController {
     }
     try {
       return await this.svc.createPlan(parsed.data);
-    } catch (e: any) {
+    } catch (e: unknown) {
       throw mapUpstreamError(e);
     }
   }
@@ -47,7 +47,7 @@ export class ContentPlansController {
   }
 }
 
-function mapUpstreamError(e: any): HttpException {
+function mapUpstreamError(e: unknown): HttpException {
   if (e instanceof HTTPError) {
     if (e.status === 429) return new HttpException({ message: 'Rate limited by upstream', detail: e.body }, 429);
     if (e.status >= 500 && e.status <= 599) return new BadGatewayException({ message: 'Upstream error', status: e.status });
@@ -55,7 +55,7 @@ function mapUpstreamError(e: any): HttpException {
     return new HttpException({ message: 'Upstream request failed' }, e.status || 502);
   }
   // Timeout/Abort
-  if (e?.name === 'AbortError') {
+  if (typeof e === 'object' && e !== null && 'name' in e && (e as { name?: string }).name === 'AbortError') {
     return new RequestTimeoutException({ message: 'Upstream timeout' });
   }
   // Network or unknown error
