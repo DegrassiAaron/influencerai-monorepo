@@ -4,7 +4,9 @@
       "Bash(gh issue list:*)",
       "Bash(test:*)",
       "Bash(docker compose:*)",
-      "Bash(gh issue create:*)"
+      "Bash(gh issue create:*)",
+      "Bash(gh issue edit 4 --body \"$(cat <<''EOF''\n### Contesto\nLo schema Prisma con modelli Tenant, Influencer, Dataset, Job e Asset è già definito in `apps/api/prisma/schema.prisma`. Le migrazioni Prisma devono essere generate e applicate per creare effettivamente le tabelle nel database PostgreSQL. Gli script di generazione del client devono essere integrati nel workflow di sviluppo.\n\n### Stato Attuale\n- ✅ schema.prisma implementato con tutti i modelli richiesti\n- ❌ Nessuna migrazione generata in `apps/api/prisma/migrations/`\n- ❌ Database non inizializzato\n- ❌ Procedura di migrazione non documentata nella README API\n\n### DoD\n- [ ] Migrazione iniziale generata con `cd apps/api && pnpm dlx prisma migrate dev --name init`\n- [ ] Tabelle create e verificate nel database Postgres locale\n- [ ] Script `prisma:generate` verificato in `apps/api/package.json`\n- [ ] Documentata nella README API la procedura per applicare le migrazioni\n- [ ] Verificato che `docker compose up api` completa con successo dopo migrate\n\n### Dipendenze\n- [INFRA-01] Inizializzare database con Prisma migrations\n\n### Note Tecniche\nLo schema include:\n- Multi-tenancy via `Tenant` con cascade delete\n- `Influencer` con `persona` JSON e link opzionale a dataset\n- `Dataset` con `meta` JSON per training LoRA\n- `Job` con tracking costi token OpenRouter (`costTok`)\n- `Asset` per storage output generati (immagini/video)\n- Indici su relazioni e query frequenti (status, type, tenantId)\nEOF\n)\")",
+      "Bash(gh issue view:*)"
     ],
     "deny": [],
     "ask": []

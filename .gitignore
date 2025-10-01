@@ -35,7 +35,8 @@ yarn-error.log*
 .turbo
 
 # Prisma
-apps/api/prisma/migrations/*
+# Keep migrations committed for reproducible schema
+# (Prisma client is generated in node_modules, not here)
 
 # Data directories
 data/datasets/*

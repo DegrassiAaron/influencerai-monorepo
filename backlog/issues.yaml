@@ -804,13 +804,13 @@ issues:
 
     ### DoD
 
-    - [ ] `docs/SETUP.md` creato con guida completa (prerequisiti, clone, Docker, DB, .env).
+    - [x] `docs/SETUP.md` creato con guida completa (prerequisiti, clone, Docker, DB, .env).
 
-    - [ ] `docs/TESTING.md` con istruzioni per eseguire test.
+    - [x] `docs/TESTING.md` con istruzioni per eseguire test.
 
-    - [ ] Script PowerShell documentati in `scripts/README.md`.
+    - [x] Script PowerShell documentati in `scripts/README.md`.
 
-    - [ ] Sezione troubleshooting con problemi comuni.
+    - [x] Sezione troubleshooting con problemi comuni.
 
 
     ### Dipendenze
