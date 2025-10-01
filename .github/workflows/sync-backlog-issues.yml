@@ -30,24 +30,33 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          node -e "
+          node - <<'NODE'
           const fs = require('fs');
           const yaml = require('js-yaml');
-          const path = 'backlog/issues.yaml';
-          const content = fs.readFileSync(path, 'utf8');
+          const content = fs.readFileSync('backlog/issues.yaml', 'utf8');
           const doc = yaml.load(content);
           const repo = process.env.GITHUB_REPOSITORY;
           if (!repo) { throw new Error('GITHUB_REPOSITORY not set'); }
           const [owner, name] = repo.split('/');
           const token = process.env.GITHUB_TOKEN;
           if (!token) { throw new Error('GITHUB_TOKEN not set'); }
-          const fetchJson = async (url, init={}) => {
-            const res = await fetch(url, { ...init, headers: { 'authorization': `Bearer ${token}`, 'accept': 'application/vnd.github+json', ...(init.headers||{}) } });
-            if (!res.ok) { const t = await res.text(); throw new Error(`HTTP ${res.status} ${res.statusText}: ${t}`); }
+          const fetchJson = async (url, init = {}) => {
+            const headers = Object.assign({
+              authorization: 'Bearer ' + token,
+              accept: 'application/vnd.github+json'
+            }, init.headers || {});
+            const res = await fetch(url, Object.assign({}, init, { headers }));
+            if (!res.ok) {
+              const t = await res.text();
+              throw new Error(`HTTP ${res.status} ${res.statusText}: ${t}`);
+            }
             return res.json();
           };
           const updateIssue = async (num, body) => {
-            await fetchJson(`https://api.github.com/repos/${owner}/${name}/issues/${num}` , { method: 'PATCH', body: JSON.stringify({ body }) });
+            await fetchJson(`https://api.github.com/repos/${owner}/${name}/issues/${num}`, {
+              method: 'PATCH',
+              body: JSON.stringify({ body })
+            });
           };
           (async () => {
             if (!doc || !Array.isArray(doc.issues)) return;
@@ -69,5 +78,4 @@ jobs:
               }
             }
           })().catch(err => { console.error(err); process.exit(1); });
-          "
-
+          NODE
