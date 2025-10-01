@@ -3,6 +3,7 @@ import { FastifyAdapter } from '@nestjs/platform-fastify';
 import { INestApplication } from '@nestjs/common';
 import * as supertest from 'supertest';
 import { AppModule } from '../src/app.module';
+import { getQueueToken } from '@nestjs/bullmq';
 import { PrismaService } from '../src/prisma/prisma.service';
 
 describe('Health (e2e)', () => {
@@ -21,6 +22,9 @@ describe('Health (e2e)', () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     })
+      .overrideProvider(getQueueToken('content-generation')).useValue({ add: jest.fn(async () => null) })
+      .overrideProvider(getQueueToken('lora-training')).useValue({ add: jest.fn(async () => null) })
+      .overrideProvider(getQueueToken('video-generation')).useValue({ add: jest.fn(async () => null) })
       .overrideProvider(PrismaService)
       .useValue(prismaMock)
       .compile();
@@ -42,4 +46,3 @@ describe('Health (e2e)', () => {
     expect(res.body).toEqual({ status: 'ok', timestamp: expect.any(String) });
   });
 });
-

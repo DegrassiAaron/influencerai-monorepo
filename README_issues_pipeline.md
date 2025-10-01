@@ -29,6 +29,9 @@ Questo starter consente di:
 - La workflow `.github/workflows/auto-issues.yml`:
   - Esegue `select_top10.py` per generare `backlog/top10.yaml`.
   - Crea su GitHub le 10 issue tramite `create_issues.sh`.
+  
+- La workflow `.github/workflows/sync-backlog-issues.yml` aggiorna anche le issue già esistenti
+  sincronizzando il corpo e i label con quanto definito in `backlog/issues.yaml` (crea le label mancanti con colori di default).
 
 ## Criteri di ranking (default)
 

@@ -1,6 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger as NestLogger, LoggerService, Optional } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { ListJobsQuery } from './dto';
 
@@ -13,19 +14,21 @@ export class JobsService {
     @InjectQueue('content-generation') private readonly contentQueue: Queue,
     @InjectQueue('lora-training') private readonly loraQueue: Queue,
     @InjectQueue('video-generation') private readonly videoQueue: Queue,
+    @Optional() private readonly logger?: LoggerService,
   ) {}
 
-  async createJob(input: { type: JobType; payload: Record<string, any>; priority?: number }) {
+  async createJob(input: { type: JobType; payload: Prisma.InputJsonValue; priority?: number }) {
     const job = await this.prisma.job.create({
       data: {
         type: input.type,
         status: 'pending',
-        payload: input.payload as any,
+        payload: input.payload,
       },
     });
 
     const queue = this.getQueue(input.type);
-    await queue.add(input.type, { jobId: job.id, ...input.payload }, {
+    this.logger?.debug?.({ jobId: job.id, type: input.type } as any, 'Enqueueing job');
+    await queue.add(input.type, { jobId: job.id, payload: input.payload }, {
       priority: input.priority ?? 1,
       removeOnComplete: true,
       removeOnFail: false,

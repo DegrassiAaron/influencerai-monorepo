@@ -6,20 +6,8 @@ import { PrismaModule } from './prisma/prisma.module';
 import { BullModule } from '@nestjs/bullmq';
 import { JobsModule } from './jobs/jobs.module';
 import { ContentPlansModule } from './content-plans/content-plans.module';
-
-function parseRedisUrl(url?: string) {
-  try {
-    const u = new URL(url || 'redis://localhost:6379');
-    return {
-      host: u.hostname,
-      port: Number(u.port || 6379),
-      username: u.username || undefined,
-      password: u.password || undefined,
-    } as any;
-  } catch {
-    return { host: 'localhost', port: 6379 } as any;
-  }
-}
+import { parseRedisUrl } from './lib/redis';
+import { LoggerModule } from 'nestjs-pino';
 
 const enableBull = !(process.env.NODE_ENV === 'test' || ['1', 'true', 'yes'].includes(String(process.env.DISABLE_BULL).toLowerCase()));
 const extraImports = enableBull
@@ -29,6 +17,15 @@ const extraImports = enableBull
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    LoggerModule.forRoot({
+      pinoHttp: {
+        level: process.env.LOG_LEVEL || (process.env.NODE_ENV === 'production' ? 'info' : 'debug'),
+        transport: process.env.NODE_ENV === 'production' ? undefined : {
+          target: 'pino-pretty',
+          options: { colorize: true, singleLine: false },
+        },
+      },
+    }),
     PrismaModule,
     ...extraImports,
     JobsModule,
