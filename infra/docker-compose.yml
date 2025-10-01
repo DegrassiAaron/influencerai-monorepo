@@ -63,6 +63,9 @@ services:
       - N8N_PROTOCOL=http
       - WEBHOOK_URL=http://localhost:5678/
       - N8N_SECURE_COOKIE=false
+      # Vars used by workflow templates
+      - API_BASE_URL=${API_BASE_URL:-http://api:3001}
+      - API_TOKEN=${API_TOKEN:-dev-token}
     ports:
       - "5678:5678"
     volumes:
@@ -70,6 +73,7 @@ services:
     depends_on:
       - postgres
       - redis
+      - api
 
   api:
     build:
