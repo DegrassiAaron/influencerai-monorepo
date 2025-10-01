@@ -1,4 +1,5 @@
 import type { JobSpec, ContentPlan, DatasetSpec, LoRAConfig } from '@influencerai/core-schemas';
+import { fetchWithTimeout, handleResponse } from './fetch-utils';
 
 export class InfluencerAIClient {
   private baseUrl: string;
@@ -8,37 +9,38 @@ export class InfluencerAIClient {
   }
 
   async createJob(spec: JobSpec) {
-    const response = await fetch(`${this.baseUrl}/jobs`, {
+    const response = await fetchWithTimeout(`${this.baseUrl}/jobs`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(spec),
     });
-    return response.json();
+    return handleResponse(response);
   }
 
   async getJob(id: string) {
-    const response = await fetch(`${this.baseUrl}/jobs/${id}`);
-    return response.json();
+    const response = await fetchWithTimeout(`${this.baseUrl}/jobs/${id}`);
+    return handleResponse(response);
   }
 
   async listJobs() {
-    const response = await fetch(`${this.baseUrl}/jobs`);
-    return response.json();
+    const response = await fetchWithTimeout(`${this.baseUrl}/jobs`);
+    return handleResponse(response);
   }
 
   async createContentPlan(plan: Omit<ContentPlan, 'createdAt'>) {
-    const response = await fetch(`${this.baseUrl}/content-plans`, {
+    const response = await fetchWithTimeout(`${this.baseUrl}/content-plans`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(plan),
     });
-    return response.json();
+    return handleResponse(response);
   }
 
   async health() {
-    const response = await fetch(`${this.baseUrl}/health`);
-    return response.json();
+    const response = await fetchWithTimeout(`${this.baseUrl}/health`);
+    return handleResponse(response);
   }
 }
 
 export type { JobSpec, ContentPlan, DatasetSpec, LoRAConfig };
+export { APIError as InfluencerAIAPIError } from './fetch-utils';
