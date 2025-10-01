@@ -225,7 +225,7 @@ issues:
 
     ### DoD
 
-    - [ ] Service S3 basato su MinIO configurato via variabili S3_*.
+    - [x] Service S3 basato su MinIO configurato via variabili S3_*.
 
     - [ ] Endpoint POST /datasets per creare record e ottenere URL di upload presignato.
 
@@ -279,13 +279,13 @@ issues:
 
     ### DoD
 
-    - [ ] GET /healthz con checks individuali per DB, Redis e MinIO.
+    - [x] GET /healthz con checks individuali per DB, Redis e MinIO.
 
-    - [ ] GET /readyz pensato per probe di Kubernetes/docker compose.
+    - [x] GET /readyz pensato per probe di Kubernetes/docker compose.
 
-    - [ ] Output JSON con dettagli su latenza e stato.
+    - [x] Output JSON con dettagli su latenza e stato.
 
-    - [ ] Test che mocka disservizi e verifica risposta corretta.
+    - [x] Test che mocka disservizi e verifica risposta corretta.
 
 
     ### Dipendenze

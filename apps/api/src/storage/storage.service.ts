@@ -33,6 +33,8 @@ export class StorageService {
   }
 
   async ensureBucket(): Promise<void> {
+    // Allow tests or callers to skip S3 connectivity checks entirely
+    if (process.env.SKIP_S3_INIT === 'true' || process.env.SKIP_S3_INIT === '1') return;
     try {
       await this.client.send(new HeadBucketCommand({ Bucket: this.bucket }));
     } catch (err: any) {
@@ -43,6 +45,8 @@ export class StorageService {
       }
       // Ignore Forbidden/200 if user lacks permissions but bucket exists
       if (err?.$metadata?.httpStatusCode === 403) return;
+      // In test environments, don't fail startup on missing/invalid S3
+      if (process.env.NODE_ENV === 'test') return;
       throw err;
     }
   }

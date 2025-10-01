@@ -1,5 +1,6 @@
 import { execSync } from 'node:child_process';
-import { resolve } from 'node:path';
+import { resolve, join } from 'node:path';
+import { existsSync } from 'node:fs';
 
 // Default e2e environment knobs
 // - Disable BullMQ queues unless a test explicitly enables them
@@ -24,21 +25,47 @@ if (process.env.DATABASE_URL_TEST) {
 // Helper to reset DB using Prisma migrate reset (force, no seed)
 function resetTestDb(label: string) {
   if (!process.env.DATABASE_URL) return;
+  if (process.env.SKIP_DB_RESET === '1' || process.env.SKIP_DB_RESET === 'true') return;
   try {
-    execSync('pnpm exec prisma migrate reset --force --skip-seed', {
-      cwd: resolve(__dirname, '..'),
-      stdio: 'inherit',
-      env: { ...process.env },
-    });
-    // Deploy again to ensure schema is applied in CI where reset might skip
-    execSync('pnpm exec prisma migrate deploy', {
-      cwd: resolve(__dirname, '..'),
-      stdio: 'inherit',
-      env: { ...process.env },
-    });
+    const apiDir = resolve(__dirname, '..');
+    const rootDir = resolve(apiDir, '..');
+    const prismaLocal = resolve(apiDir, 'node_modules', '.bin', process.platform === 'win32' ? 'prisma.cmd' : 'prisma');
+    const prismaRoot = resolve(rootDir, 'node_modules', '.bin', process.platform === 'win32' ? 'prisma.cmd' : 'prisma');
+
+    let prismaCmd: string | undefined;
+    if (existsSync(prismaLocal)) prismaCmd = `"${prismaLocal}"`;
+    else if (existsSync(prismaRoot)) prismaCmd = `"${prismaRoot}"`;
+
+    if (prismaCmd) {
+      execSync(`${prismaCmd} migrate reset --force --skip-seed --skip-generate`, {
+        cwd: apiDir,
+        stdio: 'pipe',
+        env: { ...process.env },
+      });
+      execSync(`${prismaCmd} migrate deploy`, {
+        cwd: apiDir,
+        stdio: 'pipe',
+        env: { ...process.env },
+      });
+    } else {
+      // Fallback to pnpm exec if local binary not found
+      execSync('pnpm exec prisma migrate reset --force --skip-seed --skip-generate', {
+        cwd: apiDir,
+        stdio: 'pipe',
+        env: { ...process.env },
+      });
+      execSync('pnpm exec prisma migrate deploy', {
+        cwd: apiDir,
+        stdio: 'pipe',
+        env: { ...process.env },
+      });
+    }
   } catch (err) {
     // eslint-disable-next-line no-console
-    console.warn(`[e2e setup] DB reset failed during ${label}:`, err instanceof Error ? err.message : err);
+    const msg = err instanceof Error ? err.message : String(err);
+    if (label === 'beforeAll') {
+      console.warn(`[e2e setup] DB reset failed during ${label}: ${msg}`);
+    } // be quiet during afterAll
   }
 }
 

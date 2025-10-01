@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import { FastifyAdapter } from '@nestjs/platform-fastify';
-import * as supertest from 'supertest';
+import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { getQueueToken } from '@nestjs/bullmq';
 import { ContentPlansService } from '../src/content-plans/content-plans.service';
@@ -59,7 +59,7 @@ describe('Content Plans (e2e)', () => {
   });
 
   it('POST /content-plans creates a plan', async () => {
-    const res = await (supertest as any)(app.getHttpServer())
+    const res = await request(app.getHttpServer())
       .post('/content-plans')
       .send({ influencerId: 'inf_1', theme: 'tech' })
       .expect(201);
@@ -68,12 +68,12 @@ describe('Content Plans (e2e)', () => {
   });
 
   it('GET /content-plans lists plans', async () => {
-    const res = await (supertest as any)(app.getHttpServer()).get('/content-plans').expect(200);
+    const res = await request(app.getHttpServer()).get('/content-plans').expect(200);
     expect(Array.isArray(res.body)).toBe(true);
   });
 
   it('GET /content-plans/:id returns a plan', async () => {
-    const res = await (supertest as any)(app.getHttpServer()).get('/content-plans/cp_1').expect(200);
+    const res = await request(app.getHttpServer()).get('/content-plans/cp_1').expect(200);
     expect(res.body.id).toBe('cp_1');
   });
 });

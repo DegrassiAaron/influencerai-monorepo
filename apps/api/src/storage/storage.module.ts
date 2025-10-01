@@ -12,7 +12,15 @@ import { StorageController } from './storage.controller';
 export class StorageModule implements OnModuleInit {
   constructor(private readonly storage: StorageService) {}
   async onModuleInit() {
-    await this.storage.ensureBucket();
+    try {
+      await this.storage.ensureBucket();
+    } catch (e: any) {
+      if (process.env.NODE_ENV === 'test' || process.env.SKIP_S3_INIT === 'true' || process.env.SKIP_S3_INIT === '1') {
+        // eslint-disable-next-line no-console
+        console.warn('[storage] ensureBucket skipped due to test/skip flag:', e?.message || String(e));
+        return;
+      }
+      throw e;
+    }
   }
 }
-

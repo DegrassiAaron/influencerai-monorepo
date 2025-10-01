@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { FastifyAdapter } from '@nestjs/platform-fastify';
 import { INestApplication } from '@nestjs/common';
-import * as supertest from 'supertest';
+import request from 'supertest';
 // AppModule will be required dynamically after setting env flags
 import { PrismaService } from '../src/prisma/prisma.service';
 import IORedis from 'ioredis';
@@ -9,6 +9,8 @@ import { Queue } from 'bullmq';
 import { getQueueToken } from '@nestjs/bullmq';
 import { ChildProcess, spawn } from 'child_process';
 import * as path from 'path';
+
+jest.setTimeout(20000);
 
 describe('Jobs Roundtrip with Real Worker (e2e)', () => {
   let app: INestApplication | undefined;
@@ -50,7 +52,12 @@ describe('Jobs Roundtrip with Real Worker (e2e)', () => {
     process.env.REDIS_URL = redisUrl;
     process.env.BULL_PREFIX = `bull-real-${Math.random().toString(36).slice(2, 8)}`;
 
-    const client = new IORedis(redisUrl);
+    const client = new IORedis(redisUrl, {
+      connectTimeout: 500,
+      maxRetriesPerRequest: 0,
+      enableReadyCheck: false,
+      retryStrategy: () => null,
+    } as any);
     try {
       await client.ping();
     } catch {
@@ -148,7 +155,7 @@ describe('Jobs Roundtrip with Real Worker (e2e)', () => {
   it('Real worker processes job and updates status to succeeded', async () => {
     if (skipSuite || !app) return;
 
-    const res = await (supertest as any)(app.getHttpServer())
+    const res = await request(app.getHttpServer())
       .post('/jobs')
       .send({ type: 'content-generation', payload: { test: true } })
       .expect(201);
@@ -160,7 +167,7 @@ describe('Jobs Roundtrip with Real Worker (e2e)', () => {
     const deadline = Date.now() + 15000;
     let state: any | undefined;
     while (Date.now() < deadline) {
-      const resGet = await (supertest as any)(app.getHttpServer()).get(`/jobs/${id}`).expect(200);
+      const resGet = await request(app.getHttpServer()).get(`/jobs/${id}`).expect(200);
       state = resGet.body;
       if (state?.status === 'succeeded') break;
       await new Promise((r) => setTimeout(r, 200));
