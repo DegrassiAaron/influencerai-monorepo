@@ -34,16 +34,15 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
         }
         if (params.action === 'findMany') {
           params.args = params.args || {};
-          params.args.where = params.args.where || {};
-          params.args.where.tenantId = tenantId;
+          const where = params.args.where || {};
+          params.args.where = { AND: [where, { tenantId }] };
         }
         if (params.action === 'findUnique' || params.action === 'findFirst') {
+          // findUnique cannot include non-unique fields. Convert to findFirst with AND tenantId
+          params.action = 'findFirst';
           params.args = params.args || {};
-          params.args.where = params.args.where || {};
-          if (!params.args.where.tenantId) {
-            // Strengthen filter to current tenant
-            params.args.where.tenantId = tenantId;
-          }
+          const where = params.args.where || {};
+          params.args.where = { AND: [where, { tenantId }] };
         }
         if (params.action === 'create') {
           params.args = params.args || {};
@@ -52,13 +51,13 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
         }
         if (params.action === 'updateMany' || params.action === 'update') {
           params.args = params.args || {};
-          params.args.where = params.args.where || {};
-          params.args.where.tenantId = tenantId;
+          const where = params.args.where || {};
+          params.args.where = { AND: [where, { tenantId }] };
         }
         if (params.action === 'deleteMany' || params.action === 'delete') {
           params.args = params.args || {};
-          params.args.where = params.args.where || {};
-          params.args.where.tenantId = tenantId;
+          const where = params.args.where || {};
+          params.args.where = { AND: [where, { tenantId }] };
         }
         return next(params);
       });
