@@ -1,31 +1,114 @@
 issues:
-- title: 'API-01: Bootstrap Prisma connection module'
+- title: 'INFRA-01: Inizializzare database con Prisma migrations'
   body: '### Contesto
 
-    La NestJS API espone solo un controller di test e non ha ancora una connessione
-    attiva verso Postgres. Serve un modulo Prisma condiviso e configurato con il datasource
-    della monorepo per poter implementare le feature successive.
+    Non esistono migrazioni Prisma nel repository. Il database non può essere inizializzato
+    correttamente e i servizi Docker dipendenti falliscono.
 
 
     ### DoD
 
-    - [x] Aggiunto PrismaModule/PrismaService con lifecycle hook (OnModuleInit, OnModuleDestroy).
+    - [ ] Migrazione iniziale generata con `prisma migrate dev --name init`.
 
-    - [x] Connessione letta da variabile DATABASE_URL e validazione in fase di boot.
+    - [ ] Tabelle create per Tenant, Influencer, Dataset, Job, Asset.
 
-    - [x] Logger di bootstrap che segnala successo/fallimento della connessione.
+    - [ ] File di migrazione committati in `apps/api/prisma/migrations/`.
 
-    - [ ] Test manuale: pnpm --filter @influencerai/api start:dev si avvia e stampa
-    URL.
+    - [ ] `docker compose up api-migrate` completa con successo.
+
+    '
+  labels:
+  - area:infra
+  - type:setup
+  - priority:P0
+  priority: P0
+  impact: Critical
+  estimate: S
+  code: INFRA-01
+- title: 'INFRA-02: Configurare MinIO bucket e credenziali'
+  body: '### Contesto
+
+    MinIO non è in esecuzione. Il bucket `assets` richiesto per storage di file generati
+    non esiste, bloccando upload e asset management.
+
+
+    ### DoD
+
+    - [ ] MinIO avviato con `docker compose up -d minio`.
+
+    - [ ] Bucket `assets` creato via console o CLI.
+
+    - [ ] Credenziali S3 verificate in `.env`.
+
+    - [ ] API può caricare/scaricare file da MinIO.
+
+    '
+  labels:
+  - area:infra
+  - type:setup
+  - priority:P0
+  priority: P0
+  impact: Critical
+  estimate: S
+  code: INFRA-02
+- title: 'INFRA-03: Configurare n8n workflows'
+  body: '### Contesto
+
+    n8n non è avviato. Workflow per orchestrazione content generation, LoRA training
+    e autopost non sono definiti.
+
+
+    ### DoD
+
+    - [ ] n8n avviato su http://localhost:5678.
+
+    - [ ] Workflow base creati (content-plan, lora-training, content-generation, autopost).
+
+    - [ ] Workflow esportati come JSON in `apps/n8n/workflows/`.
+
+    - [ ] Connessione tra n8n e API testata.
+
+    '
+  labels:
+  - area:infra
+  - type:setup
+  - priority:P0
+  priority: P0
+  impact: High
+  estimate: M
+  code: INFRA-03
+- title: 'API-01: Setup test database e migrazione'
+  body: '### Contesto
+
+    I test dell''API non hanno un database isolato. Eseguire test sul database di
+    sviluppo è rischioso e può causare perdita di dati.
+
+
+    ### DoD
+
+    - [ ] Variabile `DATABASE_URL_TEST` aggiunta in `.env.example`.
+
+    - [ ] `jest.e2e.config.js` configurato per usare DB test.
+
+    - [ ] Setup file che resetta DB test prima/dopo test suite.
+
+    - [ ] Script `test:e2e:db:reset` funzionante.
+
+
+    ### Dipendenze
+
+    - [INFRA-01] Inizializzare database con Prisma migrations
 
     '
   labels:
   - area:api
-  - type:feat
+  - type:test
   - priority:P1
   priority: P1
   impact: High
   estimate: M
+  depends_on:
+  - INFRA-01
   code: API-01
 - title: 'API-02: Modellare schema Prisma per tenant, influencer, dataset e job'
   body: '### Contesto
@@ -49,7 +132,7 @@ issues:
 
     ### Dipendenze
 
-    - [API-01] Bootstrap Prisma connection module
+    - [INFRA-01] Inizializzare database con Prisma migrations
 
     '
   labels:
@@ -60,7 +143,7 @@ issues:
   impact: High
   estimate: L
   depends_on:
-  - API-01
+  - INFRA-01
   code: API-02
 - title: 'API-03: Esporre CRUD dei job e integrazione con BullMQ'
   body: '### Contesto
@@ -84,8 +167,6 @@ issues:
 
     ### Dipendenze
 
-    - [API-01] Bootstrap Prisma connection module
-
     - [API-02] Modellare schema Prisma per tenant, influencer, dataset e job
 
     '
@@ -97,7 +178,6 @@ issues:
   impact: High
   estimate: L
   depends_on:
-  - API-01
   - API-02
   code: API-03
 - title: 'API-04: Endpoint Content Plan con integrazione OpenRouter'
@@ -122,8 +202,6 @@ issues:
 
     ### Dipendenze
 
-    - [API-01] Bootstrap Prisma connection module
-
     - [API-02] Modellare schema Prisma per tenant, influencer, dataset e job
 
     '
@@ -135,7 +213,6 @@ issues:
   impact: High
   estimate: L
   depends_on:
-  - API-01
   - API-02
   code: API-04
 - title: 'API-05: Dataset ingestion e storage su MinIO'
@@ -161,6 +238,8 @@ issues:
 
     - [API-02] Modellare schema Prisma per tenant, influencer, dataset e job
 
+    - [INFRA-02] Configurare MinIO bucket e credenziali
+
     '
   labels:
   - area:api
@@ -171,6 +250,7 @@ issues:
   estimate: L
   depends_on:
   - API-02
+  - INFRA-02
   code: API-05
 - title: 'API-06: Autenticazione multi-tenant con JWT'
   body: "### Contesto\nAl momento l'API è pubblica. Per rispettare il modello multi-tenant\
@@ -210,7 +290,9 @@ issues:
 
     ### Dipendenze
 
-    - [API-01] Bootstrap Prisma connection module
+    - [INFRA-01] Inizializzare database con Prisma migrations
+
+    - [INFRA-02] Configurare MinIO bucket e credenziali
 
     '
   labels:
@@ -221,7 +303,8 @@ issues:
   impact: Medium
   estimate: M
   depends_on:
-  - API-01
+  - INFRA-01
+  - INFRA-02
   code: API-07
 - title: 'API-08: Validazione config env con Zod'
   body: '### Contesto
@@ -315,7 +398,33 @@ issues:
   depends_on:
   - WORK-01
   code: WORK-02
-- title: 'WORK-03: Orchestrare training LoRA'
+- title: 'WORK-03: Aggiungere test per worker'
+  body: '### Contesto
+
+    Il package worker non ha configurazione test. Logica BullMQ non validata, job
+    processor non testati.
+
+
+    ### DoD
+
+    - [ ] Vitest configurato per ambiente Node.js.
+
+    - [ ] Test base per worker initialization e job processing.
+
+    - [ ] Mock di BullMQ e ioredis per test unitari.
+
+    - [ ] Script `test` funzionante in package.json.
+
+    '
+  labels:
+  - area:worker
+  - type:test
+  - priority:P2
+  priority: P2
+  impact: Medium
+  estimate: M
+  code: WORK-03
+- title: 'WORK-04: Orchestrare training LoRA'
   body: '### Contesto
 
     Serve un processor dedicato che lanci kohya_ss con i parametri definiti nello
@@ -350,11 +459,11 @@ issues:
   depends_on:
   - WORK-01
   - API-05
-  code: WORK-03
-- title: 'WORK-04: Pipeline video con ComfyUI e FFmpeg'
+  code: WORK-04
+- title: 'WORK-05: Pipeline video con ComfyUI e FFmpeg'
   body: "### Contesto\nLa README descrive generazione video ma il worker non integra\
     \ ComfyUI né FFmpeg. Va creato un processor che interagisce con le API locali\
-    \ di ComfyUI e normalizza i file video finali.\n\n### DoD\n- [ ] Job \nideo-generation\
+    \ di ComfyUI e normalizza i file video finali.\n\n### DoD\n- [ ] Job video-generation\
     \ che chiama ComfyUI REST e gestisce il polling dello stato.\n- [ ] Post-processing\
     \ FFmpeg (aspect ratio, audio leveling) configurabile.\n- [ ] Asset video caricati\
     \ su MinIO e registrati nel DB.\n- [ ] Test manuale con ComfyUI locale documentato.\n\
@@ -370,8 +479,8 @@ issues:
   depends_on:
   - WORK-01
   - API-05
-  code: WORK-04
-- title: 'WORK-05: Metriche, alert e Bull Board'
+  code: WORK-05
+- title: 'WORK-06: Metriche, alert e Bull Board'
   body: '### Contesto
 
     Per gestire carichi di generazione servono metriche e visibilità. Va aggiunta
@@ -397,7 +506,7 @@ issues:
   priority: P3
   impact: Medium
   estimate: M
-  code: WORK-05
+  code: WORK-06
 - title: 'WEB-01: Implementare autenticazione e sessione'
   body: '### Contesto
 
@@ -467,7 +576,33 @@ issues:
   - API-03
   - API-07
   code: WEB-02
-- title: 'WEB-03: Gestione dataset con upload verso API'
+- title: 'WEB-03: Verificare e completare test setup'
+  body: '### Contesto
+
+    Il file setupTests.ts esiste ma potrebbe essere incompleto. Test frontend potrebbero
+    non avere matcher Jest-DOM configurati.
+
+
+    ### DoD
+
+    - [ ] setupTests.ts contiene import di @testing-library/jest-dom.
+
+    - [ ] Test esistenti in src/__tests__/home.test.tsx passano.
+
+    - [ ] Matcher Jest-DOM funzionanti.
+
+    - [ ] Script test e test:watch configurati.
+
+    '
+  labels:
+  - area:web
+  - type:test
+  - priority:P2
+  priority: P2
+  impact: Medium
+  estimate: S
+  code: WEB-03
+- title: 'WEB-04: Gestione dataset con upload verso API'
   body: '### Contesto
 
     Gli operatori devono caricare dataset e seguirne lo stato. Serve una UI per upload,
@@ -499,8 +634,8 @@ issues:
   estimate: L
   depends_on:
   - API-05
-  code: WEB-03
-- title: 'WEB-04: Wizard Content Plan e approvazione'
+  code: WEB-04
+- title: 'WEB-05: Wizard Content Plan e approvazione'
   body: '### Contesto
 
     Il team marketing necessita di un flusso guidato per generare e approvare piani
@@ -532,8 +667,8 @@ issues:
   estimate: L
   depends_on:
   - API-04
-  code: WEB-04
-- title: 'WEB-05: Shell applicativa e design system shadcn/ui'
+  code: WEB-05
+- title: 'WEB-06: Shell applicativa e design system shadcn/ui'
   body: '### Contesto
 
     L''app web non utilizza ancora shadcn/ui né ha una navigazione consistente. Serve
@@ -558,7 +693,7 @@ issues:
   priority: P3
   impact: Medium
   estimate: M
-  code: WEB-05
+  code: WEB-06
 - title: 'SDK-01: Estendere client con job, dataset e content plan'
   body: '### Contesto
 
@@ -602,7 +737,7 @@ issues:
   body: "### Contesto\nIl frontend usa TanStack Query ma manca un set di hook typed\
     \ che incapsulano il client. Servono per riuso e cache coerente.\n\n### DoD\n\
     - [ ] Implementati hook (useJobs, useJob, useCreateJob, useDatasets, ...).\n-\
-    \ [ ] Provider che espone InfluencerAIClient e configura il \baseUrl.\n- [ ] Test\
+    \ [ ] Provider che espone InfluencerAIClient e configura il baseUrl.\n- [ ] Test\
     \ dei hook con React Testing Library + msw.\n- [ ] Documentazione veloce in README\
     \ web su come usarli.\n\n### Dipendenze\n- [SDK-01] Estendere client con job,\
     \ dataset e content plan\n"
@@ -616,22 +751,22 @@ issues:
   depends_on:
   - SDK-01
   code: SDK-02
-- title: 'PKG-01: Test Zod schemas e prompt regressions'
+- title: 'PKG-01: Aggiungere test per packages condivisi'
   body: '### Contesto
 
-    Le definizioni in @influencerai/core-schemas e i prompt non hanno copertura. Serve
-    introdurre test per prevenire regressioni su shape e output dei template.
+    I packages condivisi (core-schemas, sdk, prompts) non hanno test. Zod schemas
+    e API utility non validati.
 
 
     ### DoD
 
-    - [ ] Test unitari per JobSpecSchema, ContentPlanSchema, DatasetSpecSchema, LoRAConfigSchema.
+    - [ ] Vitest configurato per core-schemas, sdk, prompts.
 
-    - [ ] Snapshot dei prompt principali con input di esempio.
+    - [ ] Test validazione per tutti gli Zod schemas principali.
 
-    - [ ] Aggiunta al workflow CI esistente (lint/test).
+    - [ ] Test client SDK e prompt templates.
 
-    - [ ] Documentato come eseguire i test (pnpm test nel pacchetto).
+    - [ ] `pnpm test` in root esegue test di tutti i packages.
 
     '
   labels:
@@ -640,15 +775,16 @@ issues:
   - priority:P3
   priority: P3
   impact: Medium
-  estimate: S
+  estimate: M
   code: PKG-01
 - title: 'N8N-01: Versionare workflow end-to-end'
-  body: "### Contesto\nLa cartella \apps/n8n contiene solo un .gitkeep. Servono i\
+  body: "### Contesto\nLa cartella apps/n8n contiene solo un .gitkeep. Servono i\
     \ workflow base descritti nella README per orchestrare plan, training e autopost.\n\
     \n### DoD\n- [ ] Esportati i workflow principali (plan-generate, content-run,\
     \ publish).\n- [ ] Documentate le variabili richieste e credenziali da configurare.\n\
-    - [ ] Script per import automazione (\n8n import:workflow).\n- [ ] Verifica manuale\
-    \ di un run in locale con API stub.\n"
+    - [ ] Script per import automazione (n8n import:workflow).\n- [ ] Verifica manuale\
+    \ di un run in locale con API stub.\n\n### Dipendenze\n- [INFRA-03] Configurare\
+    \ n8n workflows\n"
   labels:
   - area:n8n
   - type:feat
@@ -656,4 +792,45 @@ issues:
   priority: P2
   impact: High
   estimate: M
+  depends_on:
+  - INFRA-03
   code: N8N-01
+- title: 'DEV-01: Documentare procedura setup completa'
+  body: '### Contesto
+
+    Manca guida step-by-step per setup ambiente sviluppo, specialmente per Windows.
+    Script PowerShell esistono ma non documentati.
+
+
+    ### DoD
+
+    - [ ] `docs/SETUP.md` creato con guida completa (prerequisiti, clone, Docker, DB, .env).
+
+    - [ ] `docs/TESTING.md` con istruzioni per eseguire test.
+
+    - [ ] Script PowerShell documentati in `scripts/README.md`.
+
+    - [ ] Sezione troubleshooting con problemi comuni.
+
+
+    ### Dipendenze
+
+    - [INFRA-01] Inizializzare database con Prisma migrations
+
+    - [INFRA-02] Configurare MinIO bucket e credenziali
+
+    - [INFRA-03] Configurare n8n workflows
+
+    '
+  labels:
+  - area:docs
+  - type:chore
+  - priority:P2
+  priority: P2
+  impact: High
+  estimate: M
+  depends_on:
+  - INFRA-01
+  - INFRA-02
+  - INFRA-03
+  code: DEV-01

@@ -20,9 +20,10 @@ function parseRedisUrl(url?: string) {
   }
 }
 
-const extraImports = process.env.NODE_ENV === 'test' ? [] : [
-  BullModule.forRoot({ connection: parseRedisUrl(process.env.REDIS_URL) }),
-];
+const enableBull = !(process.env.NODE_ENV === 'test' || ['1', 'true', 'yes'].includes(String(process.env.DISABLE_BULL).toLowerCase()));
+const extraImports = enableBull
+  ? [BullModule.forRoot({ connection: parseRedisUrl(process.env.REDIS_URL) })]
+  : [];
 
 @Module({
   imports: [

@@ -11,11 +11,13 @@ RUN pnpm install --frozen-lockfile
 
 FROM base AS builder
 WORKDIR /app
+# Use deps' node_modules as the base for building
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 # Ensure local node_modules symlinks for workspace packages that need devDeps (tsc)
 RUN pnpm -C packages/core-schemas install --frozen-lockfile --prod=false
-RUN pnpm --filter @influencerai/api prisma generate
+# Explicitly generate Prisma client inside the API package
+RUN pnpm -C apps/api exec prisma generate
 RUN pnpm --filter @influencerai/api build
 
 FROM base AS runner
@@ -26,8 +28,9 @@ COPY --from=builder /app/apps/api/dist ./apps/api/dist
 COPY --from=builder /app/apps/api/node_modules ./apps/api/node_modules
 COPY --from=builder /app/apps/api/prisma ./apps/api/prisma
 COPY --from=builder /app/apps/api/package.json ./apps/api/
-COPY --from=deps /app/node_modules ./node_modules
+# Copy root node_modules from the builder stage so the generated Prisma client (.prisma) is included
+COPY --from=builder /app/node_modules ./node_modules
 
 WORKDIR /app/apps/api
 EXPOSE 3001
-CMD ["node", "dist/main.js"]
+CMD ["node", "dist/src/main.js"]

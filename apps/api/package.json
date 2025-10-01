@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "nest start --watch",
     "build": "nest build",
-    "start": "node dist/main",
+    "start": "node dist/src/main.js",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "test": "jest",
     "test:e2e": "jest -c jest.e2e.config.js",
@@ -13,6 +13,7 @@
     "start:dev": "pnpm dev"
   },
   "dependencies": {
+    "@fastify/static": "^7.0.4",
     "@nestjs/bullmq": "^10.2.1",
     "@nestjs/common": "^10.4.8",
     "@nestjs/config": "^3.3.0",

@@ -38,13 +38,25 @@ export class PrismaService extends (PrismaClientAny as any) implements OnModuleI
   }
 
   async enableShutdownHooks(app: INestApplication): Promise<void> {
-    (this as unknown as { $on(event: string, callback: () => Promise<void>): void }).$on(
-      'beforeExit',
-      async () => {
-        this.logger.log('Prisma beforeExit hook triggered - closing Nest application');
-        await app.close();
-      },
-    );
+    const closeApp = async (reason: string): Promise<void> => {
+      this.logger.log(`${reason} - closing Nest application`);
+      await app.close();
+    };
+
+    // Prisma 5+ with library engine no longer supports $on('beforeExit').
+    // Attach to Node process events instead to ensure graceful shutdown.
+    process.on('beforeExit', async () => {
+      await closeApp('process beforeExit');
+    });
+    process.on('SIGINT', async () => {
+      await closeApp('SIGINT');
+    });
+    process.on('SIGTERM', async () => {
+      await closeApp('SIGTERM');
+    });
+    process.on('SIGQUIT', async () => {
+      await closeApp('SIGQUIT');
+    });
   }
 
   private maskDatabaseUrl(url: string): string {

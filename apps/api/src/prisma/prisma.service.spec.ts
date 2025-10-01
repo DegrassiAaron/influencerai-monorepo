@@ -45,26 +45,28 @@ describe('PrismaService', () => {
     expect(disconnectSpy).toHaveBeenCalledTimes(1);
   });
 
-  it('wires the beforeExit hook to close the Nest app', async () => {
+  it('registers process hooks to close the Nest app', async () => {
     const service = new PrismaService(createConfigService(databaseUrl));
-    const onSpy = jest.spyOn<any, any>(service as any, '$on');
     const close = jest.fn().mockResolvedValue(undefined);
     const app = { close } as unknown as INestApplication;
 
-    const callbacks: Record<string, () => Promise<void>> = {};
-    onSpy.mockImplementation((event: string, cb: () => Promise<void>) => {
-      callbacks[event] = cb;
-      return service;
-    });
+    const callbacks: Record<string, (...args: any[]) => Promise<void> | void> = {};
+    const procOnSpy = jest
+      .spyOn(process, 'on')
+      .mockImplementation(((event: any, cb: any) => {
+        callbacks[event] = cb;
+        return process as any;
+      }) as any);
 
     await service.enableShutdownHooks(app);
 
-    expect(onSpy).toHaveBeenCalledWith('beforeExit', expect.any(Function));
-    const callback = callbacks['beforeExit'];
-    expect(callback).toBeDefined();
+    expect(procOnSpy).toHaveBeenCalled();
+    expect(Object.keys(callbacks).length).toBeGreaterThan(0);
 
-    await callback?.();
-
+    // Simulate beforeExit
+    await (callbacks['beforeExit']?.(0) as any);
     expect(close).toHaveBeenCalledTimes(1);
+
+    procOnSpy.mockRestore();
   });
 });

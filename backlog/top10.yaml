@@ -1,31 +1,114 @@
 issues:
-- title: 'API-01: Bootstrap Prisma connection module'
+- title: 'INFRA-01: Inizializzare database con Prisma migrations'
   body: '### Contesto
 
-    La NestJS API espone solo un controller di test e non ha ancora una connessione
-    attiva verso Postgres. Serve un modulo Prisma condiviso e configurato con il datasource
-    della monorepo per poter implementare le feature successive.
+    Non esistono migrazioni Prisma nel repository. Il database non può essere inizializzato
+    correttamente e i servizi Docker dipendenti falliscono.
 
 
     ### DoD
 
-    - [x] Aggiunto PrismaModule/PrismaService con lifecycle hook (OnModuleInit, OnModuleDestroy).
+    - [ ] Migrazione iniziale generata con `prisma migrate dev --name init`.
 
-    - [x] Connessione letta da variabile DATABASE_URL e validazione in fase di boot.
+    - [ ] Tabelle create per Tenant, Influencer, Dataset, Job, Asset.
 
-    - [x] Logger di bootstrap che segnala successo/fallimento della connessione.
+    - [ ] File di migrazione committati in `apps/api/prisma/migrations/`.
 
-    - [ ] Test manuale: pnpm --filter @influencerai/api start:dev si avvia e stampa
-    URL.
+    - [ ] `docker compose up api-migrate` completa con successo.
+
+    '
+  labels:
+  - area:infra
+  - type:setup
+  - priority:P0
+  priority: P0
+  impact: Critical
+  estimate: S
+  code: INFRA-01
+- title: 'INFRA-02: Configurare MinIO bucket e credenziali'
+  body: '### Contesto
+
+    MinIO non è in esecuzione. Il bucket `assets` richiesto per storage di file generati
+    non esiste, bloccando upload e asset management.
+
+
+    ### DoD
+
+    - [ ] MinIO avviato con `docker compose up -d minio`.
+
+    - [ ] Bucket `assets` creato via console o CLI.
+
+    - [ ] Credenziali S3 verificate in `.env`.
+
+    - [ ] API può caricare/scaricare file da MinIO.
+
+    '
+  labels:
+  - area:infra
+  - type:setup
+  - priority:P0
+  priority: P0
+  impact: Critical
+  estimate: S
+  code: INFRA-02
+- title: 'INFRA-03: Configurare n8n workflows'
+  body: '### Contesto
+
+    n8n non è avviato. Workflow per orchestrazione content generation, LoRA training
+    e autopost non sono definiti.
+
+
+    ### DoD
+
+    - [ ] n8n avviato su http://localhost:5678.
+
+    - [ ] Workflow base creati (content-plan, lora-training, content-generation, autopost).
+
+    - [ ] Workflow esportati come JSON in `apps/n8n/workflows/`.
+
+    - [ ] Connessione tra n8n e API testata.
+
+    '
+  labels:
+  - area:infra
+  - type:setup
+  - priority:P0
+  priority: P0
+  impact: High
+  estimate: M
+  code: INFRA-03
+- title: 'API-01: Setup test database e migrazione'
+  body: '### Contesto
+
+    I test dell''API non hanno un database isolato. Eseguire test sul database di
+    sviluppo è rischioso e può causare perdita di dati.
+
+
+    ### DoD
+
+    - [ ] Variabile `DATABASE_URL_TEST` aggiunta in `.env.example`.
+
+    - [ ] `jest.e2e.config.js` configurato per usare DB test.
+
+    - [ ] Setup file che resetta DB test prima/dopo test suite.
+
+    - [ ] Script `test:e2e:db:reset` funzionante.
+
+
+    ### Dipendenze
+
+    - [INFRA-01] Inizializzare database con Prisma migrations
 
     '
   labels:
   - area:api
-  - type:feat
+  - type:test
   - priority:P1
   priority: P1
   impact: High
   estimate: M
+  depends_on:
+  - INFRA-01
   code: API-01
 - title: 'WORK-01: Sincronizzare stato job con l''API'
   body: '### Contesto
@@ -115,7 +198,7 @@ issues:
 
     ### Dipendenze
 
-    - [API-01] Bootstrap Prisma connection module
+    - [INFRA-01] Inizializzare database con Prisma migrations
 
     '
   labels:
@@ -126,7 +209,7 @@ issues:
   impact: High
   estimate: L
   depends_on:
-  - API-01
+  - INFRA-01
   code: API-02
 - title: 'API-03: Esporre CRUD dei job e integrazione con BullMQ'
   body: '### Contesto
@@ -150,8 +233,6 @@ issues:
 
     ### Dipendenze
 
-    - [API-01] Bootstrap Prisma connection module
-
     - [API-02] Modellare schema Prisma per tenant, influencer, dataset e job
 
     '
@@ -163,132 +244,8 @@ issues:
   impact: High
   estimate: L
   depends_on:
-  - API-01
   - API-02
   code: API-03
-- title: 'API-04: Endpoint Content Plan con integrazione OpenRouter'
-  body: '### Contesto
-
-    Il pacchetto @influencerai/prompts fornisce template ma l''API non ha endpoint
-    per generare e salvare ContentPlan. Serve orchestrare la chiamata a OpenRouter,
-    validare la risposta e persisterla.
-
-
-    ### DoD
-
-    - [ ] POST /content-plans che accetta persona/tema, invoca OpenRouter con prompt
-    dedicato.
-
-    - [ ] Persistenza del piano con timestamp e associazione a influencer/tenant.
-
-    - [ ] Endpoint GET /content-plans/:id e /content-plans (lista filtrabile).
-
-    - [ ] Test che stubba OpenRouter e verifica parsing + salvataggio.
-
-
-    ### Dipendenze
-
-    - [API-01] Bootstrap Prisma connection module
-
-    - [API-02] Modellare schema Prisma per tenant, influencer, dataset e job
-
-    '
-  labels:
-  - area:api
-  - type:feat
-  - priority:P1
-  priority: P1
-  impact: High
-  estimate: L
-  depends_on:
-  - API-01
-  - API-02
-  code: API-04
-- title: 'API-05: Dataset ingestion e storage su MinIO'
-  body: '### Contesto
-
-    La piattaforma richiede upload e tracciamento dei dataset per il training LoRA
-    ma manca qualsiasi endpoint. Serve integrare MinIO (S3 compatibile) e salvare
-    metadati nel database.
-
-
-    ### DoD
-
-    - [ ] Service S3 basato su MinIO configurato via variabili S3_*.
-
-    - [ ] Endpoint POST /datasets per creare record e ottenere URL di upload presignato.
-
-    - [ ] Endpoint PATCH /datasets/:id/status per aggiornare stato (es. READY, PROCESSING).
-
-    - [ ] Integrazione test con MinIO locale via docker compose.
-
-
-    ### Dipendenze
-
-    - [API-02] Modellare schema Prisma per tenant, influencer, dataset e job
-
-    '
-  labels:
-  - area:api
-  - type:feat
-  - priority:P1
-  priority: P1
-  impact: High
-  estimate: L
-  depends_on:
-  - API-02
-  code: API-05
-- title: 'API-06: Autenticazione multi-tenant con JWT'
-  body: "### Contesto\nAl momento l'API è pubblica. Per rispettare il modello multi-tenant\
-    \ descritto nella README servono login, gestione tenant e guard per proteggere\
-    \ le route.\n\n### DoD\n- [ ] Endpoint /auth/login con email+password o token\
-    \ magic e generazione JWT.\n- [ ] Middleware/guard che applica \tenantId alle\
-    \ query Prisma.\n- [ ] Seed iniziale di un tenant admin per sviluppo.\n- [ ] Test\
-    \ e2e che verifica accesso negato senza token.\n\n### Dipendenze\n- [API-02] Modellare\
-    \ schema Prisma per tenant, influencer, dataset e job\n"
-  labels:
-  - area:api
-  - type:feat
-  - priority:P1
-  priority: P1
-  impact: High
-  estimate: L
-  depends_on:
-  - API-02
-  code: API-06
-- title: 'WORK-02: Implementare processor content-generation'
-  body: '### Contesto
-
-    La coda content-generation è un TODO. Serve orchestrare chiamate a OpenRouter,
-    generare caption/script e creare job figlio per asset visivi.
-
-
-    ### DoD
-
-    - [ ] Implementato processor che richiama OpenRouter usando prompts.
-
-    - [ ] Salvataggio output testuale su S3/Asset e collegamento al job.
-
-    - [ ] Gestione errori con retry e logging strutturato.
-
-    - [ ] Test unit/integration con mock OpenRouter.
-
-
-    ### Dipendenze
-
-    - [WORK-01] Sincronizzare stato job con l''API
-
-    '
-  labels:
-  - area:worker
-  - type:feat
-  - priority:P1
-  priority: P1
-  impact: High
-  estimate: L
-  depends_on:
-  - WORK-01
-  code: WORK-02
 - title: 'WEB-02: Dashboard operativo con stato code'
   body: '### Contesto
 
