@@ -6,6 +6,13 @@ Unico costo previsto: **API OpenRouter** per generazione testi.
 
 ---
 
+## Documentazione
+
+- Setup ambiente: `docs/SETUP.md`
+- Testing: `docs/TESTING.md`
+
+---
+
 ## Executive Summary
 
 - Monorepo TS (Next.js dashboard, NestJS API, worker BullMQ) + n8n locale.
