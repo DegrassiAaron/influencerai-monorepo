@@ -1,6 +1,7 @@
 ﻿import { INestApplication, Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { PrismaClient } from '@prisma/client';
+import { Prisma, PrismaClient } from '@prisma/client';
+import { getRequestContext } from '../lib/request-context';
 
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
@@ -20,6 +21,47 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
 
   async onModuleInit(): Promise<void> {
     try {
+      // Apply multi-tenant scoping middleware for models that include tenantId
+      this.$use(async (params: Prisma.MiddlewareParams, next) => {
+        const ctx = getRequestContext();
+        const tenantId = ctx.tenantId;
+        if (!tenantId) {
+          return next(params);
+        }
+        const modelsWithTenant: Record<string, true> = { Influencer: true, Dataset: true, User: true };
+        if (!modelsWithTenant[params.model || '']) {
+          return next(params);
+        }
+        if (params.action === 'findMany') {
+          params.args = params.args || {};
+          params.args.where = params.args.where || {};
+          params.args.where.tenantId = tenantId;
+        }
+        if (params.action === 'findUnique' || params.action === 'findFirst') {
+          params.args = params.args || {};
+          params.args.where = params.args.where || {};
+          if (!params.args.where.tenantId) {
+            // Strengthen filter to current tenant
+            params.args.where.tenantId = tenantId;
+          }
+        }
+        if (params.action === 'create') {
+          params.args = params.args || {};
+          params.args.data = params.args.data || {};
+          params.args.data.tenantId = tenantId;
+        }
+        if (params.action === 'updateMany' || params.action === 'update') {
+          params.args = params.args || {};
+          params.args.where = params.args.where || {};
+          params.args.where.tenantId = tenantId;
+        }
+        if (params.action === 'deleteMany' || params.action === 'delete') {
+          params.args = params.args || {};
+          params.args.where = params.args.where || {};
+          params.args.where.tenantId = tenantId;
+        }
+        return next(params);
+      });
       await this.$connect();
       this.logger.log(`Connected to database: ${this.maskDatabaseUrl(this.databaseUrl)}`);
     } catch (error) {

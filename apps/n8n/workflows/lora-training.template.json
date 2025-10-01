@@ -1,0 +1,82 @@
+{
+  "name": "LoRA Training Job (Template)",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "node-manual-trigger-3",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        260,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "keepOnlySet": true,
+        "values": {
+          "string": [
+            { "name": "tenantId", "value": "demo-tenant" },
+            { "name": "type", "value": "lora-training" },
+            { "name": "datasetId", "value": "ds_123" }
+          ],
+          "json": [
+            { "name": "payload", "value": { "epochs": 5, "learningRate": 1e-4 } }
+          ]
+        }
+      },
+      "id": "node-set-payload-3",
+      "name": "Set Payload",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        520,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "none",
+        "url": "={{$env.API_BASE_URL || 'http://localhost:3000'}}/jobs",
+        "options": {
+          "sendHeaders": true,
+          "headerParametersJson": "{\n  \"Authorization\": \"Bearer {{$env.API_TOKEN || 'dev-token'}}\",\n  \"Content-Type\": \"application/json\"\n}"
+        },
+        "method": "POST",
+        "jsonParameters": true,
+        "sendBody": true,
+        "bodyParametersJson": "={{JSON.stringify($json)}}"
+      },
+      "id": "node-http-create-3",
+      "name": "Enqueue Job",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        800,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          { "node": "Set Payload", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Set Payload": {
+      "main": [
+        [
+          { "node": "Enqueue Job", "type": "main", "index": 0 }
+        ]
+      ]
+    }
+  },
+  "settings": {},
+  "staticData": {},
+  "tags": ["template", "lora-training"]
+}
+

@@ -1,0 +1,42 @@
+name: Automerge Dry Run
+on:
+  workflow_dispatch: {}
+  pull_request:
+    branches:
+      - 'automerge-test'
+    types: [opened, labeled, synchronize]
+
+permissions:
+  pull-requests: read
+  contents: read
+
+jobs:
+  dry-run:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Log PR payload
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const pr = context.payload.pull_request || {};
+            core.info('--- DRY RUN: pull_request payload START ---');
+            core.info(JSON.stringify(pr, null, 2));
+            core.info('--- DRY RUN: pull_request payload END ---');
+
+      - name: Decide (simulate) merge
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const pr = context.payload.pull_request;
+            if (!pr) {
+              core.info('No pull_request in context, nothing to do (dry run)');
+              return;
+            }
+            const labels = (pr.labels || []).map(l => l.name);
+            if (labels.includes('automerge')) {
+              core.info(`DRY RUN: PR #${pr.number} has 'automerge' label and WOULD be merged (squash).`);
+            } else {
+              core.info(`DRY RUN: PR #${pr.number} does NOT have 'automerge' label and would be skipped.`);
+            }

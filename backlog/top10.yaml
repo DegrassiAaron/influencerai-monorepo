@@ -60,13 +60,13 @@ issues:
 
     ### DoD
 
-    - [ ] n8n avviato su http://localhost:5678.
+    - [x] n8n avviato su http://localhost:5678.
 
-    - [ ] Workflow base creati (content-plan, lora-training, content-generation, autopost).
+    - [x] Workflow base creati (content-plan, lora-training, content-generation, autopost).
 
-    - [ ] Workflow esportati come JSON in `apps/n8n/workflows/`.
+    - [x] Workflow esportati come JSON in `apps/n8n/workflows/`.
 
-    - [ ] Connessione tra n8n e API testata.
+    - [x] Connessione tra n8n e API testata.
 
     '
   labels:
@@ -86,13 +86,13 @@ issues:
 
     ### DoD
 
-    - [ ] Variabile `DATABASE_URL_TEST` aggiunta in `.env.example`.
+    - [x] Variabile `DATABASE_URL_TEST` aggiunta in `.env.example`.
 
-    - [ ] `jest.e2e.config.js` configurato per usare DB test.
+    - [x] `jest.e2e.config.js` configurato per usare DB test.
 
-    - [ ] Setup file che resetta DB test prima/dopo test suite.
+    - [x] Setup file che resetta DB test prima/dopo test suite.
 
-    - [ ] Script `test:e2e:db:reset` funzionante.
+    - [x] Script `test:e2e:db:reset` funzionante.
 
 
     ### Dipendenze

@@ -1,7 +1,7 @@
 ﻿import { Test, TestingModule } from '@nestjs/testing';
 import { FastifyAdapter } from '@nestjs/platform-fastify';
 import { INestApplication } from '@nestjs/common';
-import * as supertest from 'supertest';
+import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { getQueueToken } from '@nestjs/bullmq';
 import { PrismaService } from '../src/prisma/prisma.service';
@@ -41,7 +41,7 @@ describe('Health (e2e)', () => {
   });
 
   it('/health (GET)', async () => {
-    const res = await (supertest as any)(app!.getHttpServer()).get('/health');
+    const res = await request(app!.getHttpServer()).get('/health');
     expect(res.status).toBe(200);
     expect(res.body).toEqual({ status: 'ok', timestamp: expect.any(String) });
   });

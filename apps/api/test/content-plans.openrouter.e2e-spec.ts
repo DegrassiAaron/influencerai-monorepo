@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import { FastifyAdapter } from '@nestjs/platform-fastify';
-import * as supertest from 'supertest';
+import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { getQueueToken } from '@nestjs/bullmq';
 import { PrismaService } from '../src/prisma/prisma.service';
@@ -52,7 +52,7 @@ describe('Content Plans with OpenRouter (fetch mock) (e2e)', () => {
   });
 
   it('POST /content-plans uses OpenRouter and returns 201', async () => {
-    const res = await (supertest as any)(app.getHttpServer())
+    const res = await request(app.getHttpServer())
       .post('/content-plans')
       .send({ influencerId: 'inf_1', theme: 'tech' })
       .expect(201);
@@ -118,7 +118,7 @@ describe('Content Plans with OpenRouter retry 429→200 (fetch mock) (e2e)', () 
   });
 
   it('POST /content-plans eventually succeeds after 429', async () => {
-    const res = await (supertest as any)(app.getHttpServer())
+    const res = await request(app.getHttpServer())
       .post('/content-plans')
       .send({ influencerId: 'inf_1', theme: 'tech' })
       .expect(201);
