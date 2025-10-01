@@ -39,6 +39,7 @@ jobs:
           version: 10.17.1
           run_install: false
 
+<<<<<<< HEAD
       - name: Get pnpm store directory
         id: pnpm-store
         shell: bash
@@ -67,6 +68,8 @@ jobs:
       - name: Generate Prisma Client (API)
         run: pnpm --filter @influencerai/api prisma:generate
 
+=======
+>>>>>>> 391b74b (ci: enforce pnpm frozen-lockfile; sync pnpm-lock.yaml for workspace deps)
       - name: Install dependencies (frozen lockfile)
         run: pnpm install --frozen-lockfile
 
