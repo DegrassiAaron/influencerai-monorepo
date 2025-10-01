@@ -42,6 +42,20 @@ services:
       timeout: 20s
       retries: 3
 
+  minio-init:
+    image: minio/mc:latest
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: ["/bin/sh", "-lc"]
+    command: |
+      set -e
+      echo "Configuring MinIO client and creating bucket if missing..."
+      mc alias set local http://minio:9000 minio minio12345
+      mc mb -p local/assets || true
+      mc ls local
+      echo "MinIO init complete."
+
   n8n:
     image: n8nio/n8n:latest
     environment:
@@ -81,6 +95,8 @@ services:
         condition: service_healthy
       minio:
         condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
       api-migrate:
         condition: service_completed_successfully
 

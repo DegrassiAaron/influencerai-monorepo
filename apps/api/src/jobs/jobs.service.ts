@@ -70,9 +70,9 @@ export class JobsService {
     if (typeof input.costTok !== 'undefined') data.costTok = input.costTok;
 
     // Auto-manage timestamps for common status transitions
-    const status = input.status?.toLowerCase();
+    const status = input.status;
     const now = new Date();
-    if (status === 'running' || status === 'in-progress' || status === 'processing') {
+    if (status === 'running') {
       data.startedAt = now;
     }
     if (status === 'succeeded' || status === 'failed' || status === 'completed') {

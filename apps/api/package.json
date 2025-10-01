@@ -17,6 +17,7 @@
     "prisma:db:push": "prisma db push"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.679.0",
     "@influencerai/core-schemas": "workspace:*",
     "@influencerai/prompts": "workspace:*",
     "@fastify/static": "^7.0.4",

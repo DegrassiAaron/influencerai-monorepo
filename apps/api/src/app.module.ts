@@ -8,6 +8,8 @@ import { JobsModule } from './jobs/jobs.module';
 import { ContentPlansModule } from './content-plans/content-plans.module';
 import { parseRedisUrl } from './lib/redis';
 import { LoggerModule } from 'nestjs-pino';
+import { StorageModule } from './storage/storage.module';
+import { HealthModule } from './health/health.module';
 
 const enableBull = !(process.env.NODE_ENV === 'test' || ['1', 'true', 'yes'].includes(String(process.env.DISABLE_BULL).toLowerCase()));
 const extraImports = enableBull
@@ -30,6 +32,8 @@ const extraImports = enableBull
     ...extraImports,
     JobsModule,
     ContentPlansModule,
+    StorageModule,
+    HealthModule,
   ],
   controllers: [AppController],
   providers: [AppService],

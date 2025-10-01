@@ -34,13 +34,13 @@ issues:
 
     ### DoD
 
-    - [ ] MinIO avviato con `docker compose up -d minio`.
+    - [x] MinIO avviato con `docker compose up -d minio`.
 
-    - [ ] Bucket `assets` creato via console o CLI.
+    - [x] Bucket `assets` creato via console o CLI.
 
-    - [ ] Credenziali S3 verificate in `.env`.
+    - [x] Credenziali S3 verificate in `.env`.
 
-    - [ ] API può caricare/scaricare file da MinIO.
+    - [x] API può caricare/scaricare file da MinIO.
 
     '
   labels:

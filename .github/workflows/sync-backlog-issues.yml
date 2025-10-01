@@ -68,10 +68,11 @@ jobs:
               return res.json();
             }
           };
-          const patchIssue = async (num, body, labels) => {
+          const patchIssue = async (num, body, labels, state) => {
             const payload = {};
             if (typeof body === 'string') payload.body = body;
             if (Array.isArray(labels)) payload.labels = labels;
+            if (state === 'open' || state === 'closed') payload.state = state;
             if (Object.keys(payload).length === 0) return;
             await fetchJson(`https://api.github.com/repos/${owner}/${name}/issues/${num}`, {
               method: 'PATCH',
@@ -146,7 +147,8 @@ jobs:
               for (const ln of desiredLabels) {
                 await ensureLabelExists(ln);
               }
-              const bodyChanged = currentBody !== body.trim();
+              const newBody = body.trim();
+              const bodyChanged = currentBody !== newBody;
               const labelsChanged = (() => {
                 const a = new Set(currentLabelNames.map(s => s.toLowerCase()));
                 const b = new Set(desiredLabels.map(s => s.toLowerCase()));
@@ -154,11 +156,18 @@ jobs:
                 for (const x of a) if (!b.has(x)) return true;
                 return false;
               })();
-              if (bodyChanged || labelsChanged) {
-                await patchIssue(item.number, body, desiredLabels);
+              // Close issue automatically if all DoD checkboxes are checked
+              const anyChecked = /- \[x\]/i.test(newBody);
+              const anyUnchecked = /- \[ \]/.test(newBody);
+              const shouldClose = anyChecked && !anyUnchecked;
+              const desiredState = shouldClose ? 'closed' : undefined;
+
+              if (bodyChanged || labelsChanged || (desiredState && full.state !== desiredState)) {
+                await patchIssue(item.number, newBody, desiredLabels, desiredState);
                 const parts = [];
                 if (bodyChanged) parts.push('body');
                 if (labelsChanged) parts.push('labels');
+                if (desiredState && full.state !== desiredState) parts.push(`state→${desiredState}`);
                 console.log(`Updated #${item.number} (${code}): ${parts.join('+')}`);
               } else {
                 console.log(`No change for #${item.number} (${code})`);
