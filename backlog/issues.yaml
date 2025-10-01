@@ -549,13 +549,13 @@ issues:
 
     ### DoD
 
-    - [ ] Pagina /dashboard con widget job queue (attivi, pending, failed).
+    - [x] Pagina /dashboard con widget job queue (attivi, pending, failed).
 
-    - [ ] Card health basata sui nuovi endpoint /healthz//readyz.
+    - [x] Card health basata sui nuovi endpoint /healthz//readyz.
 
-    - [ ] Grafico andamento ultimi job (es. area chart) con TanStack Query.
+    - [x] Grafico andamento ultimi job (es. area chart) con TanStack Query.
 
-    - [ ] Stato reattivo (polling o websocket) documentato.
+    - [x] Stato reattivo (polling o websocket) documentato.
 
 
     ### Dipendenze
@@ -611,13 +611,13 @@ issues:
 
     ### DoD
 
-    - [ ] Pagina /datasets con tabella e stati.
+    - [x] Pagina /datasets con tabella e stati.
 
-    - [ ] Form/modal per creare dataset e ottenere URL presignato.
+    - [x] Form/modal per creare dataset e ottenere URL presignato.
 
-    - [ ] Barra di avanzamento per upload (S3 multipart) e update via API.
+    - [x] Barra di avanzamento per upload (S3 multipart) e update via API.
 
-    - [ ] Test end-to-end (Playwright) che copre upload fittizio.
+    - [x] Test end-to-end (Playwright) che copre upload fittizio.
 
 
     ### Dipendenze
@@ -900,26 +900,26 @@ issues:
 
     ### 3. Rotazione credenziali
 
-    - [ ] Generare nuova API key su OpenRouter
+    - [x] Generare nuova API key su OpenRouter
 
-    - [ ] Aggiornare password database (se esposta)
+    - [x] Aggiornare password database (se esposta)
 
-    - [ ] Rigenerare secret MinIO
+    - [x] Rigenerare secret MinIO
 
-    - [ ] Aggiornare `.env.example` con placeholder chiari
+    - [x] Aggiornare `.env.example` con placeholder chiari
 
 
     ## DoD
 
-    - [ ] Verificato che `.env` non è tracciato da git
+    - [x] Verificato che `.env` non è tracciato da git
 
-    - [ ] `.gitignore` contiene `.env`
+    - [x] `.gitignore` contiene `.env`
 
-    - [ ] Credenziali esposte (se presenti) sono state ruotate
+    - [x] Credenziali esposte (se presenti) sono state ruotate
 
-    - [ ] `.env.example` aggiornato con placeholder sicuri
+    - [x] `.env.example` aggiornato con placeholder sicuri
 
-    - [ ] Documentato in README.md il processo di setup `.env`
+    - [x] Documentato in README.md il processo di setup `.env`
 
 
     ## Priorità
@@ -950,17 +950,17 @@ issues:
 
     ## DoD
 
-    - [ ] Creato `APIError` class in `packages/sdk/src/fetch-utils.ts`
+    - [x] Creato `APIError` class in `packages/sdk/src/fetch-utils.ts`
 
-    - [ ] Implementato `handleResponse` helper
+    - [x] Implementato `handleResponse` helper
 
-    - [ ] Aggiornati tutti i metodi del client (createJob, getJob, listJobs, etc.)
+    - [x] Aggiornati tutti i metodi del client (createJob, getJob, listJobs, etc.)
 
-    - [ ] Aggiunto timeout di 30s a tutte le chiamate
+    - [x] Aggiunto timeout di 30s a tutte le chiamate
 
-    - [ ] Scritti test unitari per error handling
+    - [x] Scritti test unitari per error handling
 
-    - [ ] Verificato che app/web gestisca correttamente APIError con TanStack Query
+    - [x] Verificato che app/web gestisca correttamente APIError con TanStack Query
 
     '
   labels:
