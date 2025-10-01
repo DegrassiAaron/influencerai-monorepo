@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 export const OpenRouterMessageSchema = z.object({
-  role: z.string(),
+  role: z.string().optional(),
   content: z.string(),
 });
 
@@ -27,4 +27,3 @@ export const OpenRouterResponseSchema = z.object({
 });
 
 export type OpenRouterResponse = z.infer<typeof OpenRouterResponseSchema>;
-

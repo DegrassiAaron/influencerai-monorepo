@@ -1,4 +1,4 @@
-import { Injectable, Logger as NestLogger, LoggerService } from '@nestjs/common';
+import { Injectable, Logger as NestLogger, LoggerService, Optional } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { Prisma } from '@prisma/client';
@@ -14,7 +14,7 @@ export class JobsService {
     @InjectQueue('content-generation') private readonly contentQueue: Queue,
     @InjectQueue('lora-training') private readonly loraQueue: Queue,
     @InjectQueue('video-generation') private readonly videoQueue: Queue,
-    private readonly logger: LoggerService = new NestLogger(JobsService.name),
+    @Optional() private readonly logger?: LoggerService,
   ) {}
 
   async createJob(input: { type: JobType; payload: Prisma.InputJsonValue; priority?: number }) {

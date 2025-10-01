@@ -3,6 +3,7 @@ import { INestApplication } from '@nestjs/common';
 import { FastifyAdapter } from '@nestjs/platform-fastify';
 import * as supertest from 'supertest';
 import { AppModule } from '../src/app.module';
+import { getQueueToken } from '@nestjs/bullmq';
 import { PrismaService } from '../src/prisma/prisma.service';
 
 describe('Content Plans with OpenRouter (fetch mock) (e2e)', () => {
@@ -34,6 +35,9 @@ describe('Content Plans with OpenRouter (fetch mock) (e2e)', () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     })
+      .overrideProvider(getQueueToken('content-generation')).useValue({ add: jest.fn(async () => null) })
+      .overrideProvider(getQueueToken('lora-training')).useValue({ add: jest.fn(async () => null) })
+      .overrideProvider(getQueueToken('video-generation')).useValue({ add: jest.fn(async () => null) })
       .overrideProvider(PrismaService).useValue(prismaStub)
       .compile();
 
@@ -44,7 +48,7 @@ describe('Content Plans with OpenRouter (fetch mock) (e2e)', () => {
 
   afterAll(async () => {
     (global as any).fetch = originalFetch;
-    await app.close();
+    if (app) await app.close();
   });
 
   it('POST /content-plans uses OpenRouter and returns 201', async () => {
@@ -97,6 +101,9 @@ describe('Content Plans with OpenRouter retry 429→200 (fetch mock) (e2e)', () 
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     })
+      .overrideProvider(getQueueToken('content-generation')).useValue({ add: jest.fn(async () => null) })
+      .overrideProvider(getQueueToken('lora-training')).useValue({ add: jest.fn(async () => null) })
+      .overrideProvider(getQueueToken('video-generation')).useValue({ add: jest.fn(async () => null) })
       .overrideProvider(PrismaService).useValue(prismaStub)
       .compile();
 
@@ -107,7 +114,7 @@ describe('Content Plans with OpenRouter retry 429→200 (fetch mock) (e2e)', () 
 
   afterAll(async () => {
     (global as any).fetch = originalFetch;
-    await app.close();
+    if (app) await app.close();
   });
 
   it('POST /content-plans eventually succeeds after 429', async () => {

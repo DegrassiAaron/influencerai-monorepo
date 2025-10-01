@@ -21,6 +21,10 @@ describe('JobsService', () => {
     const job = await svc.createJob({ type: 'content-generation', payload: { foo: 'bar' } });
 
     expect(job.id).toBe('j1');
-    expect(queueMock.add).toHaveBeenCalledWith('content-generation', expect.objectContaining({ jobId: 'j1', foo: 'bar' }), expect.any(Object));
+    expect(queueMock.add).toHaveBeenCalledWith(
+      'content-generation',
+      expect.objectContaining({ jobId: 'j1', payload: { foo: 'bar' } }),
+      expect.any(Object)
+    );
   });
 });

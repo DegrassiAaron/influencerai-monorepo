@@ -5,7 +5,7 @@ import { fetchWithTimeout, HTTPError, parseRetryAfter, shouldRetry, backoffDelay
 import { OpenRouterResponseSchema } from '../types/openrouter';
 import { ContentPlanDataSchema } from '../types/content';
 import { Prisma, Job } from '@prisma/client';
-import { Logger as NestLogger, LoggerService } from '@nestjs/common';
+import { Logger as NestLogger, LoggerService, Optional } from '@nestjs/common';
 
 // Minimal local prompt to avoid build coupling; align with @influencerai/prompts
 function contentPlanPrompt(persona: string, theme: string) {
@@ -16,7 +16,7 @@ function contentPlanPrompt(persona: string, theme: string) {
 export class ContentPlansService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly logger: LoggerService = new NestLogger(ContentPlansService.name),
+    @Optional() private readonly logger?: LoggerService,
   ) {}
 
   // Extracted so tests can mock only this part

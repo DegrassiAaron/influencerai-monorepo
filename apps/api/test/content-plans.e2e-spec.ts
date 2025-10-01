@@ -3,6 +3,7 @@ import { INestApplication } from '@nestjs/common';
 import { FastifyAdapter } from '@nestjs/platform-fastify';
 import * as supertest from 'supertest';
 import { AppModule } from '../src/app.module';
+import { getQueueToken } from '@nestjs/bullmq';
 import { ContentPlansService } from '../src/content-plans/content-plans.service';
 import { PrismaService } from '../src/prisma/prisma.service';
 
@@ -41,6 +42,9 @@ describe('Content Plans (e2e)', () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     })
+      .overrideProvider(getQueueToken('content-generation')).useValue({ add: jest.fn(async () => null) })
+      .overrideProvider(getQueueToken('lora-training')).useValue({ add: jest.fn(async () => null) })
+      .overrideProvider(getQueueToken('video-generation')).useValue({ add: jest.fn(async () => null) })
       .overrideProvider(ContentPlansService).useValue(svcMock)
       .overrideProvider(PrismaService).useValue({ onModuleInit: jest.fn(), onModuleDestroy: jest.fn(), enableShutdownHooks: jest.fn() })
       .compile();
@@ -51,7 +55,7 @@ describe('Content Plans (e2e)', () => {
   });
 
   afterAll(async () => {
-    await app.close();
+    if (app) await app.close();
   });
 
   it('POST /content-plans creates a plan', async () => {
