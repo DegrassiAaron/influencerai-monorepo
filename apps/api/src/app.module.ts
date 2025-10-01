@@ -11,7 +11,7 @@ import { LoggerModule } from 'nestjs-pino';
 
 const enableBull = !(process.env.NODE_ENV === 'test' || ['1', 'true', 'yes'].includes(String(process.env.DISABLE_BULL).toLowerCase()));
 const extraImports = enableBull
-  ? [BullModule.forRoot({ connection: parseRedisUrl(process.env.REDIS_URL) })]
+  ? [BullModule.forRoot({ connection: parseRedisUrl(process.env.REDIS_URL), prefix: process.env.BULL_PREFIX })]
   : [];
 
 @Module({
