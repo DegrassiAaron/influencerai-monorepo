@@ -255,9 +255,9 @@ issues:
 - title: 'API-06: Autenticazione multi-tenant con JWT'
   body: "### Contesto\nAl momento l'API è pubblica. Per rispettare il modello multi-tenant\
     \ descritto nella README servono login, gestione tenant e guard per proteggere\
-    \ le route.\n\n### DoD\n- [ ] Endpoint /auth/login con email+password o token\
-    \ magic e generazione JWT.\n- [ ] Middleware/guard che applica \tenantId alle\
-    \ query Prisma.\n- [ ] Seed iniziale di un tenant admin per sviluppo.\n- [ ] Test\
+    \ le route.\n\n### DoD\n- [x] Endpoint /auth/login con email+password o token\
+    \ magic e generazione JWT.\n- [x] Middleware/guard che applica \tenantId alle\
+    \ query Prisma.\n- [x] Seed iniziale di un tenant admin per sviluppo.\n- [x] Test\
     \ e2e che verifica accesso negato senza token.\n\n### Dipendenze\n- [API-02] Modellare\
     \ schema Prisma per tenant, influencer, dataset e job\n"
   labels:
