@@ -19,3 +19,10 @@ export const ListJobsQuerySchema = z.object({
 
 export type ListJobsQuery = z.infer<typeof ListJobsQuerySchema>;
 
+export const UpdateJobSchema = z.object({
+  status: z.string().min(1).optional(),
+  result: z.any().optional(),
+  costTok: z.number().int().nonnegative().optional(),
+});
+
+export type UpdateJobDto = z.infer<typeof UpdateJobSchema>;

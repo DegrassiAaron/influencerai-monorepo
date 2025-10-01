@@ -11,9 +11,12 @@
   "dependencies": {
     "bullmq": "^5.38.2",
     "ioredis": "^5.4.2",
+    "@influencerai/sdk": "workspace:*",
     "zod": "^3.24.1",
     "undici": "^7.3.0",
-    "p-queue": "^8.0.1"
+    "p-queue": "^8.0.1",
+    "pino": "^9.4.0",
+    "pino-pretty": "^11.3.0"
   },
   "devDependencies": {
     "@types/node": "^22.10.5",

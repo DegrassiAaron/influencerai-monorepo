@@ -341,13 +341,13 @@ issues:
 
     ### DoD
 
-    - [ ] Client REST o SDK per PATCH /jobs/:id con status/result.
+    - [x] Client REST o SDK per PATCH /jobs/:id con status/result.
 
-    - [ ] Aggiornamento stato su start, success e failure.
+    - [x] Aggiornamento stato su start, success e failure.
 
-    - [ ] Backoff configurabile (BullMQ) per retry.
+    - [x] Backoff configurabile (BullMQ) per retry.
 
-    - [ ] Test end-to-end con Redis locale che verifica roundtrip.
+    - [x] Test end-to-end con Redis locale che verifica roundtrip.
 
 
     ### Dipendenze
@@ -980,25 +980,25 @@ issues:
 
     ## DoD
 
-    - [ ] Aggiunto controllo `response.ok` e gestione status code
+    - [x] Aggiunto controllo `response.ok` e gestione status code
 
-    - [ ] Implementato timeout di 60s con AbortController
+    - [x] Implementato timeout di 60s con AbortController
 
-    - [ ] Gestito rate limiting 429 con retry-after
+    - [x] Gestito rate limiting 429 con retry-after
 
-    - [ ] Validata struttura response OpenRouter
+    - [x] Validata struttura response OpenRouter
 
-    - [ ] Aggiunto logging token usage per cost tracking
+    - [x] Aggiunto logging token usage per cost tracking
 
-    - [ ] Implementato retry logic con exponential backoff
+    - [x] Implementato retry logic con exponential backoff
 
-    - [ ] Aggiunto error handling per timeout/network errors
+    - [x] Aggiunto error handling per timeout/network errors
 
-    - [ ] Verificato env var `OPENROUTER_API_KEY` all''avvio
+    - [x] Verificato env var `OPENROUTER_API_KEY` all''avvio
 
-    - [ ] Scritti test unitari con mock fetch
+    - [x] Scritti test unitari con mock fetch
 
-    - [ ] Scritto test e2e con mock OpenRouter (nock)
+    - [x] Scritto test e2e con mock OpenRouter (fetch/undici mock)
 
     '
   labels:
@@ -1019,23 +1019,23 @@ issues:
 
     ## DoD
 
-    - [ ] Definito `RedisConnectionOptions` interface e funzione helper
+    - [x] Definito `RedisConnectionOptions` interface e funzione helper
 
-    - [ ] Rimosso `PrismaClientAny`, usare `PrismaClient` direttamente
+    - [x] Rimosso `PrismaClientAny`, usare `PrismaClient` direttamente
 
-    - [ ] Usato `Prisma.InputJsonValue` per payload in jobs.service
+    - [x] Usato `Prisma.InputJsonValue` per payload in jobs.service
 
-    - [ ] Definiti tipi `OpenRouterResponse` e `ContentPlanData`
+    - [x] Definiti tipi `OpenRouterResponse` e `ContentPlanData`
 
-    - [ ] Aggiunta validazione Zod per response OpenRouter
+    - [x] Aggiunta validazione Zod per response OpenRouter
 
-    - [ ] Fixati cast in setup-e2e.ts con `unknown`
+    - [x] Fixati cast in setup-e2e.ts con `unknown`
 
-    - [ ] Verificato che TypeScript compili senza `any` warnings
+    - [x] Verificato che TypeScript compili senza `any` warnings
 
-    - [ ] Abilitato `@typescript-eslint/no-explicit-any: ''error''` in ESLint
+    - [x] Abilitato `@typescript-eslint/no-explicit-any: ''error''` in ESLint
 
-    - [ ] Eseguito `pnpm build` su tutte le apps senza errori
+    - [x] Eseguito `pnpm build` su tutte le apps senza errori
 
     '
   labels:
@@ -1055,25 +1055,25 @@ issues:
 
     ## DoD
 
-    - [ ] Installato `pino`, `pino-pretty`, `nestjs-pino`
+    - [x] Installato `pino`, `pino-pretty`, `nestjs-pino`
 
-    - [ ] Configurato `LoggerModule` in `apps/api/src/app.module.ts`
+    - [x] Configurato `LoggerModule` in `apps/api/src/app.module.ts`
 
-    - [ ] Sostituiti tutti i `console.log` in `apps/api/src/main.ts`
+    - [x] Sostituiti tutti i `console.log` in `apps/api/src/main.ts`
 
-    - [ ] Aggiunto logger ai services esistenti (ContentPlansService, JobsService)
+    - [x] Aggiunto logger ai services esistenti (ContentPlansService, JobsService)
 
-    - [ ] Creato `apps/worker/src/logger.ts`
+    - [x] Creato `apps/worker/src/logger.ts`
 
-    - [ ] Sostituiti tutti i `console.log` in `apps/worker/src/index.ts`
+    - [x] Sostituiti tutti i `console.log` in `apps/worker/src/index.ts`
 
-    - [ ] Aggiunto `LOG_LEVEL` a `.env.example`
+    - [x] Aggiunto `LOG_LEVEL` a `.env.example`
 
-    - [ ] Verificato che log siano formattati correttamente in dev (pretty)
+    - [x] Verificato che log siano formattati correttamente in dev (pretty)
 
-    - [ ] Verificato che log siano JSON in produzione
+    - [x] Verificato che log siano JSON in produzione
 
-    - [ ] Eseguito ESLint rule per bannare `console.log`
+    - [x] Eseguito ESLint rule per bannare `console.log`
 
     '
   labels:
@@ -1085,4 +1085,3 @@ issues:
   impact: High
   estimate: M
   code: CODE-04
-

@@ -1,12 +1,9 @@
 ﻿import { INestApplication, Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-// Use runtime import to avoid TS type resolution issues during container builds
-// Types are still available in dev; in CI we fall back to any
- 
-const PrismaClientAny: any = require('@prisma/client').PrismaClient;
+import { PrismaClient } from '@prisma/client';
 
 @Injectable()
-export class PrismaService extends (PrismaClientAny as any) implements OnModuleInit, OnModuleDestroy {
+export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(PrismaService.name);
   private readonly databaseUrl: string;
 

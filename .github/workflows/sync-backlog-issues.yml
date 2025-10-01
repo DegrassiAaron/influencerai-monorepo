@@ -1,0 +1,169 @@
+name: Sync Backlog Issues
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'backlog/issues.yaml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install parser
+        run: npm i js-yaml@4.1.0
+
+      - name: Sync backlog/issues.yaml to GitHub issues
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          node - <<'NODE'
+          const fs = require('fs');
+          const yaml = require('js-yaml');
+          const content = fs.readFileSync('backlog/issues.yaml', 'utf8');
+          const doc = yaml.load(content);
+          const repo = process.env.GITHUB_REPOSITORY;
+          if (!repo) { throw new Error('GITHUB_REPOSITORY not set'); }
+          const [owner, name] = repo.split('/');
+          const token = process.env.GITHUB_TOKEN;
+          if (!token) { throw new Error('GITHUB_TOKEN not set'); }
+          const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+          const fetchJson = async (url, init = {}) => {
+            const headers = Object.assign({
+              authorization: 'Bearer ' + token,
+              accept: 'application/vnd.github+json'
+            }, init.headers || {});
+            while (true) {
+              const res = await fetch(url, Object.assign({}, init, { headers }));
+              if (res.status === 403) {
+                const remaining = Number(res.headers.get('x-ratelimit-remaining') || '0');
+                const resetSec = Number(res.headers.get('x-ratelimit-reset') || '0');
+                if (remaining === 0 && resetSec) {
+                  const waitMs = resetSec * 1000 - Date.now() + 1000;
+                  if (waitMs > 0 && waitMs < 300000) {
+                    console.log(`Rate limited. Sleeping ${waitMs}ms until reset...`);
+                    await sleep(waitMs);
+                    continue;
+                  }
+                }
+              }
+              if (!res.ok) {
+                const t = await res.text();
+                throw new Error(`HTTP ${res.status} ${res.statusText}: ${t}`);
+              }
+              if (res.status === 204) return null;
+              return res.json();
+            }
+          };
+          const patchIssue = async (num, body, labels) => {
+            const payload = {};
+            if (typeof body === 'string') payload.body = body;
+            if (Array.isArray(labels)) payload.labels = labels;
+            if (Object.keys(payload).length === 0) return;
+            await fetchJson(`https://api.github.com/repos/${owner}/${name}/issues/${num}`, {
+              method: 'PATCH',
+              body: JSON.stringify(payload)
+            });
+          };
+          // Cache and helpers for repository labels
+          const repoLabelsCache = new Map(); // name -> label
+          const ensureRepoLabelsLoaded = async () => {
+            if (repoLabelsCache.size) return;
+            let page = 1;
+            while (true) {
+              const list = await fetchJson(`https://api.github.com/repos/${owner}/${name}/labels?per_page=100&page=${page}`);
+              if (!Array.isArray(list) || list.length === 0) break;
+              for (const l of list) repoLabelsCache.set((l.name || '').toLowerCase(), l);
+              if (list.length < 100) break;
+              page += 1;
+              await sleep(100);
+            }
+          };
+          const labelColorFor = (labelName) => {
+            const n = (labelName || '').toLowerCase();
+            if (n.startsWith('type:bug')) return 'd73a4a';
+            if (n.startsWith('type:feat')) return '0e8a16';
+            if (n.startsWith('type:chore')) return '5319e7';
+            if (n.startsWith('type:test')) return 'a2eeef';
+            if (n.startsWith('priority:p0')) return 'b60205';
+            if (n.startsWith('priority:p1')) return 'd73a4a';
+            if (n.startsWith('priority:p2')) return 'fbca04';
+            if (n.startsWith('priority:p3')) return 'c5def5';
+            if (n.startsWith('area:')) return '1d76db';
+            return 'cccccc';
+          };
+          const ensureLabelExists = async (labelName) => {
+            await ensureRepoLabelsLoaded();
+            const key = (labelName || '').toLowerCase();
+            if (!key) return;
+            if (repoLabelsCache.has(key)) return;
+            try {
+              const created = await fetchJson(`https://api.github.com/repos/${owner}/${name}/labels`, {
+                method: 'POST',
+                body: JSON.stringify({ name: labelName, color: labelColorFor(labelName) })
+              });
+              if (created && created.name) {
+                repoLabelsCache.set(created.name.toLowerCase(), created);
+                console.log(`Created label '${created.name}'`);
+              }
+            } catch (err) {
+              console.log(`Warning: could not create label '${labelName}': ${String(err)}`);
+            }
+            await sleep(100);
+          };
+          const getIssue = async (num) => fetchJson(`https://api.github.com/repos/${owner}/${name}/issues/${num}`);
+          (async () => {
+            if (!doc || !Array.isArray(doc.issues)) return;
+            for (const it of doc.issues) {
+              const code = it.code;
+              const title = it.title;
+              const body = typeof it.body === 'string' ? it.body : '';
+              const desiredLabels = Array.isArray(it.labels) ? it.labels.map(String) : [];
+              if (!code || !title) continue;
+              const q = encodeURIComponent(`repo:${owner}/${name} is:issue in:title ${code}`);
+              const search = await fetchJson(`https://api.github.com/search/issues?q=${q}&per_page=1`);
+              const item = search.items && search.items[0];
+              if (!item) continue;
+              const full = await getIssue(item.number);
+              const currentBody = (full.body || '').trim();
+              const currentLabelNames = Array.isArray(full.labels)
+                ? full.labels.map(l => (typeof l === 'string' ? l : (l && l.name) || '')).filter(Boolean)
+                : [];
+              // Ensure labels exist
+              for (const ln of desiredLabels) {
+                await ensureLabelExists(ln);
+              }
+              const bodyChanged = currentBody !== body.trim();
+              const labelsChanged = (() => {
+                const a = new Set(currentLabelNames.map(s => s.toLowerCase()));
+                const b = new Set(desiredLabels.map(s => s.toLowerCase()));
+                if (a.size !== b.size) return true;
+                for (const x of a) if (!b.has(x)) return true;
+                return false;
+              })();
+              if (bodyChanged || labelsChanged) {
+                await patchIssue(item.number, body, desiredLabels);
+                const parts = [];
+                if (bodyChanged) parts.push('body');
+                if (labelsChanged) parts.push('labels');
+                console.log(`Updated #${item.number} (${code}): ${parts.join('+')}`);
+              } else {
+                console.log(`No change for #${item.number} (${code})`);
+              }
+              await sleep(200);
+            }
+          })().catch(err => { console.error(err); process.exit(1); });
+          NODE

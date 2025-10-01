@@ -119,13 +119,13 @@ issues:
 
     ### DoD
 
-    - [ ] Client REST o SDK per PATCH /jobs/:id con status/result.
+    - [x] Client REST o SDK per PATCH /jobs/:id con status/result.
 
-    - [ ] Aggiornamento stato su start, success e failure.
+    - [x] Aggiornamento stato su start, success e failure.
 
-    - [ ] Backoff configurabile (BullMQ) per retry.
+    - [x] Backoff configurabile (BullMQ) per retry.
 
-    - [ ] Test end-to-end con Redis locale che verifica roundtrip.
+    - [x] Test end-to-end con Redis locale che verifica roundtrip.
 
 
     ### Dipendenze

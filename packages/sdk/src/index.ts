@@ -25,6 +25,16 @@ export class InfluencerAIClient {
   async listJobs() {
     const response = await fetchWithTimeout(`${this.baseUrl}/jobs`);
     return handleResponse(response);
+
+  }
+
+  async updateJob(id: string, update: { status?: string; result?: unknown; costTok?: number }) {
+    const response = await fetchWithTimeout(`${this.baseUrl}/jobs/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(update),
+    });
+    return handleResponse(response);
   }
 
   async createContentPlan(plan: Omit<ContentPlan, 'createdAt'>) {

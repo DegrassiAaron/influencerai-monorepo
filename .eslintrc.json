@@ -8,5 +8,29 @@
   "env": {
     "node": true,
     "es2021": true
-  }
+  },
+  "overrides": [
+    {
+      "files": ["**/src/**/*.ts"],
+      "parser": "@typescript-eslint/parser",
+      "plugins": ["@typescript-eslint"],
+      "extends": [
+        "eslint:recommended",
+        "plugin:@typescript-eslint/recommended"
+      ],
+      "rules": {
+        "@typescript-eslint/no-explicit-any": "error",
+        "no-console": "error"
+      }
+    },
+    {
+      "files": ["**/*.spec.ts", "**/*.e2e-spec.ts", "**/test/**/*.ts"],
+      "parser": "@typescript-eslint/parser",
+      "plugins": ["@typescript-eslint"],
+      "rules": {
+        "@typescript-eslint/no-explicit-any": "off",
+        "no-console": "off"
+      }
+    }
+  ]
 }

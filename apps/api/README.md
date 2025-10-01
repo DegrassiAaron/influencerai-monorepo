@@ -58,3 +58,55 @@ curl "http://localhost:3001/jobs?type=content-generation&status=pending&take=10&
 curl http://localhost:3001/jobs/<JOB_ID>
 ```
 
+
+## OpenRouter: Timeout/Retry e Variabili d’Ambiente
+
+- Richiede `OPENROUTER_API_KEY` impostata (skippata solo in `NODE_ENV=test`).
+- Tuning opzionale (valori di default tra parentesi):
+  - `OPENROUTER_TIMEOUT_MS` (60000)
+  - `OPENROUTER_MAX_RETRIES` (3)
+  - `OPENROUTER_BACKOFF_BASE_MS` (250)
+  - `OPENROUTER_BACKOFF_JITTER_MS` (100)
+
+Esempio `.env`:
+
+```
+OPENROUTER_API_KEY=your_api_key_here
+# Opzionale
+OPENROUTER_TIMEOUT_MS=60000
+OPENROUTER_MAX_RETRIES=3
+OPENROUTER_BACKOFF_BASE_MS=250
+OPENROUTER_BACKOFF_JITTER_MS=100
+```
+
+### Mapping Errori Controller (Content Plans)
+
+- Upstream 429 → risposta 429 con messaggio "Rate limited by upstream".
+- Upstream 5xx → risposta 502 (Bad Gateway).
+- Timeout upstream (AbortError) → risposta 408 (Request Timeout).
+- Altri errori di rete → risposta 503 (Service Unavailable).
+- Altri status non-OK → `HttpException` con lo status originario (fallback 502).
+
+Note:
+- Il servizio registra eventuali `usage`/token restituiti da OpenRouter a scopo di tracciamento costi.
+- La logica di retry si applica a 429 e 5xx (backoff esponenziale + jitter, rispetto di `Retry-After`).
+
+## Test E2E Roundtrip (Redis + Worker)
+
+- Prerequisiti
+  - Redis in esecuzione localmente: `docker run --rm -p 6379:6379 redis:7`
+  - Dipendenze installate nel monorepo e SDK buildato: `pnpm i && pnpm --filter @influencerai/sdk build`
+
+- Esecuzione test
+  - Avvia i test E2E: `pnpm --filter @influencerai/api test:e2e`
+  - Le suite interessate sono:
+    - `apps/api/test/jobs.roundtrip.redis.e2e-spec.ts` (worker inline di test)
+    - `apps/api/test/jobs.roundtrip.realworker.e2e-spec.ts` (worker reale `apps/worker`)
+
+- Variabili d’ambiente utili
+  - `REDIS_URL` (default: `redis://localhost:6379`)
+  - I test forzano Bull attivo con `DISABLE_BULL=0` e fanno il ping a Redis; se non raggiungibile, la suite viene automaticamente skippata.
+
+- Note
+  - Il test “real worker” avvia il worker con `tsx` puntando a `apps/worker/src/index.ts` e necessita che le sue dipendenze siano installate. Assicurati di aver eseguito `pnpm i` a livello root.
+  - Entrambi i test usano un mock in‑memory di Prisma per evitare un database reale, ma esercitano gli endpoint `POST /jobs`, `GET /jobs/:id` e `PATCH /jobs/:id` oltre all’enqueue BullMQ.
