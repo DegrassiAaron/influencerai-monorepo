@@ -36,7 +36,7 @@ const contentWorker = new Worker(
     logger.info({ id: job.id, name: job.name, data: job.data }, 'Processing content-generation job');
     const jobId = (job.data as any)?.jobId as string | undefined;
     try {
-      if (jobId) await api.updateJob(jobId, { status: 'running' });
+      if (jobId) await patchJobStatus(jobId, { status: 'running' });
     } catch (err) {
       logger.warn({ err, jobId }, 'Failed to PATCH job status to running');
     }
@@ -45,9 +45,8 @@ const contentWorker = new Worker(
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
     const result = { success: true, result: 'Job completed' };
-
     try {
-      if (jobId) await api.updateJob(jobId, { status: 'succeeded', result });
+      if (jobId) await patchJobStatus(jobId, { status: 'succeeded', result });
     } catch (err) {
       logger.warn({ err, jobId }, 'Failed to PATCH job status to succeeded');
     }
@@ -63,7 +62,7 @@ const loraWorker = new Worker(
     logger.info({ id: job.id, data: job.data }, 'Processing LoRA training job');
     const jobId = (job.data as any)?.jobId as string | undefined;
     try {
-      if (jobId) await api.updateJob(jobId, { status: 'running' });
+      if (jobId) await patchJobStatus(jobId, { status: 'running' });
     } catch (err) {
       logger.warn({ err, jobId }, 'Failed to PATCH job status to running');
     }
@@ -73,7 +72,7 @@ const loraWorker = new Worker(
 
     const result = { success: true, result: 'Training completed' };
     try {
-      if (jobId) await api.updateJob(jobId, { status: 'succeeded', result });
+      if (jobId) await patchJobStatus(jobId, { status: 'succeeded', result });
     } catch (err) {
       logger.warn({ err, jobId }, 'Failed to PATCH job status to succeeded');
     }
@@ -90,7 +89,7 @@ contentWorker.on('failed', (job, err) => {
   logger.error({ id: job?.id, err }, 'Job failed');
   const jobId = (job?.data as any)?.jobId as string | undefined;
   if (jobId) {
-    api.updateJob(jobId, { status: 'failed', result: { message: err?.message, stack: (err as any)?.stack } as any }).catch((e) => {
+    patchJobStatus(jobId, { status: 'failed', result: { message: err?.message, stack: (err as any)?.stack } as any }).catch((e) => {
       logger.warn({ e, jobId }, 'Failed to PATCH job status to failed');
     });
   }
@@ -104,7 +103,7 @@ loraWorker.on('failed', (job, err) => {
   logger.error({ id: job?.id, err }, 'LoRA training job failed');
   const jobId = (job?.data as any)?.jobId as string | undefined;
   if (jobId) {
-    api.updateJob(jobId, { status: 'failed', result: { message: err?.message, stack: (err as any)?.stack } as any }).catch((e) => {
+    patchJobStatus(jobId, { status: 'failed', result: { message: err?.message, stack: (err as any)?.stack } as any }).catch((e) => {
       logger.warn({ e, jobId }, 'Failed to PATCH job status to failed');
     });
   }

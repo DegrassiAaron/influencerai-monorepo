@@ -127,4 +127,3 @@ Con Docker Compose dello stack (`infra/docker-compose.yml`):
 
 - `GET /healthz` restituisce lo stato di DB, Redis e MinIO con latenza per check.
 - `GET /readyz` come `healthz`, ma ritorna 503 se uno dei servizi è KO (per probe/container orchestrators).
-
