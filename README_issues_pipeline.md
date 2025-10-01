@@ -33,6 +33,13 @@ Questo starter consente di:
 - La workflow `.github/workflows/sync-backlog-issues.yml` aggiorna anche le issue già esistenti
   sincronizzando il corpo e i label con quanto definito in `backlog/issues.yaml` (crea le label mancanti con colori di default).
 
+### Verifica coerenza DoD su GitHub
+
+- La workflow `.github/workflows/verify-backlog-issues.yml` verifica che ogni issue il cui DoD risulta completo nel
+  `backlog/issues.yaml` (tutte le checkbox `- [x]` e nessuna `- [ ]`) sia effettivamente chiusa su GitHub.
+- Trigger: push su `main` e pull request che toccano `backlog/issues.yaml`, oppure manuale via "Run workflow".
+- In caso di disallineamento (DoD completo ma issue ancora aperta), il job fallisce per evidenziare l'errore.
+
 ## Criteri di ranking (default)
 
 - Ordina per `priority` (P1 > P2 > P3), poi `impact` (High > Medium > Low), poi stima (`estimate`: XS < S < M < L < XL).
