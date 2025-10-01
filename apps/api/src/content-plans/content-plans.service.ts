@@ -58,7 +58,7 @@ export class ContentPlansService {
       data: {
         type: 'content-plan' as any,
         status: 'completed',
-        payload: { influencerId: input.influencerId, theme: input.theme, targetPlatforms: plan.targetPlatforms } as any,
+        payload: { influencerId: input.influencerId, tenantId: infl.tenantId, theme: input.theme, targetPlatforms: plan.targetPlatforms } as any,
         result: plan as any,
         finishedAt: new Date(),
       },
