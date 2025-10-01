@@ -1,10 +1,11 @@
-﻿import { Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PrismaModule } from './prisma/prisma.module';
 import { BullModule } from '@nestjs/bullmq';
 import { JobsModule } from './jobs/jobs.module';
+import { ContentPlansModule } from './content-plans/content-plans.module';
 
 function parseRedisUrl(url?: string) {
   try {
@@ -31,8 +32,10 @@ const extraImports = enableBull
     PrismaModule,
     ...extraImports,
     JobsModule,
+    ContentPlansModule,
   ],
   controllers: [AppController],
   providers: [AppService],
 })
 export class AppModule {}
+

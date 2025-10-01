@@ -17,6 +17,8 @@
     "prisma:db:push": "prisma db push"
   },
   "dependencies": {
+    "@influencerai/core-schemas": "workspace:*",
+    "@influencerai/prompts": "workspace:*",
     "@fastify/static": "^7.0.4",
     "@nestjs/bullmq": "^10.2.1",
     "@nestjs/common": "^10.4.8",
