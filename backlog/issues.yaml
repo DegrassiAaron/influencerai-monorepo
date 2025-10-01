@@ -227,9 +227,9 @@ issues:
 
     - [x] Service S3 basato su MinIO configurato via variabili S3_*.
 
-    - [ ] Endpoint POST /datasets per creare record e ottenere URL di upload presignato.
+    - [x] Endpoint POST /datasets per creare record e ottenere URL di upload presignato.
 
-    - [ ] Endpoint PATCH /datasets/:id/status per aggiornare stato (es. READY, PROCESSING).
+    - [x] Endpoint PATCH /datasets/:id/status per aggiornare stato (es. READY, PROCESSING).
 
     - [ ] Integrazione test con MinIO locale via docker compose.
 
