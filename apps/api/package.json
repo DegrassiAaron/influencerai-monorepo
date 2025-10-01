@@ -10,7 +10,11 @@
     "test": "jest",
     "test:e2e": "jest -c jest.e2e.config.js",
     "test:watch": "jest --watch",
-    "start:dev": "pnpm dev"
+    "start:dev": "pnpm dev",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate:dev": "prisma migrate dev",
+    "prisma:migrate:deploy": "prisma migrate deploy",
+    "prisma:db:push": "prisma db push"
   },
   "dependencies": {
     "@fastify/static": "^7.0.4",

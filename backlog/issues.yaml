@@ -120,14 +120,14 @@ issues:
 
     ### DoD
 
-    - [ ] schema.prisma aggiornato con modelli Tenant, Influencer, Dataset, Job, Asset.
+    - [x] schema.prisma aggiornato con modelli Tenant, Influencer, Dataset, Job, Asset.
 
-    - [ ] Migrazione iniziale generata e applicata localmente (pnpm prisma migrate
+    - [x] Migrazione iniziale generata e applicata localmente (pnpm prisma migrate
     dev).
 
-    - [ ] Script prisma generate aggiunto agli script dell''app API.
+    - [x] Script prisma generate aggiunto agli script dell''app API.
 
-    - [ ] Documentata nella README API la procedura per applicare le migrazioni.
+    - [x] Documentata nella README API la procedura per applicare le migrazioni.
 
 
     ### Dipendenze
@@ -155,14 +155,14 @@ issues:
 
     ### DoD
 
-    - [ ] Endpoint POST /jobs con validazione Zod/DTO e enqueue in coda content-generation
+    - [x] Endpoint POST /jobs con validazione Zod/DTO e enqueue in coda content-generation
     o lora-training.
 
-    - [ ] Endpoint GET /jobs con filtri base (status, type) e paginazione.
+    - [x] Endpoint GET /jobs con filtri base (status, type) e paginazione.
 
-    - [ ] Endpoint GET /jobs/:id che restituisce metadata, payload e result.
+    - [x] Endpoint GET /jobs/:id che restituisce metadata, payload e result.
 
-    - [ ] Test e2e o integration che verifica roundtrip con Redis locale.
+    - [x] Test e2e o integration che verifica roundtrip con Redis locale.
 
 
     ### Dipendenze
