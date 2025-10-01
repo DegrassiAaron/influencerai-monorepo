@@ -1,6 +1,6 @@
-import { Controller, Get, Param, Post, Body, Query, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Controller, Get, Param, Post, Body, Query, BadRequestException, NotFoundException, Patch } from '@nestjs/common';
 import { JobsService } from './jobs.service';
-import { CreateJobSchema, ListJobsQuerySchema } from './dto';
+import { CreateJobSchema, ListJobsQuerySchema, UpdateJobSchema } from './dto';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 @ApiTags('jobs')
@@ -45,5 +45,20 @@ export class JobsController {
       if (!job) throw new NotFoundException('Job not found');
       return job;
     });
+  }
+
+  @Patch(':id')
+  @ApiOperation({ summary: 'Update a job (status, result, costTok)' })
+  @ApiResponse({ status: 200, description: 'Job updated' })
+  @ApiResponse({ status: 400, description: 'Validation error' })
+  @ApiResponse({ status: 404, description: 'Job not found' })
+  async update(@Param('id') id: string, @Body() body: unknown) {
+    const parsed = UpdateJobSchema.safeParse(body);
+    if (!parsed.success) {
+      throw new BadRequestException(parsed.error.flatten());
+    }
+    const updated = await this.jobsService.updateJob(id, parsed.data);
+    if (!updated) throw new NotFoundException('Job not found');
+    return updated;
   }
 }

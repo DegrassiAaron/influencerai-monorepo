@@ -11,6 +11,7 @@
   "dependencies": {
     "bullmq": "^5.38.2",
     "ioredis": "^5.4.2",
+    "@influencerai/sdk": "workspace:*",
     "zod": "^3.24.1",
     "undici": "^7.3.0",
     "p-queue": "^8.0.1",
