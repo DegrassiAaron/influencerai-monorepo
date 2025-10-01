@@ -28,7 +28,7 @@ describe('Jobs + Redis (e2e)', () => {
       await client.ping();
     } catch {
       // Skip if Redis is not available
-      // eslint-disable-next-line no-console
+       
       console.warn('Redis non disponibile; salto la suite Jobs + Redis (e2e)');
       return;
     } finally {
