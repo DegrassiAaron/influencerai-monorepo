@@ -11,7 +11,9 @@
       "Bash(cat:*)",
       "Bash(git check-ignore:*)",
       "Bash(gh label list:*)",
-      "Bash(gh label create:*)"
+      "Bash(gh label create:*)",
+      "Bash(grep:*)",
+      "Bash(gh issue close 27 --comment \"$(cat <<''EOF''\n## ✅ Verifica completata\n\n### Risultati\n- ✅ File `.env` **NON è tracciato** da git\n- ✅ `.env` contiene **solo placeholder e credenziali di sviluppo locale** (nessuna credenziale reale esposta)\n- ✅ `.gitignore` già contiene `.env`\n- ✅ Nessuna rotazione credenziali necessaria\n\n### Modifiche applicate\n\n1. **`.env.example` aggiornato** con commenti esplicativi:\n   - Documentato che OPENROUTER_API_KEY è l''unico servizio a pagamento\n   - Aggiunto link per ottenere la chiave\n   - Aggiunti commenti per ogni sezione (Database, Redis, MinIO, etc.)\n   - Aggiunta variabile opzionale LOG_LEVEL\n\n2. **README.md aggiornato** con sezione completa su setup `.env`:\n   - Step-by-step per creare `.env` da `.env.example`\n   - Istruzioni per ottenere OpenRouter API key\n   - Warning sulla sicurezza (non committare .env, non condividere API key)\n   - Lista completa variabili disponibili\n\n### Conclusione\nIl repository è **sicuro**. Nessuna credenziale reale esposta.\nEOF\n)\")"
     ],
     "deny": [],
     "ask": []

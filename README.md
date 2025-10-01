@@ -169,15 +169,44 @@ Per stoppare manualmente dalla root: `docker compose -f infra/docker-compose.yml
 
 ## Variabili ambiente (.env)
 
+### Setup
+
+1. **Crea il file `.env` dalla root del repository**:
+   ```bash
+   cp .env.example .env
+   ```
+
+2. **Configura OpenRouter API key** (obbligatoria per generazione testi):
+   - Registrati su [OpenRouter](https://openrouter.ai/)
+   - Vai su [API Keys](https://openrouter.ai/keys) e genera una nuova chiave
+   - Apri `.env` e sostituisci `your_api_key_here` con la tua chiave:
+     ```bash
+     OPENROUTER_API_KEY=sk-or-v1-xxxxx
+     ```
+
+3. **Le altre variabili** sono pre-configurate per sviluppo locale con Docker e **non richiedono modifiche**:
+   - `DATABASE_URL`, `REDIS_URL`: usano le credenziali dei container Docker
+   - `S3_*`: credenziali MinIO locali (non per produzione)
+   - `PORT`: porta API (default 3001)
+
+### ⚠️ Sicurezza
+
+- ❌ **NON committare mai il file `.env`** (già presente in `.gitignore`)
+- ❌ **NON condividere la tua OPENROUTER_API_KEY** (è l'unico servizio a pagamento)
+- ✅ Usa `.env.example` come template con placeholder sicuri
+- ✅ In produzione, rigenera tutte le credenziali (DB, MinIO, etc.)
+
+### Variabili disponibili
 
 ```bash
-DATABASE_URL=postgresql://postgres:postgres@postgres:5432/influencerai
-REDIS_URL=redis://redis:6379
-S3_ENDPOINT=http://minio:9000
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/influencerai
+REDIS_URL=redis://localhost:6379
+S3_ENDPOINT=http://localhost:9000
 S3_KEY=minio
 S3_SECRET=minio12345
 S3_BUCKET=assets
-OPENROUTER_API_KEY=...
+OPENROUTER_API_KEY=your_api_key_here  # ← Sostituisci con la tua key!
+PORT=3001
 ```
 
 ---
