@@ -45,7 +45,7 @@ export class DatasetsService {
     }
 
     const uploadUrl = await this.storage.getPresignedPutUrl({ key: finalKey, contentType: input.contentType });
-    return { id: ds.id, uploadUrl, key: finalKey, bucket: (this as any).storage['bucket'] };
+    return { id: ds.id, uploadUrl, key: finalKey, bucket: this.storage.getBucketName() };
   }
 
   async updateStatus(id: string, input: UpdateDatasetStatusDto) {
@@ -55,4 +55,3 @@ export class DatasetsService {
     return updated;
   }
 }
-

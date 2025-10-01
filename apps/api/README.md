@@ -219,6 +219,52 @@ Con Docker Compose dello stack (`infra/docker-compose.yml`):
 - `minio` espone S3 su `http://localhost:9000` e console su `http://localhost:9001`
 - `minio-init` crea automaticamente il bucket `assets` se assente
 
+## Datasets
+
+- Autenticazione
+  - Le rotte richiedono JWT in `Authorization: Bearer <token>`.
+  - Lo scope `tenantId` è applicato via middleware Prisma.
+
+- Configurazione MinIO/S3
+  - Variabili: `S3_ENDPOINT`, `S3_KEY`, `S3_SECRET`, `S3_BUCKET`
+
+- POST `/datasets` (crea record + presigned URL)
+  - Body: `{"kind":"training","filename":"dataset.zip","contentType":"application/zip","meta":{...}}`
+  - Risposta: `{"id":"<id>","uploadUrl":"<presigned-put-url>","key":"datasets/{tenantId}/{id}/{filename}","bucket":"assets"}`
+  - Esempio:
+
+```
+curl -H "Authorization: Bearer <JWT>" \
+     -H "Content-Type: application/json" \
+     -d '{"kind":"training","filename":"dataset.zip","contentType":"application/zip"}' \
+     http://localhost:3001/datasets
+```
+
+- PUT (presigned upload diretto su MinIO/S3)
+  - Usa `uploadUrl` della risposta precedente, imposta `Content-Type` coerente.
+  - Non richiede header `Authorization`.
+  - Esempio:
+
+```
+curl -X PUT -H "Content-Type: application/zip" --data-binary "@./dataset.zip" "<uploadUrl>"
+```
+
+- PATCH `/datasets/:id/status` (aggiorna stato)
+  - Body: `{"status":"ready"}` (supportati: `pending`, `ready`, `processing`, `failed`, `completed`)
+  - Esempio:
+
+```
+curl -X PATCH -H "Authorization: Bearer <JWT>" \
+     -H "Content-Type: application/json" \
+     -d '{"status":"ready"}' \
+     http://localhost:3001/datasets/<id>/status
+```
+
+- Flusso tipico
+  - Crea dataset e ottieni `uploadUrl` (POST `/datasets`)
+  - Esegui upload file con `PUT` presigned
+  - Aggiorna stato a `ready` (PATCH `/datasets/:id/status`)
+
 ## Health & Readiness
 
 - `GET /healthz` restituisce lo stato di DB, Redis e MinIO con latenza per check.
