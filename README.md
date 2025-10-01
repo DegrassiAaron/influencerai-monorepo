@@ -58,6 +58,14 @@ influencerai/
 
 ---
 
+## Backlog Sync Automation
+
+- Una GitHub Action sincronizza `backlog/issues.yaml` con le issue su GitHub ad ogni push su `main` che tocca il file.
+- Workflow: `.github/workflows/sync-backlog-issues.yml`.
+- Il job cerca le issue per `code` (es. `CODE-03`) nel titolo e aggiorna il body (inclusi i DoD checkbox) se differisce dal YAML.
+
+---
+
 ## Docker Compose
 
 ```yaml
