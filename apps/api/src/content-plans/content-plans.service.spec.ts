@@ -11,7 +11,14 @@ describe('ContentPlansService', () => {
     prismaMock.influencer.findUnique.mockImplementation(async ({ where: { id } }: any) => (id === 'inf_1' ? { id, tenantId: 'ten_1', persona: { name: 'A' } } : null));
     prismaMock.job.create.mockImplementation(async ({ data }: any) => ({ id: 'job_cp_1', ...data }));
     // Mock global fetch to simulate OpenRouter returning JSON array in content
+    process.env.OPENROUTER_MAX_RETRIES = '3';
+    process.env.OPENROUTER_TIMEOUT_MS = '50';
+    process.env.OPENROUTER_BACKOFF_BASE_MS = '1';
+    process.env.OPENROUTER_BACKOFF_JITTER_MS = '0';
     global.fetch = jest.fn(async () => ({
+      ok: true,
+      status: 200,
+      headers: { get: () => null },
       json: async () => ({ choices: [{ message: { content: JSON.stringify([{ caption: 'post1', hashtags: ['x'] }]) } }] }),
     })) as any;
   });
@@ -25,5 +32,62 @@ describe('ContentPlansService', () => {
     const arg = prismaMock.job.create.mock.calls[0][0];
     expect(arg.data.payload).toMatchObject({ influencerId: 'inf_1', tenantId: 'ten_1' });
     expect(arg.data.result.createdAt).toBeTruthy();
+  });
+
+  it('retries on 429 with Retry-After then succeeds', async () => {
+    (global.fetch as jest.Mock).mockReset();
+    (global.fetch as jest.Mock)
+      .mockImplementationOnce(async () => ({
+        ok: false,
+        status: 429,
+        headers: { get: (k: string) => (k.toLowerCase() === 'retry-after' ? '0' : null) },
+        json: async () => ({ error: 'rate limited' }),
+        text: async () => 'rate limited',
+      }))
+      .mockImplementationOnce(async () => ({
+        ok: true,
+        status: 200,
+        headers: { get: () => null },
+        json: async () => ({ choices: [{ message: { content: JSON.stringify([{ caption: 'ok', hashtags: ['h'] }]) } }] }),
+      }));
+
+    const svc = new ContentPlansService(prismaMock);
+    const posts = await svc.generatePlanPosts('{}', 't');
+    expect(posts[0]).toEqual({ caption: 'ok', hashtags: ['h'] });
+    expect((global.fetch as jest.Mock).mock.calls.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('throws after retries on timeout/network error', async () => {
+    (global.fetch as jest.Mock).mockReset();
+    (global.fetch as jest.Mock).mockImplementation(async () => {
+      const err: any = new Error('aborted');
+      err.name = 'AbortError';
+      throw err;
+    });
+    const svc = new ContentPlansService(prismaMock);
+    await expect(svc.generatePlanPosts('{}', 't')).rejects.toBeTruthy();
+    expect((global.fetch as jest.Mock).mock.calls.length).toBeGreaterThanOrEqual(3);
+  });
+
+  it('retries on 5xx then succeeds', async () => {
+    (global.fetch as jest.Mock).mockReset();
+    (global.fetch as jest.Mock)
+      .mockImplementationOnce(async () => ({
+        ok: false,
+        status: 502,
+        headers: { get: () => null },
+        json: async () => ({ error: 'bad gateway' }),
+        text: async () => 'bad gateway',
+      }))
+      .mockImplementationOnce(async () => ({
+        ok: true,
+        status: 200,
+        headers: { get: () => null },
+        json: async () => ({ choices: [{ message: { content: JSON.stringify([{ caption: 'ok2', hashtags: ['h2'] }]) } }] }),
+      }));
+    const svc = new ContentPlansService(prismaMock);
+    const posts = await svc.generatePlanPosts('{}', 't');
+    expect(posts[0]).toEqual({ caption: 'ok2', hashtags: ['h2'] });
+    expect((global.fetch as jest.Mock).mock.calls.length).toBeGreaterThanOrEqual(2);
   });
 });

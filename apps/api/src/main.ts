@@ -5,6 +5,9 @@ import { AppModule } from './app.module';
 import { PrismaService } from './prisma/prisma.service';
 
 async function bootstrap() {
+  if (!process.env.OPENROUTER_API_KEY && process.env.NODE_ENV !== 'test') {
+    throw new Error('OPENROUTER_API_KEY is required. Set it in your environment.');
+  }
   const app = await NestFactory.create<NestFastifyApplication>(
     AppModule,
     new FastifyAdapter(),

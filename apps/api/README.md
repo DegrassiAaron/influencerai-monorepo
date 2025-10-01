@@ -58,3 +58,35 @@ curl "http://localhost:3001/jobs?type=content-generation&status=pending&take=10&
 curl http://localhost:3001/jobs/<JOB_ID>
 ```
 
+
+## OpenRouter: Timeout/Retry e Variabili d’Ambiente
+
+- Richiede `OPENROUTER_API_KEY` impostata (skippata solo in `NODE_ENV=test`).
+- Tuning opzionale (valori di default tra parentesi):
+  - `OPENROUTER_TIMEOUT_MS` (60000)
+  - `OPENROUTER_MAX_RETRIES` (3)
+  - `OPENROUTER_BACKOFF_BASE_MS` (250)
+  - `OPENROUTER_BACKOFF_JITTER_MS` (100)
+
+Esempio `.env`:
+
+```
+OPENROUTER_API_KEY=your_api_key_here
+# Opzionale
+OPENROUTER_TIMEOUT_MS=60000
+OPENROUTER_MAX_RETRIES=3
+OPENROUTER_BACKOFF_BASE_MS=250
+OPENROUTER_BACKOFF_JITTER_MS=100
+```
+
+### Mapping Errori Controller (Content Plans)
+
+- Upstream 429 → risposta 429 con messaggio "Rate limited by upstream".
+- Upstream 5xx → risposta 502 (Bad Gateway).
+- Timeout upstream (AbortError) → risposta 408 (Request Timeout).
+- Altri errori di rete → risposta 503 (Service Unavailable).
+- Altri status non-OK → `HttpException` con lo status originario (fallback 502).
+
+Note:
+- Il servizio registra eventuali `usage`/token restituiti da OpenRouter a scopo di tracciamento costi.
+- La logica di retry si applica a 429 e 5xx (backoff esponenziale + jitter, rispetto di `Retry-After`).
