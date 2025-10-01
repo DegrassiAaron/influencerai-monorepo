@@ -24,7 +24,14 @@ describe('Jobs + Redis (e2e)', () => {
     process.env.REDIS_URL = redisUrl;
 
     // Quick ping to Redis; if unavailable, skip the suite
-    const client = new IORedis(redisUrl);
+    // Use a fast‑fail Redis client for the availability probe to avoid
+    // Jest hook timeouts when Redis is unavailable.
+    const client = new IORedis(redisUrl, {
+      connectTimeout: 500,
+      maxRetriesPerRequest: 0,
+      enableReadyCheck: false,
+      retryStrategy: () => null,
+    } as any);
     try {
       await client.ping();
     } catch {

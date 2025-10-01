@@ -25,6 +25,7 @@ export class InfluencerAIClient {
   async listJobs() {
     const response = await fetchWithTimeout(`${this.baseUrl}/jobs`);
     return handleResponse(response);
+
   }
 
   async updateJob(id: string, update: { status?: string; result?: unknown; costTok?: number }) {
