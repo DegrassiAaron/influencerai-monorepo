@@ -31,7 +31,10 @@ jobs:
 
       - name: Verify DoD-complete issues are closed on GitHub
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Prefer a read-only PAT to avoid org/app installation rate limits.
+          # Fallback to the default GITHUB_TOKEN if no PAT is configured.
+          # Define one of these in repo/org secrets: GH_PAT_READ or GH_TOKEN or PAT_READ_CONTENTS
+          GITHUB_TOKEN: ${{ secrets.GH_PAT_READ || secrets.GH_TOKEN || secrets.PAT_READ_CONTENTS || secrets.GITHUB_TOKEN }}
         run: |
           node - <<'NODE'
           const fs = require('fs');
@@ -49,12 +52,37 @@ jobs:
               authorization: 'Bearer ' + token,
               accept: 'application/vnd.github+json'
             }, init.headers || {});
-            const res = await fetch(url, Object.assign({}, init, { headers }));
-            if (!res.ok) {
-              const t = await res.text();
-              throw new Error(`HTTP ${res.status} ${res.statusText}: ${t}`);
+            let attempt = 0;
+            const maxAttempts = 6; // ~ up to ~1+2+4+8+16+32 = 63s backoff
+            let lastErr;
+            while (attempt < maxAttempts) {
+              try {
+                const res = await fetch(url, Object.assign({}, init, { headers }));
+                const remaining = res.headers.get('x-ratelimit-remaining');
+                const status = res.status;
+                if (status === 429 || status === 403 || remaining === '0') {
+                  // Rate limited: compute backoff
+                  const reset = parseInt(res.headers.get('x-ratelimit-reset') || '0', 10);
+                  const now = Math.floor(Date.now() / 1000);
+                  const waitSec = Math.max( (reset ? (reset - now) : 0), Math.min(2 ** attempt, 32));
+                  await sleep(waitSec * 1000);
+                  attempt++;
+                  continue;
+                }
+                if (!res.ok) {
+                  const t = await res.text();
+                  throw new Error(`HTTP ${res.status} ${res.statusText}: ${t}`);
+                }
+                return res.status === 204 ? null : res.json();
+              } catch (e) {
+                lastErr = e;
+                // network/transient error -> backoff
+                const waitMs = Math.min(2 ** attempt * 1000, 32000);
+                await sleep(waitMs);
+                attempt++;
+              }
             }
-            return res.status === 204 ? null : res.json();
+            throw lastErr || new Error('fetchJson failed after retries');
           };
           const errors = [];
           (async () => {
