@@ -3,6 +3,100 @@ import { ConfigService } from '@nestjs/config';
 import { Prisma, PrismaClient } from '@prisma/client';
 import { getRequestContext } from '../lib/request-context';
 
+const TENANT_SCOPED_MODELS = new Set(['Influencer', 'Dataset', 'User']);
+
+type TenantScopedOperationKey =
+  | 'findMany'
+  | 'findUnique'
+  | 'findFirst'
+  | 'create'
+  | 'update'
+  | 'updateMany'
+  | 'delete'
+  | 'deleteMany';
+
+type TenantQueryTransform = (
+  args: Record<string, any>,
+  tenantId: string,
+) => Record<string, any>;
+
+const cloneArgs = (args: Prisma.QueryOptionsCbArgs['args']): Record<string, any> => {
+  if (!args || typeof args !== 'object') {
+    return {};
+  }
+
+  return { ...(args as Record<string, any>) };
+};
+
+const withTenantWhere = (overrideExisting: boolean): TenantQueryTransform => {
+  return (args, tenantId) => {
+    const where = { ...(args.where ?? {}) };
+
+    if (!overrideExisting && where.tenantId) {
+      return { ...args, where };
+    }
+
+    return { ...args, where: { ...where, tenantId } };
+  };
+};
+
+const withTenantData: TenantQueryTransform = (args, tenantId) => {
+  return {
+    ...args,
+    data: { ...(args.data ?? {}), tenantId },
+  };
+};
+
+const executeScopedQuery = async (
+  options: Prisma.QueryOptionsCbArgs,
+  transform: TenantQueryTransform,
+) => {
+  const { model, args, query } = options;
+
+  if (!model || !TENANT_SCOPED_MODELS.has(model)) {
+    return query(args);
+  }
+
+  const tenantId = getRequestContext().tenantId;
+
+  if (!tenantId) {
+    return query(args);
+  }
+
+  const baseArgs = cloneArgs(args);
+  const nextArgs = transform(baseArgs, tenantId);
+
+  return query(nextArgs as typeof args);
+};
+
+type TenantScopedOperations = Record<TenantScopedOperationKey, Prisma.QueryOptionsCb>;
+
+export const tenantScopedOperations: TenantScopedOperations = {
+  findMany: (options: Prisma.QueryOptionsCbArgs) =>
+    executeScopedQuery(options, withTenantWhere(true)),
+  findUnique: (options: Prisma.QueryOptionsCbArgs) =>
+    executeScopedQuery(options, withTenantWhere(false)),
+  findFirst: (options: Prisma.QueryOptionsCbArgs) =>
+    executeScopedQuery(options, withTenantWhere(false)),
+  create: (options: Prisma.QueryOptionsCbArgs) =>
+    executeScopedQuery(options, withTenantData),
+  update: (options: Prisma.QueryOptionsCbArgs) =>
+    executeScopedQuery(options, withTenantWhere(true)),
+  updateMany: (options: Prisma.QueryOptionsCbArgs) =>
+    executeScopedQuery(options, withTenantWhere(true)),
+  delete: (options: Prisma.QueryOptionsCbArgs) =>
+    executeScopedQuery(options, withTenantWhere(true)),
+  deleteMany: (options: Prisma.QueryOptionsCbArgs) =>
+    executeScopedQuery(options, withTenantWhere(true)),
+};
+
+export const tenantScopingExtension = Prisma.defineExtension({
+  name: 'tenant-scoping',
+  query: {
+    $allModels: tenantScopedOperations,
+  },
+});
+
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(PrismaService.name);
@@ -21,47 +115,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
 
   async onModuleInit(): Promise<void> {
     try {
-      // Apply multi-tenant scoping middleware for models that include tenantId
-      this.$use(async (params: Prisma.MiddlewareParams, next) => {
-        const ctx = getRequestContext();
-        const tenantId = ctx.tenantId;
-        if (!tenantId) {
-          return next(params);
-        }
-        const modelsWithTenant: Record<string, true> = { Influencer: true, Dataset: true, User: true };
-        if (!modelsWithTenant[params.model || '']) {
-          return next(params);
-        }
-        if (params.action === 'findMany') {
-          params.args = params.args || {};
-          params.args.where = params.args.where || {};
-          params.args.where.tenantId = tenantId;
-        }
-        if (params.action === 'findUnique' || params.action === 'findFirst') {
-          params.args = params.args || {};
-          params.args.where = params.args.where || {};
-          if (!params.args.where.tenantId) {
-            // Strengthen filter to current tenant
-            params.args.where.tenantId = tenantId;
-          }
-        }
-        if (params.action === 'create') {
-          params.args = params.args || {};
-          params.args.data = params.args.data || {};
-          params.args.data.tenantId = tenantId;
-        }
-        if (params.action === 'updateMany' || params.action === 'update') {
-          params.args = params.args || {};
-          params.args.where = params.args.where || {};
-          params.args.where.tenantId = tenantId;
-        }
-        if (params.action === 'deleteMany' || params.action === 'delete') {
-          params.args = params.args || {};
-          params.args.where = params.args.where || {};
-          params.args.where.tenantId = tenantId;
-        }
-        return next(params);
-      });
+      this.$extends(tenantScopingExtension);
       await this.$connect();
       this.logger.log(`Connected to database: ${this.maskDatabaseUrl(this.databaseUrl)}`);
     } catch (error) {
