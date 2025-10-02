@@ -40,6 +40,14 @@ Questo starter consente di:
 - Trigger: push su `main` e pull request che toccano `backlog/issues.yaml`, oppure manuale via "Run workflow".
 - In caso di disallineamento (DoD completo ma issue ancora aperta), il job fallisce per evidenziare l'errore.
 
+#### Token per `verify-backlog-issues`
+
+- Per ridurre i rate limit dell'App di Actions, il workflow usa il secret `GH_PAT_READ` (se presente), altrimenti ricade su `GITHUB_TOKEN`.
+- Crea un Fine-grained PAT con accesso al solo repo `influencerai-monorepo` e permessi minimi:
+  - Repository permissions: Contents (Read-only), Issues (Read-only). Metadata è implicito.
+- Aggiungi il token come secret del repository con nome `GH_PAT_READ` (Settings → Secrets and variables → Actions → New repository secret).
+- Rotazione/incidenti: vedi `docs/security/token-rotation.md` (sezione PAT) per revoca/rigenerazione e aggiornamento del secret.
+
 ## Criteri di ranking (default)
 
 - Ordina per `priority` (P1 > P2 > P3), poi `impact` (High > Medium > Low), poi stima (`estimate`: XS < S < M < L < XL).
