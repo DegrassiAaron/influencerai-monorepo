@@ -2,6 +2,7 @@ import { Worker } from 'bullmq';
 import Redis from 'ioredis';
 import { logger } from './logger';
 import { InfluencerAIClient } from '@influencerai/sdk';
+import type { JobResponse } from '@influencerai/sdk';
 import { imageCaptionPrompt, videoScriptPrompt } from '@influencerai/prompts';
 import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
@@ -225,7 +226,7 @@ const contentWorker = new Worker(
       // 3) Create a child job for visual asset generation (e.g., video)
       let childJobId: string | undefined = undefined;
       try {
-        const child = await api.createJob({
+        const child: JobResponse = await api.createJob({
           type: 'video-generation',
           payload: {
             parentJobId: jobId,
@@ -236,8 +237,8 @@ const contentWorker = new Worker(
             durationSec,
           },
           priority: 5,
-        } as any);
-        childJobId = child?.id as string | undefined;
+        });
+        childJobId = child?.id;
       } catch (e) {
         logger.warn({ e }, 'Failed to create child job for video-generation');
       }
