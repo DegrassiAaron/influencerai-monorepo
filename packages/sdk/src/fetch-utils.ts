@@ -19,9 +19,9 @@ export class APIError extends Error {
   }
 }
 
-export async function handleResponse<T = unknown>(response: Response): Promise<T> {
-  const contentType = response.headers.get('content-type') || '';
-  const isJson = contentType.includes('application/json');
+export async function handleResponse<T = unknown>(response: any): Promise<T> {
+  const contentType = (response.headers?.get?.('content-type') || '') as string;
+  const isJson = typeof contentType === 'string' && contentType.includes('application/json');
 
   if (!response.ok) {
     let errorBody: unknown = undefined;
@@ -48,16 +48,16 @@ export async function handleResponse<T = unknown>(response: Response): Promise<T
   return (await response.json()) as T;
 }
 
-export async function fetchWithTimeout(input: RequestInfo | URL, init: RequestInit = {}, timeoutMs = 30_000): Promise<Response> {
+export async function fetchWithTimeout(input: any, init: any = {}, timeoutMs = 30_000): Promise<any> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
-  const method = init.method || 'GET';
+  const method = init?.method || 'GET';
   try {
     const response = await fetch(input, { ...init, signal: controller.signal });
     return response;
   } catch (err) {
     // Abort or network error
-    const url = typeof input === 'string' ? input : (input as URL).toString();
+    const url = typeof input === 'string' ? input : String(input);
     if ((err as Error)?.name === 'AbortError') {
       throw new APIError('Request timed out', { status: 408, url, method, cause: err });
     }

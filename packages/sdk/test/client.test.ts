@@ -22,6 +22,19 @@ describe('InfluencerAIClient error handling', () => {
     expect(out).toEqual({ id: 'j1' });
   });
 
+  it('createJob result is typed as JobResponse and id is accessible', async () => {
+    const res = new Response(JSON.stringify({ id: 'j-typed', status: 'pending' }), {
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+    });
+    vi.spyOn(globalThis, 'fetch' as never).mockResolvedValue(res as unknown as Response);
+    const out = await client.createJob({} as any);
+    // Access id without casting to ensure the type is present at compile time
+    const id: string = out.id;
+    expect(id).toBe('j-typed');
+    expect(out.status).toBe('pending');
+  });
+
   it('getJob throws InfluencerAIAPIError on non-OK', async () => {
     const res = new Response(JSON.stringify({ error: 'not found' }), { status: 404, headers: { 'content-type': 'application/json' } });
     vi.spyOn(globalThis, 'fetch' as never).mockResolvedValue(res as unknown as Response);
