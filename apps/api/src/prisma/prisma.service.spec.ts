@@ -1,6 +1,31 @@
 import { INestApplication } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { PrismaService } from './prisma.service';
+import { requestContext } from '../lib/request-context';
+
+jest.mock('@prisma/client', () => {
+  class PrismaClientMock {
+    $extends() {
+      return this;
+    }
+
+    $connect(): Promise<void> {
+      return Promise.resolve();
+    }
+
+    $disconnect(): Promise<void> {
+      return Promise.resolve();
+    }
+  }
+
+  return {
+    PrismaClient: PrismaClientMock,
+    Prisma: {
+      defineExtension: (extension: any) => extension,
+    },
+  };
+});
+
+import { PrismaService, tenantScopedOperations } from './prisma.service';
 
 describe('PrismaService', () => {
   const databaseUrl = 'postgresql://user:pass@localhost:5432/db?schema=public';
@@ -11,6 +36,10 @@ describe('PrismaService', () => {
     } as unknown as ConfigService;
   };
 
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
   it('throws if DATABASE_URL is not configured', () => {
     expect(() => new PrismaService(createConfigService(undefined))).toThrow(
       /DATABASE_URL/,
@@ -19,15 +48,18 @@ describe('PrismaService', () => {
 
   it('connects on module init', async () => {
     const service = new PrismaService(createConfigService(databaseUrl));
+    const extendsSpy = jest.spyOn<any, any>(service as any, '$extends').mockReturnValue(service);
     const connectSpy = jest.spyOn<any, any>(service as any, '$connect').mockResolvedValue(undefined);
 
     await service.onModuleInit();
 
+    expect(extendsSpy).toHaveBeenCalledTimes(1);
     expect(connectSpy).toHaveBeenCalledTimes(1);
   });
 
   it('rethrows errors raised during connection', async () => {
     const service = new PrismaService(createConfigService(databaseUrl));
+    jest.spyOn<any, any>(service as any, '$extends').mockReturnValue(service);
     const error = new Error('boom');
     jest.spyOn<any, any>(service as any, '$connect').mockRejectedValue(error);
 
@@ -68,5 +100,116 @@ describe('PrismaService', () => {
     expect(close).toHaveBeenCalledTimes(1);
 
     procOnSpy.mockRestore();
+  });
+
+  describe('tenant scoping extension', () => {
+    const runWithContext = async <T>(ctx: Record<string, any>, fn: () => Promise<T>): Promise<T> => {
+      return new Promise<T>((resolve, reject) => {
+        requestContext.run(ctx, async () => {
+          try {
+            resolve(await fn());
+          } catch (error) {
+            reject(error);
+          }
+        });
+      });
+    };
+
+    afterEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('applies tenant filter to findMany operations', async () => {
+      const query = jest.fn().mockResolvedValue(['influencer']);
+
+      await runWithContext({ tenantId: 'tenant_a' }, () =>
+        tenantScopedOperations.findMany({
+          model: 'Influencer',
+          operation: 'findMany',
+          args: { where: { status: 'active' }, orderBy: { createdAt: 'desc' } },
+          query,
+        }),
+      );
+
+      expect(query).toHaveBeenCalledWith({
+        where: { status: 'active', tenantId: 'tenant_a' },
+        orderBy: { createdAt: 'desc' },
+      });
+    });
+
+    it('preserves explicit tenant filters on findUnique', async () => {
+      const query = jest.fn().mockResolvedValue({ id: 'inf_1' });
+
+      await runWithContext({ tenantId: 'tenant_a' }, () =>
+        tenantScopedOperations.findUnique({
+          model: 'Influencer',
+          operation: 'findUnique',
+          args: { where: { id: 'inf_1', tenantId: 'tenant_b' } },
+          query,
+        }),
+      );
+
+      expect(query).toHaveBeenCalledWith({ where: { id: 'inf_1', tenantId: 'tenant_b' } });
+    });
+
+    it('injects tenant id when creating tenant-scoped records', async () => {
+      const query = jest.fn().mockResolvedValue({ id: 'inf_1' });
+
+      await runWithContext({ tenantId: 'tenant_a' }, () =>
+        tenantScopedOperations.create({
+          model: 'Influencer',
+          operation: 'create',
+          args: { data: { name: 'Jane Doe' } },
+          query,
+        }),
+      );
+
+      expect(query).toHaveBeenCalledWith({ data: { name: 'Jane Doe', tenantId: 'tenant_a' } });
+    });
+
+    it('enforces tenant constraint on updates while leaving other models untouched', async () => {
+      const updateQuery = jest.fn().mockResolvedValue({ id: 'inf_1' });
+      const passthroughQuery = jest.fn().mockResolvedValue({ id: 'tenant_1' });
+
+      await runWithContext({ tenantId: 'tenant_a' }, async () => {
+        await tenantScopedOperations.update({
+          model: 'Influencer',
+          operation: 'update',
+          args: { where: { id: 'inf_1' }, data: { name: 'Updated' } },
+          query: updateQuery,
+        });
+
+        await tenantScopedOperations.update({
+          model: 'Tenant',
+          operation: 'update',
+          args: { where: { id: 'tenant_1' }, data: { name: 'Other' } },
+          query: passthroughQuery,
+        });
+      });
+
+      expect(updateQuery).toHaveBeenCalledWith({
+        where: { id: 'inf_1', tenantId: 'tenant_a' },
+        data: { name: 'Updated' },
+      });
+      expect(passthroughQuery).toHaveBeenCalledWith({
+        where: { id: 'tenant_1' },
+        data: { name: 'Other' },
+      });
+    });
+
+    it('skips scoping when no tenant is present in the request context', async () => {
+      const query = jest.fn().mockResolvedValue([]);
+
+      await runWithContext({}, () =>
+        tenantScopedOperations.findMany({
+          model: 'Influencer',
+          operation: 'findMany',
+          args: { where: { status: 'active' } },
+          query,
+        }),
+      );
+
+      expect(query).toHaveBeenCalledWith({ where: { status: 'active' } });
+    });
   });
 });
