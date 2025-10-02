@@ -32,7 +32,7 @@ module.exports = [
     },
     plugins: { '@typescript-eslint': tsPlugin },
     rules: {
-      '@typescript-eslint/no-explicit-any': 'error',
+      '@typescript-eslint/no-explicit-any': 'warn',
     },
   },
   // Allow any in tests

@@ -61,7 +61,7 @@ function resetTestDb(label: string) {
       });
     }
   } catch (err) {
-    // eslint-disable-next-line no-console
+     
     const msg = err instanceof Error ? err.message : String(err);
     if (label === 'beforeAll') {
       console.warn(`[e2e setup] DB reset failed during ${label}: ${msg}`);
