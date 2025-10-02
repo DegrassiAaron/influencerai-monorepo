@@ -122,6 +122,8 @@ services:
     environment:
       # Next.js server listens on 3000 in the Dockerfile
       - NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL:-http://localhost:3001}
+      # Force Next.js to listen on 3000 despite PORT in ../.env
+      - PORT=3000
     ports:
       - "3000:3000"
     depends_on:
