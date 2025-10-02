@@ -15,7 +15,9 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate:dev": "prisma migrate dev",
     "prisma:migrate:deploy": "prisma migrate deploy",
-    "prisma:db:push": "prisma db push"
+    "prisma:db:push": "prisma db push",
+    "pretest": "pnpm run prisma:generate",
+    "prepare": "pnpm run prisma:generate"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.899.0",
