@@ -26,24 +26,24 @@ describe('Jobs Roundtrip + Redis (e2e)', () => {
   // Simple in-memory Prisma mock
   const mem: Record<string, any> = {};
   const prismaMock: Partial<PrismaService> = {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     job: {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       create: async (args: any) => {
         const id = 'job_rt';
         mem[id] = { id, ...args.data };
         return mem[id];
       },
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       update: async (args: any) => {
         const id = args.where.id;
         if (!mem[id]) throw new Error('NotFound');
         mem[id] = { ...mem[id], ...args.data };
         return mem[id];
       },
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       findUnique: async (args: any) => mem[args.where.id] || null,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       findMany: async (_args: any) => Object.values(mem),
     } as any,
     onModuleInit: jest.fn(),

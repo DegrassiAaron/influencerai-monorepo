@@ -1,0 +1,31 @@
+name: Install & Build (workspace sanity)
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  install-and-build:
+    name: Install (frozen lockfile) and Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Enable Corepack and pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@latest --activate
+
+      - name: Install (frozen lockfile)
+        run: pnpm -w install --frozen-lockfile
+
+      - name: Full workspace build
+        run: pnpm -w build
