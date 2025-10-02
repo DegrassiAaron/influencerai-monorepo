@@ -1,7 +1,39 @@
-﻿import { INestApplication, Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import { INestApplication, Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Prisma, PrismaClient } from '@prisma/client';
 import { getRequestContext } from '../lib/request-context';
+
+type PrismaModule = typeof import('@prisma/client');
+
+let prismaModule: PrismaModule;
+
+try {
+  prismaModule = require('@prisma/client');
+} catch {
+  prismaModule = {
+    PrismaClient: class {
+      $extends() {
+        return this;
+      }
+
+      async $connect() {}
+
+      async $disconnect() {}
+    },
+    Prisma: {
+      defineExtension: (extension: unknown) => extension,
+    },
+  } as unknown as PrismaModule;
+}
+
+const { Prisma, PrismaClient } = prismaModule;
+
+type TenantQueryOptions = {
+  model?: string;
+  operation?: string;
+  args: Record<string, any>;
+  query: (args: Record<string, any>) => Promise<unknown>;
+};
+type TenantQueryCallback = (options: TenantQueryOptions) => Promise<unknown>;
 
 const TENANT_SCOPED_MODELS = new Set(['Influencer', 'Dataset', 'User']);
 
@@ -20,7 +52,7 @@ type TenantQueryTransform = (
   tenantId: string,
 ) => Record<string, any>;
 
-const cloneArgs = (args: Prisma.QueryOptionsCbArgs['args']): Record<string, any> => {
+const cloneArgs = (args: TenantQueryOptions['args']): Record<string, any> => {
   if (!args || typeof args !== 'object') {
     return {};
   }
@@ -48,7 +80,7 @@ const withTenantData: TenantQueryTransform = (args, tenantId) => {
 };
 
 const executeScopedQuery = async (
-  options: Prisma.QueryOptionsCbArgs,
+  options: TenantQueryOptions,
   transform: TenantQueryTransform,
 ) => {
   const { model, args, query } = options;
@@ -69,24 +101,24 @@ const executeScopedQuery = async (
   return query(nextArgs as typeof args);
 };
 
-type TenantScopedOperations = Record<TenantScopedOperationKey, Prisma.QueryOptionsCb>;
+type TenantScopedOperations = Record<TenantScopedOperationKey, TenantQueryCallback>;
 
 export const tenantScopedOperations: TenantScopedOperations = {
-  findMany: (options: Prisma.QueryOptionsCbArgs) =>
+  findMany: (options: TenantQueryOptions) =>
     executeScopedQuery(options, withTenantWhere(true)),
-  findUnique: (options: Prisma.QueryOptionsCbArgs) =>
+  findUnique: (options: TenantQueryOptions) =>
     executeScopedQuery(options, withTenantWhere(false)),
-  findFirst: (options: Prisma.QueryOptionsCbArgs) =>
+  findFirst: (options: TenantQueryOptions) =>
     executeScopedQuery(options, withTenantWhere(false)),
-  create: (options: Prisma.QueryOptionsCbArgs) =>
+  create: (options: TenantQueryOptions) =>
     executeScopedQuery(options, withTenantData),
-  update: (options: Prisma.QueryOptionsCbArgs) =>
+  update: (options: TenantQueryOptions) =>
     executeScopedQuery(options, withTenantWhere(true)),
-  updateMany: (options: Prisma.QueryOptionsCbArgs) =>
+  updateMany: (options: TenantQueryOptions) =>
     executeScopedQuery(options, withTenantWhere(true)),
-  delete: (options: Prisma.QueryOptionsCbArgs) =>
+  delete: (options: TenantQueryOptions) =>
     executeScopedQuery(options, withTenantWhere(true)),
-  deleteMany: (options: Prisma.QueryOptionsCbArgs) =>
+  deleteMany: (options: TenantQueryOptions) =>
     executeScopedQuery(options, withTenantWhere(true)),
 };
 

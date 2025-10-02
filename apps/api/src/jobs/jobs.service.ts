@@ -1,7 +1,6 @@
 import { Injectable, Logger as NestLogger, LoggerService, Optional } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
-import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { ListJobsQuery, UpdateJobDto } from './dto';
 
@@ -17,12 +16,12 @@ export class JobsService {
     @Optional() private readonly logger?: LoggerService,
   ) {}
 
-  async createJob(input: { type: JobType; payload: Prisma.InputJsonValue; priority?: number }) {
+  async createJob(input: { type: JobType; payload: unknown; priority?: number }) {
     const job = await this.prisma.job.create({
       data: {
         type: input.type,
         status: 'pending',
-        payload: input.payload,
+        payload: input.payload as any,
       },
     });
 
@@ -64,9 +63,9 @@ export class JobsService {
   }
 
   async updateJob(id: string, input: UpdateJobDto) {
-    const data: any = {};
+    const data: Record<string, unknown> = {};
     if (typeof input.status !== 'undefined') data.status = input.status;
-    if (typeof input.result !== 'undefined') data.result = input.result as Prisma.InputJsonValue;
+    if (typeof input.result !== 'undefined') data.result = input.result as any;
     if (typeof input.costTok !== 'undefined') data.costTok = input.costTok;
 
     // Auto-manage timestamps for common status transitions
