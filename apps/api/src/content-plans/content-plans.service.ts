@@ -4,8 +4,7 @@ import { CreateContentPlanDto, ContentPlanResponse } from './dto';
 import { fetchWithTimeout, HTTPError, parseRetryAfter, shouldRetry, backoffDelay, sleep } from '../lib/http-utils';
 import { OpenRouterResponseSchema } from '../types/openrouter';
 import { ContentPlanDataSchema } from '../types/content';
-import { Prisma, Job } from '@prisma/client';
-import { Logger as NestLogger, LoggerService, Optional } from '@nestjs/common';
+import { LoggerService, Optional } from '@nestjs/common';
 
 // Minimal local prompt to avoid build coupling; align with @influencerai/prompts
 function contentPlanPrompt(persona: string, theme: string) {
@@ -122,8 +121,13 @@ export class ContentPlansService {
       data: {
         type: 'content-plan',
         status: 'completed',
-        payload: { influencerId: input.influencerId, tenantId: infl.tenantId, theme: input.theme, targetPlatforms: plan.targetPlatforms } as Prisma.InputJsonValue,
-        result: plan as Prisma.InputJsonValue,
+        payload: {
+          influencerId: input.influencerId,
+          tenantId: infl.tenantId,
+          theme: input.theme,
+          targetPlatforms: plan.targetPlatforms,
+        } as unknown as Record<string, unknown>,
+        result: plan as unknown as Record<string, unknown>,
         finishedAt: new Date(),
       },
     });
@@ -139,16 +143,21 @@ export class ContentPlansService {
   }
 
   async listPlans(params: { influencerId?: string; take?: number; skip?: number }): Promise<{ id: string; plan: ContentPlanResponse }[]> {
-    const jobs: Job[] = await this.prisma.job.findMany({
-      where: {
-        type: 'content-plan',
-        ...(params.influencerId ? { payload: { path: ['influencerId'], equals: params.influencerId } as Prisma.JsonFilter } : {}),
-      },
+    const where: Record<string, unknown> = { type: 'content-plan' };
+    if (params.influencerId) {
+      where.payload = { path: ['influencerId'], equals: params.influencerId };
+    }
+
+    const jobs = await this.prisma.job.findMany({
+      where: where as any,
       orderBy: { createdAt: 'desc' },
       take: params.take ?? 20,
       skip: params.skip ?? 0,
     });
-    return jobs.map((j) => ({ id: j.id, plan: j.result as unknown as ContentPlanResponse }));
+    return jobs.map((job: { id: string; result: unknown }) => ({
+      id: job.id,
+      plan: job.result as unknown as ContentPlanResponse,
+    }));
   }
 }
 
