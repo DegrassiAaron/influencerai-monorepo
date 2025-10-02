@@ -1,0 +1,33 @@
+import React from "react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import LoginPage from "../app/login/page";
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }),
+  useSearchParams: () => ({ get: () => null }),
+}));
+
+describe("LoginPage", () => {
+  beforeEach(() => {
+    // @ts-ignore
+    global.fetch = vi.fn(async () => ({ ok: true, json: async () => ({ ok: true }) }));
+  });
+
+  it("renders form and submits", async () => {
+    render(<LoginPage />);
+    const email = screen.getByLabelText(/email/i);
+    const password = screen.getByLabelText(/password/i);
+    const submit = screen.getByRole("button", { name: /sign in/i });
+
+    fireEvent.change(email, { target: { value: "user@example.com" } });
+    fireEvent.change(password, { target: { value: "secret" } });
+    fireEvent.click(submit);
+
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledWith(
+        "/api/session/login",
+        expect.objectContaining({ method: "POST" })
+      );
+    });
+  });
+});
