@@ -516,13 +516,13 @@ issues:
 
     ### DoD
 
-    - [ ] Pagina /login con form e chiamata a /auth/login.
+    - [x] Pagina /login con form e chiamata a /auth/login.
 
-    - [ ] Salvataggio token (httpOnly cookie o storage sicuro) e provider contesto.
+    - [x] Salvataggio token (httpOnly cookie o storage sicuro) e provider contesto.
 
-    - [ ] Middleware per proteggere route e redirect.
+    - [x] Middleware per proteggere route e redirect.
 
-    - [ ] Test component/integration con Playwright o React Testing Library.
+    - [x] Test component/integration con Playwright o React Testing Library.
 
 
     ### Dipendenze
