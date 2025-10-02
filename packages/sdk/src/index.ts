@@ -35,7 +35,6 @@ export class InfluencerAIClient {
     });
     return handleResponse(response);
   }
-  }
 
   async createContentPlan(plan: Omit<ContentPlan, 'createdAt'>) {
     const response = await fetchWithTimeout(`${this.baseUrl}/content-plans`, {
