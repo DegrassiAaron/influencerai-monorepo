@@ -23,8 +23,34 @@ This doc explains how to quickly revoke an exposed token and rotate credentials 
      - Repository permissions: Contents (Read and write), Pull requests (Read and write), Issues (Read and write).
 
 3) Update local environment
-   - PowerShell: `$env:GH_TOKEN='<NEW_PAT>'`
-   - GitHub CLI (optional): `gh auth login --with-token` then paste `<NEW_PAT>`.
+    - PowerShell: `$env:GH_TOKEN='<NEW_PAT>'`
+    - GitHub CLI (optional): `gh auth login --with-token` then paste `<NEW_PAT>`.
+
+### Use a read-only PAT in GitHub Actions (GH_PAT_READ)
+
+To lower rate limits on verification workflows, store a fine-grained PAT as a repository secret used by CI.
+
+1) Create a fine-grained PAT
+   - Owner: your user (recommended).
+   - Repository access: `DegrassiAaron/influencerai-monorepo` only.
+   - Permissions (minimum): Repository permissions → Contents: Read-only; Issues: Read-only.
+
+2) Add as repo secret `GH_PAT_READ`
+   - GitHub UI: Settings → Secrets and variables → Actions → New repository secret → Name: `GH_PAT_READ` → Value: your PAT.
+   - Or via GitHub CLI from the repo root:
+     - PowerShell: `gh secret set GH_PAT_READ -R DegrassiAaron/influencerai-monorepo --body "$env:GH_TOKEN"`
+     - Bash: `gh secret set GH_PAT_READ -R DegrassiAaron/influencerai-monorepo --body "$GH_TOKEN"`
+
+3) Workflow usage
+   - `.github/workflows/verify-backlog-issues.yml` prefers `GH_PAT_READ` and falls back to `GITHUB_TOKEN`.
+   - The workflow includes retry/backoff on 403/429 and when `x-ratelimit-remaining=0`.
+
+4) Rotate the PAT
+   - Revoke old PAT; generate a new fine-grained PAT with the same minimal permissions.
+   - Update the repo secret:
+     - PowerShell: `gh secret set GH_PAT_READ -R DegrassiAaron/influencerai-monorepo --body "<NEW_PAT>"`
+     - Bash: `gh secret set GH_PAT_READ -R DegrassiAaron/influencerai-monorepo --body "<NEW_PAT>"`
+   - See also the PAT rotation steps above.
 
 ## Rotate a GitHub App Installation Token
 
@@ -76,4 +102,3 @@ With `GH_TOKEN` set to the new PAT/installation token, you can complete the work
 - Never paste tokens into issues/PRs/chat; prefer local environment variables or secret stores.
 - Keep GitHub App private keys restricted to trusted machines; rotate keys periodically.
 - Prefer fine‑grained PAT or GitHub App tokens with minimal scopes.
-
