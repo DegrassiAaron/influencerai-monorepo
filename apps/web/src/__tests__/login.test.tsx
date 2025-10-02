@@ -1,4 +1,5 @@
 import React from "react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import LoginPage from "../app/login/page";
 
@@ -9,8 +10,8 @@ vi.mock("next/navigation", () => ({
 
 describe("LoginPage", () => {
   beforeEach(() => {
-    // @ts-ignore
-    global.fetch = vi.fn(async () => ({ ok: true, json: async () => ({ ok: true }) }));
+    const mockFetch = vi.fn(async () => ({ ok: true, json: async () => ({ ok: true }) }));
+    globalThis.fetch = mockFetch as unknown as typeof fetch;
   });
 
   it("renders form and submits", async () => {
