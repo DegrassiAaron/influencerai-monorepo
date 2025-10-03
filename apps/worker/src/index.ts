@@ -1,4 +1,5 @@
 import { Worker } from 'bullmq';
+import type { Processor } from 'bullmq';
 import Redis from 'ioredis';
 import { logger } from './logger';
 import { InfluencerAIClient } from '@influencerai/sdk';
@@ -6,7 +7,11 @@ import type { JobResponse } from '@influencerai/sdk';
 import { imageCaptionPrompt, videoScriptPrompt } from '@influencerai/prompts';
 import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import { createContentGenerationProcessor } from './processors/contentGeneration';
+import {
+  createContentGenerationProcessor,
+  type ContentGenerationJobData,
+  type ContentGenerationResult,
+} from './processors/contentGeneration';
 
 // Lightweight HTTP helpers (aligned with API app)
 class HTTPError extends Error {
@@ -186,7 +191,7 @@ async function patchJobStatus(jobId: string, data: { status?: 'running' | 'succe
 }
 
 // Content generation worker
-const contentWorker = new Worker(
+const contentWorker = new Worker<ContentGenerationJobData, ContentGenerationResult, 'content-generation'>(
   'content-generation',
   createContentGenerationProcessor({
     logger,
@@ -223,21 +228,38 @@ const contentWorker = new Worker(
   { connection, prefix: process.env.BULL_PREFIX }
 );
 
-// LoRA training worker
-const loraWorker = new Worker(
-  'lora-training',
-  async (job) => {
+type LoraTrainingJobData = {
+  jobId?: string;
+  payload?: Record<string, unknown>;
+};
+
+type LoraTrainingResult = {
+  success: true;
+  result: string;
+};
+
+const loraProcessor: Processor<LoraTrainingJobData, LoraTrainingResult, 'lora-training'> = async (job) => {
     logger.info({ id: job.id, data: job.data }, 'Processing LoRA training job');
-    const jobId = (job.data as any)?.jobId as string | undefined;
+    const jobData = job.data ?? {};
+    const jobId = typeof jobData.jobId === 'string' ? jobData.jobId : undefined;
     if (jobId) await patchJobStatus(jobId, { status: 'running' });
 
     // TODO: Implement LoRA training logic
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
-    const result = { success: true, result: 'Training completed' };
-    if (jobId) await patchJobStatus(jobId, { status: 'succeeded', result });
+    const result: LoraTrainingResult = { success: true, result: 'Training completed' };
+    if (jobId) {
+      const { success: _success, ...jobResult } = result;
+      void _success;
+      await patchJobStatus(jobId, { status: 'succeeded', result: jobResult });
+    }
     return result;
-  },
+  };
+
+// LoRA training worker
+const loraWorker = new Worker<LoraTrainingJobData, LoraTrainingResult, 'lora-training'>(
+  'lora-training',
+  loraProcessor,
   { connection, prefix: process.env.BULL_PREFIX }
 );
 

@@ -1,4 +1,4 @@
-import type { Job } from 'bullmq';
+import type { Job, Processor } from 'bullmq';
 import type { Logger } from 'pino';
 import type { JobResponse } from '@influencerai/sdk';
 
@@ -56,13 +56,26 @@ export interface ContentGenerationDependencies {
   prompts: PromptHelpers;
 }
 
-export type ContentGenerationJob = Job<{
+export type ContentGenerationJobData = {
   jobId?: string;
   payload?: Record<string, unknown>;
-}>;
+};
+
+export type ContentGenerationResult = {
+  success: true;
+  caption: string;
+  script: string;
+  captionUrl?: string;
+  scriptUrl?: string;
+  childJobId?: string;
+};
+
+export type ContentGenerationJob = Job<ContentGenerationJobData, ContentGenerationResult, 'content-generation'>;
 
 export function createContentGenerationProcessor(deps: ContentGenerationDependencies) {
-  return async function process(job: ContentGenerationJob) {
+  const processor: Processor<ContentGenerationJobData, ContentGenerationResult, 'content-generation'> = async function process(
+    job: ContentGenerationJob
+  ) {
     const { logger, callOpenRouter, patchJobStatus, uploadTextAssets, createChildJob, prompts } = deps;
     logger.info({ id: job.id, name: job.name, data: job.data }, 'Processing content-generation job');
 
@@ -132,7 +145,8 @@ export function createContentGenerationProcessor(deps: ContentGenerationDependen
         }
       }
 
-      const result = {
+      const result: ContentGenerationResult = {
+        success: true,
         caption: (captionResult.content || '').trim(),
         script: (scriptResult.content || '').trim(),
         captionUrl,
@@ -141,14 +155,16 @@ export function createContentGenerationProcessor(deps: ContentGenerationDependen
       };
 
       if (jobId) {
+        const { success: _success, ...jobResult } = result;
+        void _success;
         await patchJobStatus(jobId, {
           status: 'succeeded',
-          result,
+          result: jobResult,
           ...(totalTokens ? { costTok: totalTokens } : {}),
         });
       }
 
-      return { success: true, ...result };
+      return result;
     } catch (err) {
       logger.error({ err }, 'content-generation processor error');
       if (jobId) {
@@ -160,4 +176,6 @@ export function createContentGenerationProcessor(deps: ContentGenerationDependen
       throw err;
     }
   };
+
+  return processor;
 }
