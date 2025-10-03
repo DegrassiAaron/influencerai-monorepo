@@ -1,6 +1,7 @@
 import React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+
 import LoginPage from "../app/login/page";
 
 vi.mock("next/navigation", () => ({
@@ -10,12 +11,24 @@ vi.mock("next/navigation", () => ({
 
 describe("LoginPage", () => {
   beforeEach(() => {
-    const mockFetch = vi.fn(async () => ({ ok: true, json: async () => ({ ok: true }) }));
+    const mockFetch = vi.fn(async () => ({
+      ok: true,
+      json: async () => ({ ok: true }),
+    }));
     globalThis.fetch = mockFetch as unknown as typeof fetch;
   });
 
-  it("renders form and submits", async () => {
+  it("renders form fields", () => {
     render(<LoginPage />);
+
+    expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /sign in/i })).toBeInTheDocument();
+  });
+
+  it("submits credentials", async () => {
+    render(<LoginPage />);
+
     const email = screen.getByLabelText(/email/i);
     const password = screen.getByLabelText(/password/i);
     const submit = screen.getByRole("button", { name: /sign in/i });
