@@ -10,4 +10,24 @@ module.exports = [
   { ignores: ['.next/**', 'node_modules/**', 'dist/**'] },
   js.configs.recommended,
   ...nextCoreWebVitals,
+  {
+    files: [
+      'src/**/*.test.{js,jsx,ts,tsx}',
+      'src/**/*.spec.{js,jsx,ts,tsx}',
+      'src/__tests__/**/*.{js,jsx,ts,tsx}',
+    ],
+    languageOptions: {
+      globals: {
+        describe: 'readonly',
+        it: 'readonly',
+        expect: 'readonly',
+        test: 'readonly',
+        vi: 'readonly',
+        beforeAll: 'readonly',
+        afterAll: 'readonly',
+        beforeEach: 'readonly',
+        afterEach: 'readonly',
+      },
+    },
+  },
 ]
