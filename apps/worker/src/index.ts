@@ -6,6 +6,7 @@ import type { JobResponse } from '@influencerai/sdk';
 import { imageCaptionPrompt, videoScriptPrompt } from '@influencerai/prompts';
 import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { createContentGenerationProcessor } from './processors/contentGeneration';
 
 // Lightweight HTTP helpers (aligned with API app)
 class HTTPError extends Error {
@@ -67,9 +68,7 @@ async function safeReadBody(res: any) {
   }
 }
 
-type OpenRouterUsage = { prompt_tokens?: number; completion_tokens?: number; total_tokens?: number } | undefined;
-
-async function callOpenRouter(messages: { role: 'system' | 'user' | 'assistant'; content: string }[], opts?: { responseFormat?: 'json_object' | 'text' }) {
+async function callOpenRouter(messages: { role: 'system' | 'user' | 'assistant'; content: string }[], opts?: { responseFormat?: 'json_object' | 'text' }): Promise<{ content: string; usage?: { prompt_tokens?: number; completion_tokens?: number; total_tokens?: number } }> {
   const apiKey = process.env.OPENROUTER_API_KEY || '';
   const url = 'https://openrouter.ai/api/v1/chat/completions';
   const maxAttempts = Number(process.env.OPENROUTER_MAX_RETRIES || 3);
@@ -113,7 +112,7 @@ async function callOpenRouter(messages: { role: 'system' | 'user' | 'assistant';
 
       const json = await res.json();
       const content = json?.choices?.[0]?.message?.content as string | undefined;
-      const usage: OpenRouterUsage = json?.usage;
+      const usage = json?.usage as { prompt_tokens?: number; completion_tokens?: number; total_tokens?: number } | undefined;
       return { content: content ?? '', usage };
     } catch (err) {
       lastErr = err;
@@ -189,102 +188,38 @@ async function patchJobStatus(jobId: string, data: { status?: 'running' | 'succe
 // Content generation worker
 const contentWorker = new Worker(
   'content-generation',
-  async (job) => {
-    logger.info({ id: job.id, name: job.name, data: job.data }, 'Processing content-generation job');
-    const jobId = (job.data as any)?.jobId as string | undefined;
-    const payload = ((job.data as any)?.payload ?? {}) as Record<string, any>;
-    if (jobId) await patchJobStatus(jobId, { status: 'running' });
-
-    try {
-      const persona = payload.persona ? JSON.stringify(payload.persona) : payload.personaText || '{}';
-      const context = payload.context || payload.theme || 'general social post';
-      const durationSec = Number(payload.durationSec || 15);
-
-      // 1) Generate a caption via OpenRouter using our prompt helper
-      const captionPrompt = imageCaptionPrompt(`Persona: ${persona}\nContext/Theme: ${context}`);
-      const { content: caption, usage: usage1 } = await callOpenRouter(
-        [
-          { role: 'system', content: 'You generate concise, vivid social captions.' },
-          { role: 'user', content: captionPrompt },
-        ],
-        { responseFormat: 'text' }
-      );
-
-      // 2) Generate a short script based on the caption
-      const scriptPrompt = videoScriptPrompt(caption || 'A short engaging caption', durationSec);
-      const { content: script, usage: usage2 } = await callOpenRouter(
-        [
-          { role: 'system', content: 'You write short timestamped scripts for short-form videos.' },
-          { role: 'user', content: scriptPrompt },
-        ],
-        { responseFormat: 'text' }
-      );
-
-      // Aggregate token usage if available
-      const totalTokens = (usage1?.total_tokens || 0) + (usage2?.total_tokens || 0);
-
-      // 3) Create a child job for visual asset generation (e.g., video)
-      let childJobId: string | undefined = undefined;
-      try {
-        const child: JobResponse = await api.createJob({
-          type: 'video-generation',
-          payload: {
-            parentJobId: jobId,
-            caption,
-            script,
-            persona: payload.persona ?? payload.personaText,
-            context,
-            durationSec,
-          },
-          priority: 5,
-        });
-        childJobId = child?.id;
-      } catch (e) {
-        logger.warn({ e }, 'Failed to create child job for video-generation');
-      }
-
-      let captionUrl: string | undefined;
-      let scriptUrl: string | undefined;
-      try {
-        const s3 = getS3Client();
-        if (s3) {
-          const { client, bucket } = s3;
-          const idForKey = jobId || String(job.id);
-          const baseKey = `content-generation/${idForKey}/`;
-          const capKey = `${baseKey}caption.txt`;
-          const scrKey = `${baseKey}script.txt`;
-          await putTextObjectS3(client, bucket, capKey, caption || '');
-          await putTextObjectS3(client, bucket, scrKey, script || '');
-          captionUrl = await getSignedGetUrlS3(client, bucket, capKey, 24 * 3600);
-          scriptUrl = await getSignedGetUrlS3(client, bucket, scrKey, 24 * 3600);
-        }
-      } catch (e) {
-        logger.warn({ e }, 'S3 upload/presign failed');
-      }
-
-      const result = {
-        caption: (caption || '').trim(),
-        script: (script || '').trim(),
-        captionUrl,
-        scriptUrl,
-        childJobId,
-      };
-
-      if (jobId) {
-        await patchJobStatus(jobId, { status: 'succeeded', result, ...(totalTokens ? { costTok: totalTokens } : {}) });
-      }
-      return { success: true, ...result };
-    } catch (err) {
-      logger.error({ err }, 'content-generation processor error');
-      if (jobId) {
-        await patchJobStatus(jobId, {
-          status: 'failed',
-          result: { message: (err as any)?.message, stack: (err as any)?.stack },
-        });
-      }
-      throw err;
-    }
-  },
+  createContentGenerationProcessor({
+    logger,
+    callOpenRouter,
+    patchJobStatus,
+    createChildJob: async ({ parentJobId, caption, script, persona, context, durationSec }) =>
+      api.createJob({
+        type: 'video-generation',
+        payload: {
+          parentJobId,
+          caption,
+          script,
+          persona,
+          context,
+          durationSec,
+        },
+        priority: 5,
+      }) as Promise<JobResponse>,
+    uploadTextAssets: async ({ jobIdentifier, caption, script }) => {
+      const s3 = getS3Client();
+      if (!s3) return {};
+      const { client, bucket } = s3;
+      const baseKey = `content-generation/${jobIdentifier}/`;
+      const captionKey = `${baseKey}caption.txt`;
+      const scriptKey = `${baseKey}script.txt`;
+      await putTextObjectS3(client, bucket, captionKey, caption || '');
+      await putTextObjectS3(client, bucket, scriptKey, script || '');
+      const captionUrl = await getSignedGetUrlS3(client, bucket, captionKey, 24 * 3600);
+      const scriptUrl = await getSignedGetUrlS3(client, bucket, scriptKey, 24 * 3600);
+      return { captionUrl, scriptUrl };
+    },
+    prompts: { imageCaptionPrompt, videoScriptPrompt },
+  }),
   { connection, prefix: process.env.BULL_PREFIX }
 );
 
