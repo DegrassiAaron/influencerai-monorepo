@@ -3,6 +3,13 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { ApiError, apiGet } from "../lib/api";
 
 type JobSeriesPoint = {
@@ -16,8 +23,8 @@ function ChartSkeleton() {
     <div className="flex h-48 items-end gap-2">
       {Array.from({ length: 12 }).map((_, index) => (
         <div key={index} className="flex-1 space-y-2">
-          <div className="h-16 animate-pulse rounded bg-slate-200" />
-          <div className="h-10 animate-pulse rounded bg-slate-100" />
+          <div className="h-16 animate-pulse rounded bg-muted" />
+          <div className="h-10 animate-pulse rounded bg-muted/80" />
         </div>
       ))}
     </div>
@@ -53,27 +60,35 @@ export function JobsChart() {
   }, [data]);
 
   return (
-    <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-      <header className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+    <Card>
+      <CardHeader>
         <div>
-          <h2 className="text-lg font-semibold text-slate-900">Andamento ultimi job</h2>
-          <p className="text-sm text-slate-500">Ultima ora, aggiornamento automatico</p>
+          <CardTitle>Andamento ultimi job</CardTitle>
+          <CardDescription>Ultima ora, aggiornamento automatico</CardDescription>
         </div>
-      </header>
+      </CardHeader>
 
-      <div className="mt-4">
+      <CardContent>
         {isLoading && <ChartSkeleton />}
         {error && (
-          <p className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-            {error instanceof ApiError ? error.message : "Impossibile recuperare la serie dei job"}
-          </p>
+          <div className="rounded-md border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive">
+            {error instanceof ApiError
+              ? error.message
+              : "Impossibile recuperare la serie dei job"}
+          </div>
         )}
         {!isLoading && !error && (
           <>
             {points.length === 0 ? (
-              <p className="text-sm text-slate-500">{"Nessun job registrato nell’ultima ora."}</p>
+              <p className="text-sm text-muted-foreground">
+                {"Nessun job registrato nell’ultima ora."}
+              </p>
             ) : (
-              <div role="img" aria-label="Grafico a barre dei job" className="flex h-48 items-end gap-2">
+              <div
+                role="img"
+                aria-label="Grafico a barre dei job"
+                className="flex h-48 items-end gap-2"
+              >
                 {points.map((point) => {
                   const successHeight = (point.success / maxValue) * 100;
                   const failedHeight = (point.failed / maxValue) * 100;
@@ -83,16 +98,22 @@ export function JobsChart() {
                       <div className="flex h-full flex-col justify-end gap-1">
                         <div
                           className="rounded-t bg-emerald-500"
-                          style={{ height: `${successHeight}%`, minHeight: point.success > 0 ? 4 : 0 }}
+                          style={{
+                            height: `${successHeight}%`,
+                            minHeight: point.success > 0 ? 4 : 0,
+                          }}
                           aria-hidden
                         />
                         <div
                           className="rounded-b bg-rose-500"
-                          style={{ height: `${failedHeight}%`, minHeight: point.failed > 0 ? 4 : 0 }}
+                          style={{
+                            height: `${failedHeight}%`,
+                            minHeight: point.failed > 0 ? 4 : 0,
+                          }}
                           aria-hidden
                         />
                       </div>
-                      <div className="mt-2 text-center text-xs text-slate-500">
+                      <div className="mt-2 text-center text-xs text-muted-foreground">
                         {formatTimestamp(point.t)}
                       </div>
                     </div>
@@ -100,10 +121,13 @@ export function JobsChart() {
                 })}
               </div>
             )}
-            <p className="mt-3 text-xs text-slate-500">Verde = successi, Rosa = fallimenti. Le colonne sono normalizzate sul valore massimo.</p>
+            <p className="mt-3 text-xs text-muted-foreground">
+              Verde = successi, Rosa = fallimenti. Le colonne sono normalizzate sul
+              valore massimo.
+            </p>
           </>
         )}
-      </div>
-    </section>
+      </CardContent>
+    </Card>
   );
 }
