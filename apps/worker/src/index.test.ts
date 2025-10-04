@@ -2,7 +2,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Worker } from 'bullmq';
 import type Redis from 'ioredis';
 import type { InfluencerAIClient } from '@influencerai/sdk';
-import type { Logger } from 'pino';
 
 type WorkerMockInstance = {
   name: string;
@@ -14,7 +13,7 @@ type WorkerMockInstance = {
 
 const workerMockState = vi.hoisted(() => {
   const instances: WorkerMockInstance[] = [];
-  const WorkerMockFn = vi.fn<WorkerMockInstance, ConstructorParameters<typeof Worker>>((name, processor, opts) => {
+  const WorkerMock = vi.fn((name: string, processor: any, opts: any) => {
     const handlers = new Map<string, (...args: any[]) => unknown>();
     const instance: WorkerMockInstance = {
       name,
@@ -27,22 +26,18 @@ const workerMockState = vi.hoisted(() => {
       }),
     };
     instances.push(instance);
-    return instance;
+    return instance as unknown as Worker;
   });
-  const WorkerMock = WorkerMockFn as unknown as WorkerConstructor;
-  return { instances, WorkerMock, WorkerMockFn };
+  return { instances, WorkerMock };
 });
 
-type WorkerConstructor = typeof Worker;
-
-const loggerMockState = vi.hoisted(() => {
-  const logger: Pick<Logger, 'info' | 'warn' | 'error'> = {
+const loggerMockState = vi.hoisted(() => ({
+  logger: {
     info: vi.fn(),
     warn: vi.fn(),
     error: vi.fn(),
-  };
-  return { logger };
-});
+  },
+}));
 
 const contentProcessorMockState = vi.hoisted(() => {
   const processorFn = vi.fn();
@@ -112,6 +107,7 @@ describe('worker bootstrap', () => {
 
   it('instantiates workers and registers event handlers', async () => {
     const { createWorkers } = await import('./index');
+    const { Worker } = await import('bullmq');
 
     const patchJobStatus = vi.fn().mockResolvedValue(undefined);
     const connection = { kind: 'redis' } as unknown as Redis;
@@ -132,14 +128,14 @@ describe('worker bootstrap', () => {
     expect(result.apiClient).toBe(apiClient);
     expect(result.connection).toBe(connection);
 
-    expect(workerMockState.WorkerMockFn).toHaveBeenCalledTimes(2);
-    expect(workerMockState.WorkerMockFn).toHaveBeenNthCalledWith(1, 'content-generation', contentProcessorMockState.processorFn, {
+    expect(Worker).toHaveBeenCalledTimes(2);
+    expect(Worker).toHaveBeenNthCalledWith(1, 'content-generation', contentProcessorMockState.processorFn, {
       connection,
       prefix: 'queue-prefix',
     });
-    expect(workerMockState.WorkerMockFn.mock.calls[1][0]).toBe('lora-training');
-    expect(typeof workerMockState.WorkerMockFn.mock.calls[1][1]).toBe('function');
-    expect(workerMockState.WorkerMockFn.mock.calls[1][2]).toEqual({ connection, prefix: 'queue-prefix' });
+    expect(Worker.mock.calls[1][0]).toBe('lora-training');
+    expect(typeof Worker.mock.calls[1][1]).toBe('function');
+    expect(Worker.mock.calls[1][2]).toEqual({ connection, prefix: 'queue-prefix' });
 
     expect(contentProcessorMockState.factory).toHaveBeenCalledWith(
       expect.objectContaining({
