@@ -2,83 +2,75 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  :root {
-    --background: 0 0% 100%;
-    --foreground: 240 10% 3.9%;
-    --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 46.1%;
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
-    --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
-    --ring: 240 5% 64.9%;
-    --font-sans: 'Inter', sans-serif;
-  }
+:root {
+  --background: 0 0% 100%;
+  --foreground: 215 28% 12%;
 
-  .dark {
-    --background: 240 10% 3.9%;
-    --foreground: 0 0% 98%;
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    --card: 240 10% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --ring: 240 4.9% 83.9%;
-  }
+  --card: 0 0% 100%;
+  --card-foreground: 215 28% 12%;
 
-  body {
-    @apply bg-background text-foreground;
-  }
+  --popover: 0 0% 100%;
+  --popover-foreground: 215 28% 12%;
+
+  --primary: 224 84% 56%;
+  --primary-foreground: 210 40% 98%;
+
+  --secondary: 210 40% 96%;
+  --secondary-foreground: 224 84% 22%;
+
+  --muted: 210 40% 96%;
+  --muted-foreground: 215 16% 46%;
+
+  --accent: 215 40% 93%;
+  --accent-foreground: 220 14% 30%;
+
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 98%;
+
+  --border: 214 32% 91%;
+  --input: 214 32% 91%;
+  --ring: 224 84% 56%;
+
+  --radius: 0.75rem;
 }
 
-@layer utilities {
-  .bg-background {
-    background-color: hsl(var(--background));
-  }
+.dark {
+  --background: 230 30% 6%;
+  --foreground: 210 20% 94%;
 
-  .bg-card {
-    background-color: hsl(var(--card));
-  }
+  --card: 231 25% 10%;
+  --card-foreground: 210 20% 94%;
 
-  .bg-muted {
-    background-color: hsl(var(--muted));
-  }
+  --popover: 231 25% 10%;
+  --popover-foreground: 210 20% 94%;
 
-  .bg-border {
-    background-color: hsl(var(--border));
-  }
+  --primary: 221 83% 67%;
+  --primary-foreground: 229 84% 12%;
 
-  .text-foreground {
-    color: hsl(var(--foreground));
-  }
+  --secondary: 224 24% 18%;
+  --secondary-foreground: 210 20% 94%;
 
-  .text-muted-foreground {
-    color: hsl(var(--muted-foreground));
-  }
+  --muted: 223 24% 20%;
+  --muted-foreground: 220 14% 70%;
 
-  .text-muted-foreground\/70 {
-    color: hsl(var(--muted-foreground) / 0.7);
-  }
+  --accent: 223 24% 20%;
+  --accent-foreground: 210 20% 94%;
 
-  .text-card-foreground {
-    color: hsl(var(--card-foreground));
-  }
+  --destructive: 0 72% 50%;
+  --destructive-foreground: 0 0% 98%;
 
-  .border-border {
+  --border: 223 20% 18%;
+  --input: 223 20% 18%;
+  --ring: 221 83% 67%;
+}
+
+@layer base {
+  * {
     border-color: hsl(var(--border));
   }
 
-  .border-input {
-    border-color: hsl(var(--input));
-  }
-
-  .ring-ring {
-    --tw-ring-color: hsl(var(--ring));
-  }
-
-  .font-sans {
-    font-family: var(--font-sans);
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
   }
 }
