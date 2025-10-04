@@ -164,69 +164,34 @@ async function getSignedGetUrlS3(client: S3Client, bucket: string, key: string, 
   return getSignedUrl(client, cmd, { expiresIn: expiresInSeconds });
 }
 
-const connection = new Redis({
-  host: process.env.REDIS_HOST || 'localhost',
-  port: parseInt(process.env.REDIS_PORT || '6379'),
-  maxRetriesPerRequest: null,
-});
+type LogFn = (...args: any[]) => void;
 
-const apiBaseUrl = process.env.API_BASE_URL || process.env.WORKER_API_URL || 'http://localhost:3001';
-const api = new InfluencerAIClient(apiBaseUrl);
+export type WorkerLogger = {
+  info: LogFn;
+  warn: LogFn;
+  error: LogFn;
+};
 
-async function patchJobStatus(jobId: string, data: { status?: 'running' | 'succeeded' | 'failed' | 'completed'; result?: unknown; costTok?: number }) {
-  const maxAttempts = 2;
-  let lastErr: unknown = undefined;
-  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-    try {
-      await api.updateJob(jobId, data);
-      return;
-    } catch (err) {
-      lastErr = err;
-      if (attempt < maxAttempts) {
-        await new Promise((r) => setTimeout(r, 200 * attempt));
-      }
-    }
-  }
-  logger.warn({ err: lastErr, jobId, data }, 'Failed to PATCH job status after retries');
-}
+type UpdateJobInput = Parameters<InfluencerAIClient['updateJob']>[1];
+type CreateJobInput = Parameters<InfluencerAIClient['createJob']>[0];
 
-// Content generation worker
-const contentWorker = new Worker<ContentGenerationJobData, ContentGenerationResult, 'content-generation'>(
-  'content-generation',
-  createContentGenerationProcessor({
-    logger,
-    callOpenRouter,
-    patchJobStatus,
-    createChildJob: async ({ parentJobId, caption, script, persona, context, durationSec }) =>
-      api.createJob({
-        type: 'video-generation',
-        payload: {
-          parentJobId,
-          caption,
-          script,
-          persona,
-          context,
-          durationSec,
-        },
-        priority: 5,
-      }) as Promise<JobResponse>,
-    uploadTextAssets: async ({ jobIdentifier, caption, script }) => {
-      const s3 = getS3Client();
-      if (!s3) return {};
-      const { client, bucket } = s3;
-      const baseKey = `content-generation/${jobIdentifier}/`;
-      const captionKey = `${baseKey}caption.txt`;
-      const scriptKey = `${baseKey}script.txt`;
-      await putTextObjectS3(client, bucket, captionKey, caption || '');
-      await putTextObjectS3(client, bucket, scriptKey, script || '');
-      const captionUrl = await getSignedGetUrlS3(client, bucket, captionKey, 24 * 3600);
-      const scriptUrl = await getSignedGetUrlS3(client, bucket, scriptKey, 24 * 3600);
-      return { captionUrl, scriptUrl };
-    },
-    prompts: { imageCaptionPrompt, videoScriptPrompt },
-  }),
-  { connection, prefix: process.env.BULL_PREFIX }
-);
+export type WorkerApi = {
+  updateJob: (jobId: string, data: UpdateJobInput) => Promise<unknown>;
+  createJob: (input: CreateJobInput) => Promise<JobResponse>;
+};
+
+export type S3Helpers = {
+  getClient: typeof getS3Client;
+  putTextObject: typeof putTextObjectS3;
+  getSignedGetUrl: typeof getSignedGetUrlS3;
+};
+
+export type WorkerDependencies = {
+  logger: WorkerLogger;
+  api: WorkerApi;
+  connection: Redis;
+  s3: S3Helpers;
+};
 
 type LoraTrainingJobData = {
   jobId?: string;
@@ -238,8 +203,65 @@ type LoraTrainingResult = {
   result: string;
 };
 
-const loraProcessor: Processor<LoraTrainingJobData, LoraTrainingResult, 'lora-training'> = async (job) => {
-    logger.info({ id: job.id, data: job.data }, 'Processing LoRA training job');
+export function createWorkers(deps: WorkerDependencies) {
+  const { logger: depLogger, api, connection, s3 } = deps;
+
+  async function patchJobStatus(jobId: string, data: UpdateJobInput) {
+    const maxAttempts = 2;
+    let lastErr: unknown = undefined;
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        await api.updateJob(jobId, data);
+        return;
+      } catch (err) {
+        lastErr = err;
+        if (attempt < maxAttempts) {
+          await new Promise((r) => setTimeout(r, 200 * attempt));
+        }
+      }
+    }
+    depLogger.warn({ err: lastErr, jobId, data }, 'Failed to PATCH job status after retries');
+  }
+
+  const contentWorker = new Worker<ContentGenerationJobData, ContentGenerationResult, 'content-generation'>(
+    'content-generation',
+    createContentGenerationProcessor({
+      logger: depLogger,
+      callOpenRouter,
+      patchJobStatus,
+      createChildJob: async ({ parentJobId, caption, script, persona, context, durationSec }) =>
+        api.createJob({
+          type: 'video-generation',
+          payload: {
+            parentJobId,
+            caption,
+            script,
+            persona,
+            context,
+            durationSec,
+          },
+          priority: 5,
+        }),
+      uploadTextAssets: async ({ jobIdentifier, caption, script }) => {
+        const s3Client = s3.getClient();
+        if (!s3Client) return {};
+        const { client, bucket } = s3Client;
+        const baseKey = `content-generation/${jobIdentifier}/`;
+        const captionKey = `${baseKey}caption.txt`;
+        const scriptKey = `${baseKey}script.txt`;
+        await s3.putTextObject(client, bucket, captionKey, caption || '');
+        await s3.putTextObject(client, bucket, scriptKey, script || '');
+        const captionUrl = await s3.getSignedGetUrl(client, bucket, captionKey, 24 * 3600);
+        const scriptUrl = await s3.getSignedGetUrl(client, bucket, scriptKey, 24 * 3600);
+        return { captionUrl, scriptUrl };
+      },
+      prompts: { imageCaptionPrompt, videoScriptPrompt },
+    }),
+    { connection, prefix: process.env.BULL_PREFIX }
+  );
+
+  const loraProcessor: Processor<LoraTrainingJobData, LoraTrainingResult, 'lora-training'> = async (job) => {
+    depLogger.info({ id: job.id, data: job.data }, 'Processing LoRA training job');
     const jobData = job.data ?? {};
     const jobId = typeof jobData.jobId === 'string' ? jobData.jobId : undefined;
     if (jobId) await patchJobStatus(jobId, { status: 'running' });
@@ -256,35 +278,66 @@ const loraProcessor: Processor<LoraTrainingJobData, LoraTrainingResult, 'lora-tr
     return result;
   };
 
-// LoRA training worker
-const loraWorker = new Worker<LoraTrainingJobData, LoraTrainingResult, 'lora-training'>(
-  'lora-training',
-  loraProcessor,
-  { connection, prefix: process.env.BULL_PREFIX }
-);
+  const loraWorker = new Worker<LoraTrainingJobData, LoraTrainingResult, 'lora-training'>(
+    'lora-training',
+    loraProcessor,
+    { connection, prefix: process.env.BULL_PREFIX }
+  );
 
-contentWorker.on('completed', (job) => {
-  logger.info({ id: job.id }, 'Job completed successfully');
-});
+  contentWorker.on('completed', (job) => {
+    depLogger.info({ id: job.id }, 'Job completed successfully');
+  });
 
-contentWorker.on('failed', (job, err) => {
-  logger.error({ id: job?.id, err }, 'Job failed');
-  const jobId = (job?.data as any)?.jobId as string | undefined;
-  if (jobId) {
-    patchJobStatus(jobId, { status: 'failed', result: { message: (err as any)?.message, stack: (err as any)?.stack } }).catch(() => {});
-  }
-});
+  contentWorker.on('failed', (job, err) => {
+    depLogger.error({ id: job?.id, err }, 'Job failed');
+    const jobId = (job?.data as any)?.jobId as string | undefined;
+    if (jobId) {
+      patchJobStatus(jobId, { status: 'failed', result: { message: (err as any)?.message, stack: (err as any)?.stack } }).catch(
+        () => {}
+      );
+    }
+  });
 
-loraWorker.on('completed', (job) => {
-  logger.info({ id: job.id }, 'LoRA training job completed successfully');
-});
+  loraWorker.on('completed', (job) => {
+    depLogger.info({ id: job.id }, 'LoRA training job completed successfully');
+  });
 
-loraWorker.on('failed', (job, err) => {
-  logger.error({ id: job?.id, err }, 'LoRA training job failed');
-  const jobId = (job?.data as any)?.jobId as string | undefined;
-  if (jobId) {
-    patchJobStatus(jobId, { status: 'failed', result: { message: (err as any)?.message, stack: (err as any)?.stack } }).catch(() => {});
-  }
-});
+  loraWorker.on('failed', (job, err) => {
+    depLogger.error({ id: job?.id, err }, 'LoRA training job failed');
+    const jobId = (job?.data as any)?.jobId as string | undefined;
+    if (jobId) {
+      patchJobStatus(jobId, { status: 'failed', result: { message: (err as any)?.message, stack: (err as any)?.stack } }).catch(
+        () => {}
+      );
+    }
+  });
 
-logger.info('Workers started and listening for jobs...');
+  depLogger.info('Workers started and listening for jobs...');
+
+  return { contentWorker, loraWorker };
+}
+
+if (process.env.NODE_ENV !== 'test') {
+  const connection = new Redis({
+    host: process.env.REDIS_HOST || 'localhost',
+    port: parseInt(process.env.REDIS_PORT || '6379'),
+    maxRetriesPerRequest: null,
+  });
+
+  const apiBaseUrl = process.env.API_BASE_URL || process.env.WORKER_API_URL || 'http://localhost:3001';
+  const api = new InfluencerAIClient(apiBaseUrl);
+
+  createWorkers({
+    logger,
+    api: {
+      updateJob: (jobId, data) => api.updateJob(jobId, data),
+      createJob: (input) => api.createJob(input) as Promise<JobResponse>,
+    },
+    connection,
+    s3: {
+      getClient: getS3Client,
+      putTextObject: putTextObjectS3,
+      getSignedGetUrl: getSignedGetUrlS3,
+    },
+  });
+}
