@@ -22,4 +22,19 @@ Files:
 
 Notes:
 - Replace polling with websockets when API supports it.
-- Styles are Tailwind utility-first placeholders; can be refined.
+- Styles now rely on the shared design system primitives documented below.
+
+## Design system & layout (WEB-06)
+
+- `tailwind.config.ts` enables the shadcn-style preset with our `brand` palette and class-based dark mode. Global tokens live in
+  `src/app/globals.css`.
+- Reusable primitives live under `src/components/ui/` (Button, Card, Badge, Input, Label, Breadcrumb, Sheet, Avatar, Separator).
+  Compose them instead of hand-written Tailwind utilities.
+- Utility helpers:
+  - `src/lib/utils.ts` → `cn()` merges class names using `clsx` and `tailwind-merge`.
+  - `src/components/theme-provider.tsx` exposes `ThemeProvider`/`useTheme` for light/dark toggling.
+- Application shell:
+  - Implemented in `src/components/layout/app-shell.tsx` with `AppSidebar`, `AppHeader`, and automatic breadcrumbs (`AppBreadcrumbs`).
+  - `src/app/layout.tsx` wires the shell + providers and applies the required global classes on `<body>`.
+  - Mobile navigation uses the shared `Sheet` primitive via `MobileNavigation`.
+- When adding new views, render page content directly; the shell handles padding, chrome, and breadcrumbs.

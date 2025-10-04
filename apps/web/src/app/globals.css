@@ -1,3 +1,77 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+  --background: 0 0% 100%;
+  --foreground: 215 28% 12%;
+
+  --card: 0 0% 100%;
+  --card-foreground: 215 28% 12%;
+
+  --popover: 0 0% 100%;
+  --popover-foreground: 215 28% 12%;
+
+  --primary: 224 84% 56%;
+  --primary-foreground: 210 40% 98%;
+
+  --secondary: 210 40% 96%;
+  --secondary-foreground: 224 84% 22%;
+
+  --muted: 210 40% 96%;
+  --muted-foreground: 215 16% 46%;
+
+  --accent: 215 40% 93%;
+  --accent-foreground: 220 14% 30%;
+
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 98%;
+
+  --border: 214 32% 91%;
+  --input: 214 32% 91%;
+  --ring: 224 84% 56%;
+
+  --radius: 0.75rem;
+}
+
+.dark {
+  --background: 230 30% 6%;
+  --foreground: 210 20% 94%;
+
+  --card: 231 25% 10%;
+  --card-foreground: 210 20% 94%;
+
+  --popover: 231 25% 10%;
+  --popover-foreground: 210 20% 94%;
+
+  --primary: 221 83% 67%;
+  --primary-foreground: 229 84% 12%;
+
+  --secondary: 224 24% 18%;
+  --secondary-foreground: 210 20% 94%;
+
+  --muted: 223 24% 20%;
+  --muted-foreground: 220 14% 70%;
+
+  --accent: 223 24% 20%;
+  --accent-foreground: 210 20% 94%;
+
+  --destructive: 0 72% 50%;
+  --destructive-foreground: 0 0% 98%;
+
+  --border: 223 20% 18%;
+  --input: 223 20% 18%;
+  --ring: 221 83% 67%;
+}
+
+@layer base {
+  * {
+    border-color: hsl(var(--border));
+  }
+
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    @apply antialiased;
+  }
+}
