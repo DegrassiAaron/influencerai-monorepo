@@ -2,6 +2,7 @@
 
 import { ArrowUpRight, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { ModeToggle } from "../components/mode-toggle";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -40,47 +41,20 @@ export default function Home() {
   }
 
   return (
-    <div className="flex h-full flex-col gap-8">
-      <header className="flex flex-col gap-4 border-b border-border/60 pb-6 lg:flex-row lg:items-center lg:justify-between">
-        <div className="space-y-2">
-          <Badge variant="brand" className="bg-brand-100 text-brand-700">
-            Release 24.12
-          </Badge>
-          <h1 className="text-3xl font-semibold leading-tight tracking-tight text-foreground">
-            Benvenuta nella control room di InfluencerAI
-          </h1>
-          <p className="max-w-2xl text-base text-muted-foreground">
-            Coordina asset, campagne e generazioni da un’unica interfaccia. Monitora le operazioni in tempo reale e reagisci
-            rapidamente a colli di bottiglia o incidenti di qualità.
-          </p>
+    <main className="min-h-screen p-8">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h1 className="text-4xl font-bold mb-4">InfluencerAI Dashboard</h1>
+        <div className="flex items-center gap-2">
+          <ModeToggle />
+          <button
+            onClick={logout}
+            className="rounded-md border border-input bg-background px-3 py-1 text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            Logout
+          </button>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Button variant="secondary" className="gap-2">
-            <Sparkles className="h-4 w-4 text-brand-500" />
-            Guida rapida
-          </Button>
-          <Button variant="outline" onClick={logout} className="gap-2">
-            Esci
-            <ArrowUpRight className="h-4 w-4" />
-          </Button>
-        </div>
-      </header>
-
-      <section className="grid gap-4 md:grid-cols-3">
-        {highlights.map((item) => (
-          <Card key={item.title} className="border-border/60 bg-card/70">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-sm font-medium text-muted-foreground">{item.title}</CardTitle>
-              <CardDescription className="text-3xl font-semibold text-foreground">
-                {item.value}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <p className="text-sm text-muted-foreground">{item.delta}</p>
-            </CardContent>
-          </Card>
-        ))}
-      </section>
-    </div>
+      </div>
+      <p className="text-gray-600">Virtual Influencer Content Generation Platform</p>
+    </main>
   );
 }
