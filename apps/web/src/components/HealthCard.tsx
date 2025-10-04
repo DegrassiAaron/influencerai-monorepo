@@ -11,6 +11,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+
 import { apiGet, ApiError } from "../lib/api";
 
 type HealthResponse = {
@@ -59,23 +60,29 @@ export function HealthCard() {
   const checks = data ? Object.entries(data.checks) : [];
 
   return (
-    <Card>
-      <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <CardTitle>Health</CardTitle>
-          <CardDescription>Aggregazione di healthz / readyz</CardDescription>
+    <Card className="h-full border-border/60 bg-card/70">
+      <CardHeader className="pb-2">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <CardTitle>Health</CardTitle>
+            <CardDescription>Aggregazione di healthz / readyz</CardDescription>
+          </div>
+          {status && (
+            <Badge
+              variant="secondary"
+              className={cn("border px-3 py-1 text-xs font-semibold", status.badgeClass)}
+            >
+              {status.label}
+            </Badge>
+          )}
         </div>
-        {status && <Badge variant={status.badgeVariant}>{status.label}</Badge>}
       </CardHeader>
-
-      <CardContent className="text-sm text-muted-foreground">
+      <CardContent className="pt-0 text-sm text-muted-foreground">
         {isLoading && <ChecksSkeleton />}
         {error && (
-          <div className="rounded-md border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive">
-            {error instanceof ApiError
-              ? error.message
-              : "Impossibile recuperare lo stato"}
-          </div>
+          <p className="rounded-md border border-destructive/30 bg-destructive/10 p-3 text-destructive">
+            {error instanceof ApiError ? error.message : "Impossibile recuperare lo stato"}
+          </p>
         )}
         {!isLoading && !error && (
           <ul className="space-y-2" aria-live="polite">
@@ -84,16 +91,15 @@ export function HealthCard() {
               <li key={service} className="flex items-center justify-between gap-3">
                 <span className="font-medium text-foreground">{service}</span>
                 <Badge
-                  variant={healthy ? "success" : "destructive"}
-                  className="inline-flex items-center gap-2"
+                  variant="outline"
+                  className={cn(
+                    "inline-flex items-center gap-2 border px-3 py-1 text-xs font-semibold",
+                    healthy
+                      ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                      : "border-red-200 bg-red-50 text-red-700",
+                  )}
                 >
-                  <span
-                    className={cn(
-                      "h-2 w-2 rounded-full",
-                      healthy ? "bg-emerald-500" : "bg-destructive"
-                    )}
-                    aria-hidden
-                  />
+                  <span className={cn("h-2 w-2 rounded-full", healthy ? "bg-emerald-500" : "bg-red-500")} />
                   {healthy ? "OK" : "Down"}
                 </Badge>
               </li>

@@ -10,6 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+
 import { ApiError, apiGet } from "../lib/api";
 
 type JobSeriesPoint = {
@@ -24,7 +25,7 @@ function ChartSkeleton() {
       {Array.from({ length: 12 }).map((_, index) => (
         <div key={index} className="flex-1 space-y-2">
           <div className="h-16 animate-pulse rounded bg-muted" />
-          <div className="h-10 animate-pulse rounded bg-muted/80" />
+          <div className="h-10 animate-pulse rounded bg-muted/70" />
         </div>
       ))}
     </div>
@@ -60,29 +61,22 @@ export function JobsChart() {
   }, [data]);
 
   return (
-    <Card>
+    <Card className="border-border/60 bg-card/70">
       <CardHeader>
-        <div>
-          <CardTitle>Andamento ultimi job</CardTitle>
-          <CardDescription>Ultima ora, aggiornamento automatico</CardDescription>
-        </div>
+        <CardTitle>Andamento ultimi job</CardTitle>
+        <CardDescription>Ultima ora, aggiornamento automatico</CardDescription>
       </CardHeader>
-
       <CardContent>
         {isLoading && <ChartSkeleton />}
         {error && (
-          <div className="rounded-md border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive">
-            {error instanceof ApiError
-              ? error.message
-              : "Impossibile recuperare la serie dei job"}
-          </div>
+          <p className="rounded-md border border-destructive/30 bg-destructive/10 p-3 text-destructive">
+            {error instanceof ApiError ? error.message : "Impossibile recuperare la serie dei job"}
+          </p>
         )}
         {!isLoading && !error && (
           <>
             {points.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                {"Nessun job registrato nell’ultima ora."}
-              </p>
+              <p className="text-sm text-muted-foreground">{"Nessun job registrato nell’ultima ora."}</p>
             ) : (
               <div
                 role="img"
@@ -122,8 +116,7 @@ export function JobsChart() {
               </div>
             )}
             <p className="mt-3 text-xs text-muted-foreground">
-              Verde = successi, Rosa = fallimenti. Le colonne sono normalizzate sul
-              valore massimo.
+              Verde = successi, Rosa = fallimenti. Le colonne sono normalizzate sul valore massimo.
             </p>
           </>
         )}

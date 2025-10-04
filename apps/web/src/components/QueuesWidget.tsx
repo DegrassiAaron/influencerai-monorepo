@@ -3,7 +3,6 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 
-import { Badge } from "@/components/ui/badge";
 import {
   Card,
   CardContent,
@@ -11,6 +10,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
+
 import { ApiError, apiGet } from "../lib/api";
 
 type QueueStats = {
@@ -53,10 +54,9 @@ function StatSkeleton() {
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
       {STAT_DEFINITION.map(({ key }) => (
-        <div key={key} className="rounded-lg border border-border/70 p-4">
-          <div className="h-6 w-20 animate-pulse rounded bg-muted" />
-          <div className="mt-2 h-8 w-24 animate-pulse rounded bg-muted/80" />
-          <div className="mt-2 h-3 w-32 animate-pulse rounded bg-muted/70" />
+        <div key={key} className="rounded-lg border border-border/60 p-3">
+          <div className="h-6 w-16 animate-pulse rounded bg-muted" />
+          <div className="mt-2 h-4 w-full animate-pulse rounded bg-muted" />
         </div>
       ))}
     </div>
@@ -79,33 +79,25 @@ export function QueuesWidget() {
   }, [data]);
 
   return (
-    <Card>
+    <Card className="h-full border-border/60 bg-card/70">
       <CardHeader>
-        <div>
-          <CardTitle>Job Queues</CardTitle>
-          <CardDescription>Monitoraggio BullMQ</CardDescription>
-        </div>
+        <CardTitle>Job Queues</CardTitle>
+        <CardDescription>Monitoraggio BullMQ</CardDescription>
       </CardHeader>
-
       <CardContent className="text-sm text-muted-foreground">
         {isLoading && <StatSkeleton />}
         {error && (
-          <div className="rounded-md border border-destructive/20 bg-destructive/10 p-3 text-destructive">
-            {error instanceof ApiError
-              ? error.message
-              : "Impossibile recuperare le code"}
-          </div>
+          <p className="rounded-md border border-destructive/30 bg-destructive/10 p-3 text-destructive">
+            {error instanceof ApiError ? error.message : "Impossibile recuperare le code"}
+          </p>
         )}
         {stats && (
           <dl className="grid grid-cols-1 gap-4 md:grid-cols-3" aria-live="polite">
-            {stats.map(({ key, label, description, badgeVariant, value }) => (
-              <div
-                key={key}
-                className="rounded-lg border border-border bg-card/40 p-4 shadow-sm"
-              >
+            {stats.map(({ key, label, description, accentClass, value }) => (
+              <div key={key} className="rounded-lg border border-border/60 bg-background/60 p-4">
                 <dt className="text-sm font-medium text-muted-foreground">{label}</dt>
-                <dd className="mt-2 text-3xl font-semibold text-foreground">
-                  <Badge variant={badgeVariant} className="text-base">
+                <dd className="mt-3 text-3xl font-semibold text-foreground">
+                  <span className={cn("inline-flex rounded-full border px-3 py-1 text-base", accentClass)}>
                     {numberFormatter.format(value)}
                   </Badge>
                 </dd>
