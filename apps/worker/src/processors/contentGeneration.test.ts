@@ -21,8 +21,10 @@ describe('content generation processor', () => {
       logger: noopLogger,
       callOpenRouter: async () => {
         const next = openRouterResponses.shift();
-        expect(next).toBeDefined();
-        return next!;
+        if (!next) {
+          throw new Error('expected open router calls');
+        }
+        return next;
       },
       patchJobStatus: async (id, data) => {
         patchCalls.push({ id, data });

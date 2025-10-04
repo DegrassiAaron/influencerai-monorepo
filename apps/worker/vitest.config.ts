@@ -1,14 +1,18 @@
 import { defineConfig } from 'vitest/config';
-import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { dirname, resolve } from 'node:path';
+
+const rootDir = dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
-  test: {
-    environment: 'node',
-  },
   resolve: {
     alias: {
-      '@influencerai/sdk': path.resolve(__dirname, '../../packages/sdk/src/index.ts'),
-      '@influencerai/prompts': path.resolve(__dirname, '../../packages/prompts/src/index.ts'),
+      '@influencerai/sdk': resolve(rootDir, '../../packages/sdk/src/index.ts'),
+      '@influencerai/prompts': resolve(rootDir, '../../packages/prompts/src/index.ts'),
     },
+  },
+  test: {
+    environment: 'node',
+    include: ['src/**/*.test.ts'],
   },
 });
