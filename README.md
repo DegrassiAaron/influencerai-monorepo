@@ -1,5 +1,7 @@
 # InfluencerAI
 
+[![CI](https://github.com/DegrassiAaron/influencerai-monorepo/actions/workflows/ci.yml/badge.svg)](https://github.com/DegrassiAaron/influencerai-monorepo/actions/workflows/ci.yml)
+
 [![Sync Backlog Issues](https://github.com/DegrassiAaron/influencerai-monorepo/actions/workflows/sync-backlog-issues.yml/badge.svg)](https://github.com/DegrassiAaron/influencerai-monorepo/actions/workflows/sync-backlog-issues.yml)
 [![Verify Backlog Issues](https://github.com/DegrassiAaron/influencerai-monorepo/actions/workflows/verify-backlog-issues.yml/badge.svg)](https://github.com/DegrassiAaron/influencerai-monorepo/actions/workflows/verify-backlog-issues.yml)
 
