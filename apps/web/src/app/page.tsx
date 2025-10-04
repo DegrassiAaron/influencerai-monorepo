@@ -1,14 +1,45 @@
 "use client";
-import React from "react";
+
+import { ArrowUpRight, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { ModeToggle } from "../components/mode-toggle";
 
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+
+const highlights = [
+  {
+    title: "Campagne attive",
+    value: "12",
+    delta: "+3 rispetto alla scorsa settimana",
+  },
+  {
+    title: "Scene generate",
+    value: "248",
+    delta: "Ultimo batch completato 8 min fa",
+  },
+  {
+    title: "Soddisfazione QA",
+    value: "96%",
+    delta: "Nuove linee guida adottate",
+  },
+];
+
 export default function Home() {
   const router = useRouter();
+
   async function logout() {
     await fetch("/api/session/logout", { method: "POST" });
     router.refresh();
   }
+
   return (
     <main className="min-h-screen p-8">
       <div className="flex flex-wrap items-center justify-between gap-2">

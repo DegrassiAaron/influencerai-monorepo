@@ -3,6 +3,15 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { cn } from "@/lib/utils";
+
 import { ApiError, apiGet } from "../lib/api";
 
 type QueueStats = {
@@ -43,9 +52,9 @@ function StatSkeleton() {
   return (
     <div className="grid grid-cols-3 gap-4">
       {STAT_DEFINITION.map(({ key }) => (
-        <div key={key} className="rounded-lg border border-slate-200 p-3">
-          <div className="h-6 w-16 animate-pulse rounded bg-slate-200" />
-          <div className="mt-2 h-4 w-full animate-pulse rounded bg-slate-200" />
+        <div key={key} className="rounded-lg border border-border/60 p-3">
+          <div className="h-6 w-16 animate-pulse rounded bg-muted" />
+          <div className="mt-2 h-4 w-full animate-pulse rounded bg-muted" />
         </div>
       ))}
     </div>
@@ -68,37 +77,34 @@ export function QueuesWidget() {
   }, [data]);
 
   return (
-    <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-      <header className="flex items-start justify-between">
-        <div>
-          <h2 className="text-lg font-semibold text-slate-900">Job Queues</h2>
-          <p className="text-sm text-slate-500">Monitoraggio BullMQ</p>
-        </div>
-      </header>
-
-      <div className="mt-4 text-sm text-slate-600">
+    <Card className="h-full border-border/60 bg-card/70">
+      <CardHeader>
+        <CardTitle>Job Queues</CardTitle>
+        <CardDescription>Monitoraggio BullMQ</CardDescription>
+      </CardHeader>
+      <CardContent className="text-sm text-muted-foreground">
         {isLoading && <StatSkeleton />}
         {error && (
-          <p className="rounded-md border border-red-200 bg-red-50 p-3 text-red-700">
+          <p className="rounded-md border border-destructive/30 bg-destructive/10 p-3 text-destructive">
             {error instanceof ApiError ? error.message : "Impossibile recuperare le code"}
           </p>
         )}
         {stats && (
           <dl className="grid grid-cols-1 gap-4 md:grid-cols-3" aria-live="polite">
             {stats.map(({ key, label, description, accentClass, value }) => (
-              <div key={key} className="rounded-lg border border-slate-200 p-4">
-                <dt className="text-sm font-medium text-slate-500">{label}</dt>
-                <dd className="mt-2 text-3xl font-semibold text-slate-900">
-                  <span className={`inline-flex rounded-full border px-3 py-1 text-base ${accentClass}`}>
+              <div key={key} className="rounded-lg border border-border/60 bg-background/60 p-4">
+                <dt className="text-sm font-medium text-muted-foreground">{label}</dt>
+                <dd className="mt-3 text-3xl font-semibold text-foreground">
+                  <span className={cn("inline-flex rounded-full border px-3 py-1 text-base", accentClass)}>
                     {numberFormatter.format(value)}
                   </span>
                 </dd>
-                <p className="mt-2 text-xs text-slate-500">{description}</p>
+                <p className="mt-2 text-xs text-muted-foreground">{description}</p>
               </div>
             ))}
           </dl>
         )}
-      </div>
-    </section>
+      </CardContent>
+    </Card>
   );
 }
