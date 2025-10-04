@@ -2,6 +2,7 @@
 
 [![Sync Backlog Issues](https://github.com/DegrassiAaron/influencerai-monorepo/actions/workflows/sync-backlog-issues.yml/badge.svg)](https://github.com/DegrassiAaron/influencerai-monorepo/actions/workflows/sync-backlog-issues.yml)
 [![Verify Backlog Issues](https://github.com/DegrassiAaron/influencerai-monorepo/actions/workflows/verify-backlog-issues.yml/badge.svg)](https://github.com/DegrassiAaron/influencerai-monorepo/actions/workflows/verify-backlog-issues.yml)
+[![CI - install & build](https://github.com/DegrassiAaron/influencerai-monorepo/actions/workflows/ci.yml/badge.svg)](https://github.com/DegrassiAaron/influencerai-monorepo/actions/workflows/ci.yml)
 
 Sistema locale per generazione contenuti (testo, immagini, video) per influencer virtuali.  
 Infrastruttura basata su **TypeScript** end-to-end, orchestrazione con **n8n**, addestramento **LoRA** e generazione **video locale** con **ComfyUI**.  
