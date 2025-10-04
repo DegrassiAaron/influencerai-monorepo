@@ -20,29 +20,31 @@ type QueueStats = {
   failed: number;
 };
 
-const STAT_DEFINITION: Array<{
+type StatDefinition = {
   key: keyof QueueStats;
   label: string;
   description: string;
-  accentClass: string;
-}> = [
+  badgeVariant: "info" | "secondary" | "destructive";
+};
+
+const STAT_DEFINITION: StatDefinition[] = [
   {
     key: "active",
     label: "Attivi",
     description: "Job in elaborazione",
-    accentClass: "border-blue-200 bg-blue-50 text-blue-700",
+    badgeVariant: "info",
   },
   {
     key: "waiting",
     label: "In coda",
     description: "Job in attesa",
-    accentClass: "border-slate-200 bg-slate-50 text-slate-700",
+    badgeVariant: "secondary",
   },
   {
     key: "failed",
     label: "Falliti",
     description: "Richiedono attenzione",
-    accentClass: "border-rose-200 bg-rose-50 text-rose-700",
+    badgeVariant: "destructive",
   },
 ];
 
@@ -50,7 +52,7 @@ const numberFormatter = new Intl.NumberFormat("it-IT");
 
 function StatSkeleton() {
   return (
-    <div className="grid grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
       {STAT_DEFINITION.map(({ key }) => (
         <div key={key} className="rounded-lg border border-border/60 p-3">
           <div className="h-6 w-16 animate-pulse rounded bg-muted" />
@@ -97,7 +99,7 @@ export function QueuesWidget() {
                 <dd className="mt-3 text-3xl font-semibold text-foreground">
                   <span className={cn("inline-flex rounded-full border px-3 py-1 text-base", accentClass)}>
                     {numberFormatter.format(value)}
-                  </span>
+                  </Badge>
                 </dd>
                 <p className="mt-2 text-xs text-muted-foreground">{description}</p>
               </div>

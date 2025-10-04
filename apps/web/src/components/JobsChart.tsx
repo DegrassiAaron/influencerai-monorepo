@@ -78,7 +78,11 @@ export function JobsChart() {
             {points.length === 0 ? (
               <p className="text-sm text-muted-foreground">{"Nessun job registrato nell’ultima ora."}</p>
             ) : (
-              <div role="img" aria-label="Grafico a barre dei job" className="flex h-48 items-end gap-2">
+              <div
+                role="img"
+                aria-label="Grafico a barre dei job"
+                className="flex h-48 items-end gap-2"
+              >
                 {points.map((point) => {
                   const successHeight = (point.success / maxValue) * 100;
                   const failedHeight = (point.failed / maxValue) * 100;
@@ -88,12 +92,18 @@ export function JobsChart() {
                       <div className="flex h-full flex-col justify-end gap-1">
                         <div
                           className="rounded-t bg-emerald-500"
-                          style={{ height: `${successHeight}%`, minHeight: point.success > 0 ? 4 : 0 }}
+                          style={{
+                            height: `${successHeight}%`,
+                            minHeight: point.success > 0 ? 4 : 0,
+                          }}
                           aria-hidden
                         />
                         <div
                           className="rounded-b bg-rose-500"
-                          style={{ height: `${failedHeight}%`, minHeight: point.failed > 0 ? 4 : 0 }}
+                          style={{
+                            height: `${failedHeight}%`,
+                            minHeight: point.failed > 0 ? 4 : 0,
+                          }}
                           aria-hidden
                         />
                       </div>

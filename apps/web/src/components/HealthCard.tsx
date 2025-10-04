@@ -19,18 +19,23 @@ type HealthResponse = {
   checks: Record<string, boolean>;
 };
 
-const STATUS_CONFIG: Record<HealthResponse["status"], { label: string; badgeClass: string }> = {
+type StatusVariant = "success" | "warning" | "destructive";
+
+const STATUS_CONFIG: Record<
+  HealthResponse["status"],
+  { label: string; badgeVariant: StatusVariant }
+> = {
   ok: {
     label: "Tutti i servizi operativi",
-    badgeClass: "bg-emerald-100 text-emerald-700 border-emerald-200",
+    badgeVariant: "success",
   },
   degraded: {
     label: "Servizi con degrado",
-    badgeClass: "bg-amber-100 text-amber-700 border-amber-200",
+    badgeVariant: "warning",
   },
   down: {
     label: "Servizi non disponibili",
-    badgeClass: "bg-red-100 text-red-700 border-red-200",
+    badgeVariant: "destructive",
   },
 };
 
