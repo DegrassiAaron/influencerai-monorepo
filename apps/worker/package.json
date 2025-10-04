@@ -7,8 +7,7 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "lint": "eslint src/**/*.ts --fix",
-    "test": "vitest run",
-    "test:watch": "vitest watch"
+    "test": "vitest run"
   },
   "dependencies": {
     "bullmq": "^5.38.2",
@@ -30,6 +29,6 @@
     "tsx": "^4.19.2",
     "typescript": "^5.7.2",
     "eslint": "^9.18.0",
-    "vitest": "^2.1.9"
+    "vitest": "^1.6.0"
   }
 }
