@@ -1,9 +1,15 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
+import { Inter } from "next/font/google";
+
+import { cn } from "@/lib/utils";
+
 import "./globals.css";
 import { AppShell } from "@/components/layout/app-shell";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Providers } from "./providers";
+
+const font = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "InfluencerAI",
