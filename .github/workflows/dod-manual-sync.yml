@@ -1,0 +1,80 @@
+name: DoD — Manual Sync via Slash Command
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  pull-requests: write
+  issues: write
+  contents: read
+
+jobs:
+  handle:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: cli/cli@v2
+      - name: Parse command
+        id: parse
+        run: |
+          body=$(jq -r '.comment.body' < "$GITHUB_EVENT_PATH")
+          if [[ "$body" =~ ^/dod[[:space:]]+(check|uncheck) ]]; then
+            action=$(echo "$body" | awk '{print $2}')
+            items=$(echo "$body" | cut -d' ' -f3-)
+            echo "run=true" >> $GITHUB_OUTPUT
+            echo "action=$action" >> $GITHUB_OUTPUT
+            echo "items=$items" >> $GITHUB_OUTPUT
+          else
+            echo "run=false" >> $GITHUB_OUTPUT
+          fi
+      - name: Apply to target (Issue or PR)
+        if: steps.parse.outputs.run == 'true'
+        env: { GH_TOKEN: ${{ secrets.GITHUB_TOKEN }} }
+        run: |
+          is_pr=$(jq -r '.issue.pull_request | has("url")' < "$GITHUB_EVENT_PATH")
+          num=$(jq -r '.issue.number' < "$GITHUB_EVENT_PATH")
+          target_md=target.md
+          if [ "$is_pr" = "true" ]; then
+            gh pr view "$num" --json body -q .body > $target_md
+          else
+            gh issue view "$num" --json body -q .body > $target_md
+          fi
+          fix(){
+            key="$1"
+            case "$key" in
+              lint) pat='Lint/format ok' ;;
+              test|tests) pat='Test locali passano' ;;
+              e2e|ux) pat='E2E/UX aggiornati (se serve)' ;;
+              docs|changelog) pat='Docs/Changelog aggiornati' ;;
+              mig|migrations) pat='Migrazioni verificate' ;;
+              *) pat='' ;;
+            esac
+            [ -z "$pat" ] && return 0
+            if [ "${{ steps.parse.outputs.action }}" = "check" ]; then
+              sed -i "s/- \[ \] $pat/- [x] $pat/g" $target_md
+            else
+              sed -i "s/- \[x\] $pat/- [ ] $pat/g" $target_md
+            fi
+          }
+          for i in ${{ steps.parse.outputs.items }}; do fix "$i"; done
+          if [ "$is_pr" = "true" ]; then
+            gh pr edit "$num" --body-file $target_md
+            issue=$(gh pr view "$num" --json body,title --jq '[.title,.body]|join("\n")' | grep -oE '#[0-9]+' | head -n1 | tr -d '#')
+            if [ -n "$issue" ]; then
+              gh issue view "$issue" --json body -q .body > issue.md
+              # Applica le stesse sostituzioni all'Issue
+              cp $target_md tmp.md # placeholder no-op
+              for i in ${{ steps.parse.outputs.items }}; do
+                case "$i" in
+                  lint) sed -i "s/- \[ \] Lint\/format ok/- [x] Lint\/format ok/g; s/- \[x\] Lint\/format ok/- [ ] Lint\/format ok/g" issue.md;;
+                  test|tests) sed -i "s/- \[ \] Test locali passano/- [x] Test locali passano/g; s/- \[x\] Test locali passano/- [ ] Test locali passano/g" issue.md;;
+                  e2e|ux) sed -i "s/- \[ \] E2E\/UX aggiornati (se serve)/- [x] E2E\/UX aggiornati (se serve)/g; s/- \[x\] E2E\/UX aggiornati (se serve)/- [ ] E2E\/UX aggiornati (se serve)/g" issue.md;;
+                  docs|changelog) sed -i "s/- \[ \] Docs\/Changelog aggiornati/- [x] Docs\/Changelog aggiornati/g; s/- \[x\] Docs\/Changelog aggiornati/- [ ] Docs\/Changelog aggiornati/g" issue.md;;
+                  mig|migrations) sed -i "s/- \[ \] Migrazioni verificate/- [x] Migrazioni verificate/g; s/- \[x\] Migrazioni verificate/- [ ] Migrazioni verificate/g" issue.md;;
+                esac
+              done
+              gh issue edit "$issue" --body-file issue.md || true
+            fi
+          else
+            gh issue edit "$num" --body-file $target_md
+          fi

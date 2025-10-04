@@ -1,0 +1,32 @@
+name: E2E — Puppeteer MCV
+
+on:
+  pull_request:
+    branches: [develop, main]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+      - name: Launch MCV server
+        run: |
+          nohup npm run e2e:server > server.log 2>&1 &
+          npx wait-on http-get://localhost:5173/healthz
+      - name: Run E2E tests (Puppeteer)
+        run: npm run e2e:test
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-logs
+          path: server.log
