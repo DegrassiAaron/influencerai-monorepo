@@ -13,6 +13,12 @@
 
 Richiede `DATABASE_URL` configurata (in `apps/api/.env` o nella root `.env`).
 
+## Login "magico" (solo sviluppo/test)
+
+- L'endpoint `POST /auth/login` accetta il campo opzionale `magic` con il formato `tenantId:email` per ottenere un token JWT senza password durante lo sviluppo.
+- Quando `NODE_ENV=production` la rotta risponde `401 Unauthorized` e ignora completamente il campo `magic`.
+- Per gli ambienti produttivi usare esclusivamente le credenziali classiche (email/password).
+
 ### Tramite Docker Compose
 
 - Le migrazioni vengono applicate automaticamente al primo avvio tramite il servizio `api-migrate` definito in `infra/docker-compose.yml`.
