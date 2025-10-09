@@ -42,7 +42,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
           if (!tenantId) {
             return next(params);
           }
-          const modelsWithTenant: Record<string, true> = { Influencer: true, Dataset: true, User: true };
+          const modelsWithTenant: Record<string, true> = { Influencer: true, Dataset: true, User: true, Job: true };
           if (!modelsWithTenant[params.model || '']) {
             return next(params);
           }
@@ -150,7 +150,7 @@ export const tenantScopedOperations = {
     const tenantId = ctx.tenantId;
     args = args || {};
     args.where = args.where || {};
-    if (tenantId && ['Influencer', 'Dataset', 'User'].includes(model)) {
+    if (tenantId && ['Influencer', 'Dataset', 'User', 'Job'].includes(model)) {
       args.where.tenantId = tenantId;
     }
     return query(args);
@@ -160,7 +160,7 @@ export const tenantScopedOperations = {
     const tenantId = ctx.tenantId;
     args = args || {};
     args.where = args.where || {};
-    if (tenantId && ['Influencer', 'Dataset', 'User'].includes(model)) {
+    if (tenantId && ['Influencer', 'Dataset', 'User', 'Job'].includes(model)) {
       args.where.tenantId = args.where.tenantId || tenantId;
     }
     return query(args);
@@ -170,7 +170,7 @@ export const tenantScopedOperations = {
     const tenantId = ctx.tenantId;
     args = args || {};
     args.data = args.data || {};
-    if (tenantId && ['Influencer', 'Dataset', 'User'].includes(model)) {
+    if (tenantId && ['Influencer', 'Dataset', 'User', 'Job'].includes(model)) {
       args.data.tenantId = tenantId;
     }
     return query(args);
@@ -180,7 +180,7 @@ export const tenantScopedOperations = {
     const tenantId = ctx.tenantId;
     args = args || {};
     args.where = args.where || {};
-    if (tenantId && ['Influencer', 'Dataset', 'User'].includes(model)) {
+    if (tenantId && ['Influencer', 'Dataset', 'User', 'Job'].includes(model)) {
       args.where.tenantId = args.where.tenantId || tenantId;
     }
     return query(args);
