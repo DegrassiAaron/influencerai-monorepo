@@ -78,18 +78,25 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
         };
       };
 
+      const scopingMiddleware = applyScoping();
+
       if (typeof (this as any).$extends === 'function') {
-        // For Prisma clients or test mocks that provide $extends, register a no-op extension or
-        // an extension that proxies queries — calling $extends also satisfies tests that spy on it.
+        // For Prisma clients or test mocks that provide $extends, register a query extension that
+        // delegates to our multi-tenant scoping middleware.
         try {
           // Some Prisma versions expect an extension object; pass a lightweight extension that
-          // doesn't change behavior but ensures $extends is invoked.
-          (this as any).$extends({});
+          // proxies all queries through the tenant scoping middleware.
+          (this as any).$extends({
+            query: {
+              $allModels: (params: PrismaMiddlewareParams, next: PrismaMiddlewareNext) =>
+                scopingMiddleware(params, next),
+            },
+          });
         } catch {
           // ignore if $extends invocation isn't supported in this runtime
         }
       } else if (typeof (this as any).$use === 'function') {
-        (this as any).$use(applyScoping());
+        (this as any).$use(scopingMiddleware);
       }
       await this.$connect();
       this.logger.log(`Connected to database: ${this.maskDatabaseUrl(this.databaseUrl)}`);
