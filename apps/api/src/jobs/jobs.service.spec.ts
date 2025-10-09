@@ -1,19 +1,23 @@
 import { Test } from '@nestjs/testing';
 import { Queue } from 'bullmq';
+import { ConfigService } from '@nestjs/config';
 import { JobsService } from './jobs.service';
 import { PrismaService } from '../prisma/prisma.service';
-import { Queue } from 'bullmq';
-
-const queueMock = {
-  add: jest.fn().mockResolvedValue(null),
-  getJobCounts: jest.fn().mockResolvedValue({ active: 0, waiting: 0, failed: 0 }),
-} as Pick<Queue, 'add' | 'getJobCounts'>;
 import { JobSeriesQuerySchema } from './dto';
+import { AppConfig, validateEnv } from '../config/env.validation';
+
+function createConfigService(overrides: Partial<AppConfig> = {}): ConfigService<AppConfig, true> {
+  const base = validateEnv({ DATABASE_URL: 'postgresql://user:pass@localhost:5432/db' });
+  const values: AppConfig = { ...base, ...overrides };
+  return {
+    get: jest.fn((key: keyof AppConfig) => values[key]),
+  } as unknown as ConfigService<AppConfig, true>;
+}
 
 describe('JobsService', () => {
-  const queueMock = { add: jest.fn().mockResolvedValue(null) } as Pick<Queue, 'add'>;
   let prismaMock: { job: { create: jest.Mock }; $queryRawUnsafe: jest.Mock };
   let service: JobsService;
+  let queueMock: Pick<Queue, 'add' | 'getJobCounts'>;
 
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -21,6 +25,10 @@ describe('JobsService', () => {
       job: { create: jest.fn().mockResolvedValue({ id: 'j1', type: 'content-generation' }) },
       $queryRawUnsafe: jest.fn().mockResolvedValue([]),
     } as any;
+    queueMock = {
+      add: jest.fn().mockResolvedValue(null),
+      getJobCounts: jest.fn().mockResolvedValue({ active: 0, waiting: 0, failed: 0 }),
+    } as unknown as Pick<Queue, 'add' | 'getJobCounts'>;
 
     const moduleRef = await Test.createTestingModule({
       providers: [
@@ -29,6 +37,7 @@ describe('JobsService', () => {
         { provide: 'BullQueue_content-generation', useValue: queueMock },
         { provide: 'BullQueue_lora-training', useValue: queueMock },
         { provide: 'BullQueue_video-generation', useValue: queueMock },
+        { provide: ConfigService, useValue: createConfigService() },
       ],
     }).compile();
 
@@ -46,7 +55,10 @@ describe('JobsService', () => {
     expect(queueMock.add).toHaveBeenCalledWith(
       'content-generation',
       expect.objectContaining({ jobId: 'j1', payload: { foo: 'bar' } }),
-      expect.any(Object),
+      expect.objectContaining({
+        attempts: 3,
+        backoff: expect.objectContaining({ delay: 5000 }),
+      }),
     );
   });
 

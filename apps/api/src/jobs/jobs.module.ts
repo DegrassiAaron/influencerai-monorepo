@@ -4,8 +4,9 @@ import { JobsService } from './jobs.service';
 import { JobsController } from './jobs.controller';
 import { QueuesController } from './queues.controller';
 import { PrismaService } from '../prisma/prisma.service';
+import { computeBullEnabled } from '../config/env.validation';
 
-const enableBull = !(process.env.NODE_ENV === 'test' || ['1', 'true', 'yes'].includes(String(process.env.DISABLE_BULL).toLowerCase()));
+const enableBull = computeBullEnabled(process.env);
 const queueImports = enableBull
   ? [
       BullModule.registerQueue(

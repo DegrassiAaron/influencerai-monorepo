@@ -5,6 +5,8 @@ import { fetchWithTimeout, HTTPError, parseRetryAfter, shouldRetry, backoffDelay
 import { OpenRouterResponseSchema } from '../types/openrouter';
 import { ContentPlanDataSchema } from '../types/content';
 import { LoggerService, Optional } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { AppConfig } from '../config/env.validation';
 
 // Minimal local prompt to avoid build coupling; align with @influencerai/prompts
 function contentPlanPrompt(persona: string, theme: string) {
@@ -15,19 +17,20 @@ function contentPlanPrompt(persona: string, theme: string) {
 export class ContentPlansService {
   constructor(
     private readonly prisma: PrismaService,
+    private readonly config: ConfigService<AppConfig, true>,
     @Optional() private readonly logger?: LoggerService,
   ) {}
 
   // Extracted so tests can mock only this part
   async generatePlanPosts(persona: string, theme: string): Promise<{ caption: string; hashtags: string[] }[]> {
     const prompt = contentPlanPrompt(persona, theme);
-    const apiKey = process.env.OPENROUTER_API_KEY || '';
+    const apiKey = this.config.get('OPENROUTER_API_KEY', { infer: true });
     const url = 'https://openrouter.ai/api/v1/chat/completions';
 
-    const maxAttempts = Number(process.env.OPENROUTER_MAX_RETRIES || 3);
-    const timeoutMs = Number(process.env.OPENROUTER_TIMEOUT_MS || 60000);
-    const backoffBaseMs = Number(process.env.OPENROUTER_BACKOFF_BASE_MS || 250);
-    const backoffJitterMs = Number(process.env.OPENROUTER_BACKOFF_JITTER_MS || 100);
+    const maxAttempts = this.config.get('OPENROUTER_MAX_RETRIES', { infer: true });
+    const timeoutMs = this.config.get('OPENROUTER_TIMEOUT_MS', { infer: true });
+    const backoffBaseMs = this.config.get('OPENROUTER_BACKOFF_BASE_MS', { infer: true });
+    const backoffJitterMs = this.config.get('OPENROUTER_BACKOFF_JITTER_MS', { infer: true });
     let attempt = 0;
     let lastError: unknown = null;
     while (attempt < maxAttempts) {

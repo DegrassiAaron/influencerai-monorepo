@@ -2,6 +2,7 @@ import { INestApplication } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaClient } from '@prisma/client';
 import { requestContext } from '../lib/request-context';
+import { AppConfig, validateEnv } from '../config/env.validation';
 
 jest.mock('@prisma/client', () => {
   const db: Record<string, any[]> = {
@@ -106,10 +107,17 @@ const runWithContext = async <T>(ctx: Record<string, any>, fn: () => Promise<T>)
 describe('PrismaService', () => {
   const databaseUrl = 'postgresql://user:pass@localhost:5432/db?schema=public';
 
-  const createConfigService = (value?: string): ConfigService => {
+  const baseConfig = validateEnv({ DATABASE_URL: databaseUrl });
+
+  const createConfigService = (value?: string): ConfigService<AppConfig, true> => {
     return {
-      get: jest.fn((key: string) => (key === 'DATABASE_URL' ? value : undefined)),
-    } as unknown as ConfigService;
+      get: jest.fn((key: keyof AppConfig) => {
+        if (key === 'DATABASE_URL') {
+          return value as any;
+        }
+        return baseConfig[key];
+      }),
+    } as unknown as ConfigService<AppConfig, true>;
   };
 
   afterEach(() => {
