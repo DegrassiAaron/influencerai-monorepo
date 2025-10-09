@@ -210,18 +210,20 @@ export function createWorkers(deps: WorkerDependencies) {
 
   async function patchJobStatus(jobId: string, data: UpdateJobInput) {
     const maxAttempts = 2;
-    let lastErr: unknown = undefined;
-    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    let lastErr: unknown;
+
+    for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
       try {
         await api.updateJob(jobId, data);
         return;
       } catch (err) {
         lastErr = err;
         if (attempt < maxAttempts) {
-          await new Promise((r) => setTimeout(r, 200 * attempt));
+          await sleep(200 * attempt);
         }
       }
     }
+
     depLogger.warn({ err: lastErr, jobId, data }, 'Failed to PATCH job status after retries');
   }
 
