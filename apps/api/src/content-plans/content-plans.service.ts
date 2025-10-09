@@ -82,8 +82,8 @@ export class ContentPlansService {
           } else {
             this.logger?.warn?.('OpenRouter posts validation failed, defaulting to empty array');
             normalized = [];
-        }
-      } catch {
+          }
+        } catch {
           this.logger?.warn?.('OpenRouter response content is not valid JSON array, defaulting to empty array');
           normalized = [];
         }
