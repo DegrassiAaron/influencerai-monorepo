@@ -4,6 +4,20 @@ export const JobTypeSchema = z.enum(['content-generation', 'lora-training', 'vid
 
 export const JobStatusSchema = z.enum(['pending', 'running', 'succeeded', 'failed', 'completed']);
 
+const windowRegex = /^\d+(?:m|h|d)$/i;
+
+export const JobSeriesQuerySchema = z.object({
+  window: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .regex(windowRegex, 'Invalid window format. Use values like 1h or 24h.')
+    .optional()
+    .default('24h'),
+});
+
+export type JobSeriesQuery = z.infer<typeof JobSeriesQuerySchema>;
+
 export const CreateJobSchema = z.object({
   type: JobTypeSchema,
   payload: z.record(z.any()),
