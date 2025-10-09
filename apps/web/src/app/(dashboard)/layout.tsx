@@ -4,6 +4,7 @@ import { AppShell } from "@/components/layout/AppShell";
 
 const navItems = [
   { title: "Dashboard", href: "/dashboard" },
+  { title: "Content Plans", href: "/dashboard/content-plans" },
   { title: "Jobs", href: "/dashboard/jobs" },
   { title: "Queues", href: "/dashboard/queues" },
 ];
