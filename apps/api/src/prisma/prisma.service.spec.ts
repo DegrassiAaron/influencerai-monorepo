@@ -1,10 +1,42 @@
 import { INestApplication } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { PrismaClient } from '@prisma/client';
 import { requestContext } from '../lib/request-context';
 
 jest.mock('@prisma/client', () => {
+  const db: Record<string, any[]> = {
+    Influencer: [],
+    Dataset: [],
+    User: [],
+  };
+
   class PrismaClientMock {
-    $extends() {
+    influencer: any;
+    dataset: any;
+    user: any;
+    private queryExtension?: (params: any, next: any) => Promise<any>;
+
+    constructor() {
+      this.influencer = {
+        findMany: (args?: any) => this.findMany('Influencer', args),
+        findUnique: (args?: any) => this.findUnique('Influencer', args),
+      };
+      this.dataset = {
+        findMany: (args?: any) => this.findMany('Dataset', args),
+        findUnique: (args?: any) => this.findUnique('Dataset', args),
+      };
+      this.user = {
+        findMany: (args?: any) => this.findMany('User', args),
+        findUnique: (args?: any) => this.findUnique('User', args),
+      };
+    }
+
+    static __setData(model: string, data: any[]): void {
+      db[model] = data;
+    }
+
+    $extends(extension: any) {
+      this.queryExtension = extension?.query?.$allModels;
       return this;
     }
 
@@ -14,6 +46,38 @@ jest.mock('@prisma/client', () => {
 
     $disconnect(): Promise<void> {
       return Promise.resolve();
+    }
+
+    private async executeQuery(
+      model: string,
+      action: string,
+      args: any,
+      handler: (finalArgs: any) => any,
+    ) {
+      const params = { model, action, args };
+      const next = async (nextParams: any) => handler(nextParams.args ?? args);
+      if (this.queryExtension) {
+        return this.queryExtension(params, next);
+      }
+      return handler(args);
+    }
+
+    private async findMany(model: string, args?: any) {
+      return this.executeQuery(model, 'findMany', args, (finalArgs: any) => {
+        const where = finalArgs?.where ?? {};
+        return db[model].filter((item) =>
+          Object.entries(where).every(([key, value]) => item[key] === value),
+        );
+      });
+    }
+
+    private async findUnique(model: string, args?: any) {
+      return this.executeQuery(model, 'findUnique', args, (finalArgs: any) => {
+        const where = finalArgs?.where ?? {};
+        return db[model].find((item) =>
+          Object.entries(where).every(([key, value]) => item[key] === value),
+        );
+      });
     }
   }
 
@@ -26,6 +90,18 @@ jest.mock('@prisma/client', () => {
 });
 
 import { PrismaService, tenantScopedOperations } from './prisma.service';
+
+const runWithContext = async <T>(ctx: Record<string, any>, fn: () => Promise<T>): Promise<T> => {
+  return new Promise<T>((resolve, reject) => {
+    requestContext.run(ctx, async () => {
+      try {
+        resolve(await fn());
+      } catch (error) {
+        reject(error);
+      }
+    });
+  });
+};
 
 describe('PrismaService', () => {
   const databaseUrl = 'postgresql://user:pass@localhost:5432/db?schema=public';
@@ -103,18 +179,6 @@ describe('PrismaService', () => {
   });
 
   describe('tenant scoping extension', () => {
-    const runWithContext = async <T>(ctx: Record<string, any>, fn: () => Promise<T>): Promise<T> => {
-      return new Promise<T>((resolve, reject) => {
-        requestContext.run(ctx, async () => {
-          try {
-            resolve(await fn());
-          } catch (error) {
-            reject(error);
-          }
-        });
-      });
-    };
-
     afterEach(() => {
       jest.clearAllMocks();
     });
@@ -210,6 +274,50 @@ describe('PrismaService', () => {
       );
 
       expect(query).toHaveBeenCalledWith({ where: { status: 'active' } });
+    });
+  });
+
+  describe('$extends tenant scoping integration', () => {
+    const setModelData = (model: string, data: any[]) => {
+      (PrismaClient as any).__setData(model, data);
+    };
+
+    afterEach(() => {
+      setModelData('Influencer', []);
+      setModelData('User', []);
+      setModelData('Dataset', []);
+    });
+
+    it('scopes findMany queries to the active tenant', async () => {
+      setModelData('Influencer', [
+        { id: 'inf_a1', tenantId: 'tenant_a' },
+        { id: 'inf_b1', tenantId: 'tenant_b' },
+      ]);
+
+      const service = new PrismaService(createConfigService(databaseUrl));
+      await service.onModuleInit();
+
+      const results = await runWithContext({ tenantId: 'tenant_a' }, () =>
+        (service as any).influencer.findMany({}),
+      );
+
+      expect(results).toEqual([{ id: 'inf_a1', tenantId: 'tenant_a' }]);
+    });
+
+    it('prevents cross-tenant reads on findUnique', async () => {
+      setModelData('Influencer', [
+        { id: 'inf_a1', tenantId: 'tenant_a' },
+        { id: 'inf_b1', tenantId: 'tenant_b' },
+      ]);
+
+      const service = new PrismaService(createConfigService(databaseUrl));
+      await service.onModuleInit();
+
+      const result = await runWithContext({ tenantId: 'tenant_a' }, () =>
+        (service as any).influencer.findUnique({ where: { id: 'inf_b1' } }),
+      );
+
+      expect(result).toBeUndefined();
     });
   });
 });
