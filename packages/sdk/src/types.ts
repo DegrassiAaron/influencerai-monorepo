@@ -10,3 +10,9 @@ export interface JobResponse {
 }
 
 // JobResponse is exported via the `export interface JobResponse` declaration above.
+
+export interface QueueSummary {
+  active: number;
+  waiting: number;
+  failed: number;
+}

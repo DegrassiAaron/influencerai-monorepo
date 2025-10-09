@@ -1,6 +1,6 @@
 import type { JobSpec, ContentPlan, DatasetSpec, LoRAConfig } from '@influencerai/core-schemas';
 import { fetchWithTimeout, handleResponse, APIError } from './fetch-utils';
-import type { JobResponse } from './types';
+import type { JobResponse, QueueSummary } from './types';
 
 export class InfluencerAIClient {
   private baseUrl: string;
@@ -42,6 +42,22 @@ export class InfluencerAIClient {
     return handleResponse(response);
   }
 
+  async getQueuesSummary(): Promise<QueueSummary> {
+    const response = await fetchWithTimeout(`${this.baseUrl}/queues/summary`);
+    const parsed = await handleResponse<QueueSummary>(response);
+    if (
+      !parsed ||
+      typeof parsed !== 'object' ||
+      typeof (parsed as QueueSummary).active !== 'number' ||
+      typeof (parsed as QueueSummary).waiting !== 'number' ||
+      typeof (parsed as QueueSummary).failed !== 'number'
+    ) {
+      throw new APIError('Invalid queue summary response shape', { status: 502, body: parsed });
+    }
+
+    return parsed;
+  }
+
   async createContentPlan(plan: Omit<ContentPlan, 'createdAt'>) {
     const response = await fetchWithTimeout(`${this.baseUrl}/content-plans`, {
       method: 'POST',
@@ -58,5 +74,5 @@ export class InfluencerAIClient {
 }
 
 export type { JobSpec, ContentPlan, DatasetSpec, LoRAConfig };
-export type { JobResponse } from './types';
+export type { JobResponse, QueueSummary } from './types';
 export { APIError as InfluencerAIAPIError } from './fetch-utils';

@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
+import type { QueueSummary } from "@influencerai/core-schemas";
 
 import {
   Card,
@@ -14,14 +15,8 @@ import { cn } from "@/lib/utils";
 
 import { ApiError, apiGet } from "../lib/api";
 
-type QueueStats = {
-  active: number;
-  waiting: number;
-  failed: number;
-};
-
 type StatDefinition = {
-  key: keyof QueueStats;
+  key: keyof QueueSummary;
   label: string;
   description: string;
   badgeVariant: "info" | "secondary" | "destructive";
@@ -64,9 +59,9 @@ function StatSkeleton() {
 }
 
 export function QueuesWidget() {
-  const { data, error, isLoading } = useQuery<QueueStats, Error>({
+  const { data, error, isLoading } = useQuery<QueueSummary, Error>({
     queryKey: ["queues"],
-    queryFn: () => apiGet<QueueStats>("/queues/summary"),
+    queryFn: () => apiGet<QueueSummary>("/queues/summary"),
     refetchInterval: 4000,
   });
 

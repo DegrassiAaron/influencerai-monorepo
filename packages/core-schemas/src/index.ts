@@ -1,5 +1,14 @@
 import { z } from 'zod';
 
+// Queue summary
+export const QueueSummarySchema = z.object({
+  active: z.number().int().nonnegative(),
+  waiting: z.number().int().nonnegative(),
+  failed: z.number().int().nonnegative(),
+});
+
+export type QueueSummary = z.infer<typeof QueueSummarySchema>;
+
 // Job Specifications
 export const JobSpecSchema = z.object({
   type: z.enum(['content-generation', 'lora-training', 'video-generation']),

@@ -178,6 +178,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@influencerai/core-schemas':
+        specifier: workspace:*
+        version: link:../../packages/core-schemas
       '@radix-ui/react-slot':
         specifier: ^1.1.1
         version: 1.2.3(@types/react@19.1.15)(react@19.1.1)
@@ -1745,6 +1748,11 @@ packages:
 
   '@prisma/get-platform@6.16.2':
     resolution: {integrity: sha512-U/P36Uke5wS7r1+omtAgJpEB94tlT4SdlgaeTc6HVTTT93pXj7zZ+B/cZnmnvjcNPfWddgoDx8RLjmQwqGDYyA==}
+
+  '@puppeteer/browsers@2.6.1':
+    resolution: {integrity: sha512-aBSREisdsGH890S2rQqK82qmQYU3uFpSH8wcZWHgHzl3LfzsxAKbLNiAG9mO8v1Y0UICBeClICxPJvyr0rcuxg==}
+    engines: {node: '>=18'}
+    hasBin: true
 
   '@radix-ui/react-compose-refs@1.1.2':
     resolution: {integrity: sha512-z4eqJvfiNnFMHIIvXP3CY57y2WJs5g2v3X0zm9mEJkrkNv4rDxu+sg9Jh8EkXyeqBkB7SOcboo9dMVqhyrACIg==}
@@ -3408,6 +3416,9 @@ packages:
     resolution: {integrity: sha512-TLz+x/vEXm/Y7P7wn1EJFNLxYpUD4TgMosxY6fAVJUnJMbupHBOncxyWUG9OpTaH9EBD7uFI5LfEgmMOc54DsA==}
     engines: {node: '>=8'}
 
+  devtools-protocol@0.0.1367902:
+    resolution: {integrity: sha512-XxtPuC3PGakY6PD7dG66/o8KwJ/LkH2/EKe19Dcw58w53dv4/vSQEkn/SzuyhHE2q4zPgCkxQBxus3VV4ql+Pg==}
+
   dezalgo@1.0.4:
     resolution: {integrity: sha512-rXSP0bf+5n0Qonsb+SVVfNfIsimO4HEtmnIpPHY8Q1UCzKlQrDMfdobr8nJOOsRgWCyMRqeSBQzmWUMq7zvVig==}
 
@@ -4781,6 +4792,10 @@ packages:
 
   lru-cache@5.1.1:
     resolution: {integrity: sha512-KpNARQA3Iwv+jTA0utUVVbrh+Jlrr1Fv0e56GGzAFOXN7dk/FviaDW8LHmK52DlcH4WP2n6gI8vN1aesBFgo9w==}
+
+  lru-cache@7.18.3:
+    resolution: {integrity: sha512-jumlc0BIUrS3qJGgIkWZsyfAM7NCWiBcCDhnd+3NNM5KbBmLTgHVfWBcg6W+rLUsIpzpERPsvwUP7CckAQSOoA==}
+    engines: {node: '>=12'}
 
   luxon@3.7.2:
     resolution: {integrity: sha512-vtEhXh/gNjI9Yg1u4jX/0YVPMvxzHuGgCm6tC5kZyb08yjGWGnqAjGJvcXbqQR2P3MyMEFnRbpcdFS6PBcLqew==}
@@ -8382,6 +8397,21 @@ snapshots:
     dependencies:
       '@prisma/debug': 6.16.2
 
+  '@puppeteer/browsers@2.6.1':
+    dependencies:
+      debug: 4.4.3
+      extract-zip: 2.0.1
+      progress: 2.0.3
+      proxy-agent: 6.5.0
+      semver: 7.7.2
+      tar-fs: 3.1.1
+      unbzip2-stream: 1.4.3
+      yargs: 17.7.2
+    transitivePeerDependencies:
+      - bare-buffer
+      - react-native-b4a
+      - supports-color
+
   '@radix-ui/react-compose-refs@1.1.2(@types/react@19.1.15)(react@19.1.1)':
     dependencies:
       react: 19.1.1
@@ -9502,8 +9532,7 @@ snapshots:
 
   acorn@8.15.0: {}
 
-  agent-base@7.1.4:
-    optional: true
+  agent-base@7.1.4: {}
 
   ajv-formats@2.1.1(ajv@8.12.0):
     optionalDependencies:
@@ -10274,6 +10303,8 @@ snapshots:
 
   detect-newline@3.1.0: {}
 
+  devtools-protocol@0.0.1367902: {}
+
   dezalgo@1.0.4:
     dependencies:
       asap: 2.0.6
@@ -10345,6 +10376,8 @@ snapshots:
 
   entities@6.0.1:
     optional: true
+
+  env-paths@2.2.1: {}
 
   error-ex@1.3.4:
     dependencies:
@@ -11309,7 +11342,6 @@ snapshots:
       debug: 4.4.3
     transitivePeerDependencies:
       - supports-color
-    optional: true
 
   https-proxy-agent@7.0.6:
     dependencies:
@@ -11317,7 +11349,6 @@ snapshots:
       debug: 4.4.3
     transitivePeerDependencies:
       - supports-color
-    optional: true
 
   human-signals@2.1.0: {}
 
@@ -12212,6 +12243,8 @@ snapshots:
     dependencies:
       yallist: 3.1.1
 
+  lru-cache@7.18.3: {}
+
   luxon@3.7.2: {}
 
   lz-string@1.5.0: {}
@@ -12604,6 +12637,8 @@ snapshots:
     dependencies:
       entities: 6.0.1
     optional: true
+
+  parseurl@1.3.3: {}
 
   passport-jwt@4.0.1:
     dependencies:
@@ -14132,6 +14167,16 @@ snapshots:
       xml-name-validator: 5.0.0
     optional: true
 
+  wait-on@8.0.5:
+    dependencies:
+      axios: 1.12.2
+      joi: 18.0.1
+      lodash: 4.17.21
+      minimist: 1.2.8
+      rxjs: 7.8.2
+    transitivePeerDependencies:
+      - debug
+
   walker@1.0.8:
     dependencies:
       makeerror: 1.0.12
@@ -14284,8 +14329,7 @@ snapshots:
       imurmurhash: 0.1.4
       signal-exit: 3.0.7
 
-  ws@8.18.3:
-    optional: true
+  ws@8.18.3: {}
 
   xml-name-validator@5.0.0:
     optional: true

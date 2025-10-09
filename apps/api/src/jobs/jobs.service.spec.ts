@@ -3,7 +3,10 @@ import { JobsService } from './jobs.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { Queue } from 'bullmq';
 
-const queueMock = { add: jest.fn().mockResolvedValue(null) } as Pick<Queue, 'add'>;
+const queueMock = {
+  add: jest.fn().mockResolvedValue(null),
+  getJobCounts: jest.fn().mockResolvedValue({ active: 0, waiting: 0, failed: 0 }),
+} as Pick<Queue, 'add' | 'getJobCounts'>;
 
 describe('JobsService', () => {
   it('creates job and enqueues', async () => {
