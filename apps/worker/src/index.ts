@@ -1,13 +1,10 @@
 import { Worker } from 'bullmq';
 import type { Processor } from 'bullmq';
 import Redis from 'ioredis';
-import { spawn } from 'child_process';
 import { logger as defaultLogger } from './logger';
 import { InfluencerAIClient } from '@influencerai/sdk';
 import type { JobResponse } from '@influencerai/sdk';
 import { imageCaptionPrompt, videoScriptPrompt } from '@influencerai/prompts';
-import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import {
   createLoraTrainingProcessor,
   type LoraTrainingJobData,
@@ -23,171 +20,16 @@ import {
   type VideoGenerationJobData,
   type VideoGenerationResult,
 } from './processors/videoGeneration';
-
-// Lightweight HTTP helpers (aligned with API app)
-class HTTPError extends Error {
-  status: number;
-  body?: unknown;
-  url?: string;
-  method?: string;
-  constructor(message: string, opts: { status: number; body?: unknown; url?: string; method?: string }) {
-    super(message);
-    this.name = 'HTTPError';
-    this.status = opts.status;
-    this.body = opts.body;
-    this.url = opts.url;
-    this.method = opts.method;
-  }
-}
-
-async function fetchWithTimeout(url: string, init: any = {}, timeoutMs = 60000): Promise<any> {
-  const controller = new AbortController();
-  const t = setTimeout(() => controller.abort(), timeoutMs);
-  try {
-    const res = await fetch(url as any, { ...init, signal: controller.signal } as any);
-    return res as any;
-  } finally {
-    clearTimeout(t);
-  }
-}
-
-function sleep(ms: number) {
-  return new Promise<void>((resolve) => setTimeout(resolve, ms));
-}
-
-function parseRetryAfter(header: string | null | undefined): number | null {
-  if (!header) return null;
-  const asInt = Number(header);
-  if (!Number.isNaN(asInt) && asInt >= 0) return asInt * 1000;
-  const date = Date.parse(header);
-  if (!Number.isNaN(date)) return Math.max(0, date - Date.now());
-  return null;
-}
-
-function shouldRetry(status: number): boolean {
-  return status === 429 || (status >= 500 && status <= 599);
-}
-
-function backoffDelay(attempt: number, baseMs = 250, jitterMs = 100): number {
-  const base = baseMs * Math.pow(2, attempt - 1);
-  const jitter = jitterMs > 0 ? Math.floor(Math.random() * jitterMs) : 0;
-  return base + jitter;
-}
-
-async function safeReadBody(res: any) {
-  try {
-    const ct = (res.headers as any)?.get?.('content-type') || '';
-    if (typeof ct === 'string' && ct.includes('application/json')) return await res.json();
-    return await res.text();
-  } catch {
-    return null;
-  }
-}
-
-async function callOpenRouter(messages: { role: 'system' | 'user' | 'assistant'; content: string }[], opts?: { responseFormat?: 'json_object' | 'text' }): Promise<{ content: string; usage?: { prompt_tokens?: number; completion_tokens?: number; total_tokens?: number } }> {
-  const apiKey = process.env.OPENROUTER_API_KEY || '';
-  const url = 'https://openrouter.ai/api/v1/chat/completions';
-  const maxAttempts = Number(process.env.OPENROUTER_MAX_RETRIES || 3);
-  const timeoutMs = Number(process.env.OPENROUTER_TIMEOUT_MS || 60000);
-  const backoffBaseMs = Number(process.env.OPENROUTER_BACKOFF_BASE_MS || 250);
-  const backoffJitterMs = Number(process.env.OPENROUTER_BACKOFF_JITTER_MS || 100);
-
-  let attempt = 0;
-  let lastErr: unknown = undefined;
-  while (attempt < maxAttempts) {
-    attempt += 1;
-    try {
-      const res = await fetchWithTimeout(
-        url,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${apiKey}`,
-          },
-          body: JSON.stringify({
-            model: 'openrouter/auto',
-            messages,
-            ...(opts?.responseFormat ? { response_format: { type: opts.responseFormat } } : {}),
-          }),
-        },
-        timeoutMs
-      );
-
-      if (!res.ok) {
-        const status = (res as any).status ?? 500;
-        const body = await safeReadBody(res);
-        if (shouldRetry(status) && attempt < maxAttempts) {
-          const ra = parseRetryAfter((res as any).headers?.get?.('Retry-After'));
-          const delay = Math.max(ra ?? 0, backoffDelay(attempt, backoffBaseMs, backoffJitterMs));
-          await sleep(delay);
-          continue;
-        }
-        throw new HTTPError('OpenRouter request failed', { status, body, url, method: 'POST' });
-      }
-
-      const json = await res.json();
-      const content = json?.choices?.[0]?.message?.content as string | undefined;
-      const usage = json?.usage as { prompt_tokens?: number; completion_tokens?: number; total_tokens?: number } | undefined;
-      return { content: content ?? '', usage };
-    } catch (err) {
-      lastErr = err;
-      if (attempt < maxAttempts) {
-        await sleep(backoffDelay(attempt, backoffBaseMs, backoffJitterMs));
-        continue;
-      }
-      throw err;
-    }
-  }
-  if (lastErr) throw lastErr;
-  return { content: '', usage: undefined };
-}
-
-// Minimal S3 helpers
-type LoggerLike = Pick<typeof defaultLogger, 'info' | 'warn' | 'error'>;
-
-function getS3Client(logger: LoggerLike = defaultLogger): { client: S3Client; bucket: string } | null {
-  const endpoint = process.env.S3_ENDPOINT || 'http://localhost:9000';
-  const region = process.env.AWS_REGION || 'us-east-1';
-  const accessKeyId = process.env.S3_KEY || 'minio';
-  const secretAccessKey = process.env.S3_SECRET || 'minio12345';
-  const bucket = process.env.S3_BUCKET || 'assets';
-  try {
-    const client = new S3Client({
-      region,
-      endpoint,
-      forcePathStyle: true,
-      credentials: { accessKeyId, secretAccessKey },
-    });
-    return { client, bucket };
-  } catch (e) {
-    logger.warn({ err: e }, 'Unable to initialize S3 client');
-    return null;
-  }
-}
-
-async function putTextObjectS3(client: S3Client, bucket: string, key: string, content: string) {
-  await client.send(
-    new PutObjectCommand({ Bucket: bucket, Key: key, Body: Buffer.from(content, 'utf8'), ContentType: 'text/plain' })
-  );
-}
-
-async function putBinaryObjectS3(
-  client: S3Client,
-  bucket: string,
-  key: string,
-  body: NodeJS.ReadableStream | Uint8Array | Buffer,
-  contentType = 'application/octet-stream'
-) {
-  await client.send(
-    new PutObjectCommand({ Bucket: bucket, Key: key, Body: body, ContentType: contentType })
-  );
-}
-
-async function getSignedGetUrlS3(client: S3Client, bucket: string, key: string, expiresInSeconds = 3600): Promise<string> {
-  const cmd = new GetObjectCommand({ Bucket: bucket, Key: key });
-  return getSignedUrl(client, cmd, { expiresIn: expiresInSeconds });
-}
+import { HTTPError, callOpenRouter, fetchWithTimeout, safeReadBody, sleep } from './httpClient';
+import { createFfmpegRunner } from './ffmpeg';
+import {
+  getClient as getS3Client,
+  putTextObject as putTextObjectS3,
+  putBinaryObject as putBinaryObjectS3,
+  getSignedGetUrl as getSignedGetUrlS3,
+  type S3Helpers,
+} from './s3Helpers';
+export type { S3Helpers } from './s3Helpers';
 
 type LogFn = (...args: any[]) => void;
 
@@ -205,13 +47,6 @@ export type WorkerApi = {
   createJob: (input: CreateJobInput) => Promise<JobResponse>;
 };
 
-export type S3Helpers = {
-  getClient: typeof getS3Client;
-  putTextObject: typeof putTextObjectS3;
-  putBinaryObject: typeof putBinaryObjectS3;
-  getSignedGetUrl: typeof getSignedGetUrlS3;
-};
-
 export type WorkerDependencies = {
   logger: WorkerLogger;
   api: WorkerApi;
@@ -223,98 +58,6 @@ export type WorkerDependencies = {
   ) => Promise<Partial<Record<string, unknown>> & { modelName?: string; outputPath?: string } | null>;
 };
 
-type FfmpegRunner = {
-  aspectRatio: string;
-  audioFilter: string;
-  preset: string;
-  run: (input: { inputPath: string; outputPath: string; aspectRatio: string; audioFilter: string; preset: string }) => Promise<void>;
-};
-
-function buildAspectRatioFilter(aspectRatio: string): string {
-  const [wStr, hStr] = aspectRatio.split(':');
-  const width = Number(wStr);
-  const height = Number(hStr);
-  if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) {
-    return "scale=-2:1080:force_original_aspect_ratio=decrease,setsar=1";
-  }
-  const ratio = width / height;
-  let targetWidth: number;
-  let targetHeight: number;
-  if (ratio >= 1) {
-    targetWidth = 1920;
-    targetHeight = Math.round(targetWidth / ratio);
-  } else {
-    targetHeight = 1920;
-    targetWidth = Math.round(targetHeight * ratio);
-  }
-  targetWidth = Math.max(2, Math.round(targetWidth / 2) * 2);
-  targetHeight = Math.max(2, Math.round(targetHeight / 2) * 2);
-  return `scale=${targetWidth}:-2:force_original_aspect_ratio=decrease,pad=${targetWidth}:${targetHeight}:(ow-iw)/2:(oh-ih)/2,setsar=1`;
-}
-
-function createFfmpegRunner(logger: WorkerLogger): FfmpegRunner {
-  const ffmpegPath = process.env.FFMPEG_PATH || 'ffmpeg';
-  const aspectRatio = process.env.FFMPEG_ASPECT_RATIO || '9:16';
-  const audioFilter = process.env.FFMPEG_AUDIO_FILTER || 'loudnorm=I=-16:TP=-1.5:LRA=11';
-  const preset = process.env.FFMPEG_VIDEO_PRESET || 'medium';
-
-  return {
-    aspectRatio,
-    audioFilter,
-    preset,
-    run: ({ inputPath, outputPath, aspectRatio: ar, audioFilter: af, preset: pr }) =>
-      new Promise<void>((resolve, reject) => {
-        const args = [
-          '-y',
-          '-i',
-          inputPath,
-          '-vf',
-          buildAspectRatioFilter(ar),
-          '-af',
-          af,
-          '-c:v',
-          'libx264',
-          '-preset',
-          pr,
-          '-pix_fmt',
-          'yuv420p',
-          '-movflags',
-          '+faststart',
-          '-c:a',
-          'aac',
-          '-b:a',
-          '192k',
-          outputPath,
-        ];
-
-        logger.info({ args }, 'Running FFmpeg post-processing');
-
-        const proc = spawn(ffmpegPath, args, { stdio: ['ignore', 'ignore', 'pipe'] });
-        let stderr = '';
-
-        proc.stderr?.on('data', (chunk) => {
-          stderr += chunk.toString();
-        });
-
-        proc.on('close', (code) => {
-          if (code === 0) {
-            if (stderr.trim()) {
-              logger.info({ stderr: stderr.trim() }, 'FFmpeg completed with diagnostics');
-            }
-            resolve();
-          } else {
-            logger.error({ code, stderr: stderr.trim() }, 'FFmpeg failed');
-            reject(new Error(`FFmpeg exited with code ${code ?? -1}`));
-          }
-        });
-
-        proc.on('error', (err) => {
-          logger.error({ err }, 'Unable to start FFmpeg');
-          reject(err);
-        });
-      }),
-  };
-}
 
 export function createWorkers(deps: WorkerDependencies) {
   const { logger: depLogger, api, connection, s3, fetchDataset, fetchLoraConfig } = deps;
