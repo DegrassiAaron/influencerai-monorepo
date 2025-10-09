@@ -1,4 +1,9 @@
+import { QueueSummarySchema as SharedQueueSummarySchema } from '@influencerai/core-schemas';
 import { z } from 'zod';
+
+export const QueueSummarySchema = SharedQueueSummarySchema;
+
+export type QueueSummaryDto = z.infer<typeof QueueSummarySchema>;
 
 export const JobTypeSchema = z.enum(['content-generation', 'lora-training', 'video-generation']);
 

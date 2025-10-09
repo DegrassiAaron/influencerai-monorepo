@@ -84,6 +84,26 @@ describe('InfluencerAIClient error handling', () => {
     expect(result).toEqual({ ok: true });
   });
 
+  it('getQueuesSummary fetches queue summary and validates shape', async () => {
+    const response = {} as Response;
+    fetchWithTimeoutSpy.mockResolvedValue(response);
+    handleResponseSpy.mockResolvedValue({ active: 3, waiting: 4, failed: 1 } as any);
+
+    const result = await client.getQueuesSummary();
+
+    expect(fetchWithTimeoutSpy).toHaveBeenCalledWith('https://api.test.example/queues/summary');
+    expect(handleResponseSpy).toHaveBeenCalledWith(response);
+    expect(result).toEqual({ active: 3, waiting: 4, failed: 1 });
+  });
+
+  it('getQueuesSummary throws InfluencerAIAPIError on invalid shape', async () => {
+    const response = {} as Response;
+    fetchWithTimeoutSpy.mockResolvedValue(response);
+    handleResponseSpy.mockResolvedValue({ active: 1 } as any);
+
+    await expect(client.getQueuesSummary()).rejects.toBeInstanceOf(InfluencerAIAPIError as any);
+  });
+
   it('createContentPlan uses POST and returns handled response', async () => {
     const response = {} as Response;
     const plan = { title: 'Plan' } as any;

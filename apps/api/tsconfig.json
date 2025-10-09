@@ -18,6 +18,9 @@
     "noImplicitAny": true,
     "strictBindCallApply": true,
     "forceConsistentCasingInFileNames": true,
-    "noFallthroughCasesInSwitch": true
+    "noFallthroughCasesInSwitch": true,
+    "paths": {
+      "@influencerai/core-schemas": ["../../packages/core-schemas/src"]
+    }
   }
 }
