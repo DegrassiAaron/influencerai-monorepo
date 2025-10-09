@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { QueueSummary } from "@influencerai/core-schemas";
 
+import { Badge, type BadgeProps } from "@/components/ui/badge";
 import {
   Card,
   CardContent,
@@ -19,7 +20,7 @@ type StatDefinition = {
   key: keyof QueueSummary;
   label: string;
   description: string;
-  badgeVariant: "info" | "secondary" | "destructive";
+  badgeVariant: NonNullable<BadgeProps["variant"]>;
 };
 
 const STAT_DEFINITION: StatDefinition[] = [
@@ -27,7 +28,7 @@ const STAT_DEFINITION: StatDefinition[] = [
     key: "active",
     label: "Attivi",
     description: "Job in elaborazione",
-    badgeVariant: "info",
+    badgeVariant: "brand",
   },
   {
     key: "waiting",
@@ -88,11 +89,13 @@ export function QueuesWidget() {
         )}
         {stats && (
           <dl className="grid grid-cols-1 gap-4 md:grid-cols-3" aria-live="polite">
-            {stats.map(({ key, label, description, accentClass, value }) => (
+            {stats.map(({ key, label, description, badgeVariant, value }) => (
               <div key={key} className="rounded-lg border border-border/60 bg-background/60 p-4">
                 <dt className="text-sm font-medium text-muted-foreground">{label}</dt>
                 <dd className="mt-3 text-3xl font-semibold text-foreground">
-                  <span className={cn("inline-flex rounded-full border px-3 py-1 text-base", accentClass)}>
+                  <Badge
+                    variant={badgeVariant}
+                    className={cn("px-3 py-1 text-base leading-tight")}>
                     {numberFormatter.format(value)}
                   </Badge>
                 </dd>

@@ -1,6 +1,6 @@
 import { Controller, Get, Param, Post, Body, Query, BadRequestException, NotFoundException, Patch } from '@nestjs/common';
 import { JobsService } from './jobs.service';
-import { CreateJobSchema, ListJobsQuerySchema, UpdateJobSchema } from './dto';
+import { CreateJobSchema, JobSeriesQuerySchema, ListJobsQuerySchema, UpdateJobSchema } from './dto';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 @ApiTags('jobs')
@@ -34,6 +34,17 @@ export class JobsController {
       throw new BadRequestException(parsed.error.flatten());
     }
     return this.jobsService.listJobs(parsed.data);
+  }
+
+  @Get('series')
+  @ApiOperation({ summary: 'Get aggregated job outcomes over time' })
+  @ApiResponse({ status: 200, description: 'Aggregated job series' })
+  series(@Query('window') window?: string) {
+    const parsed = JobSeriesQuerySchema.safeParse({ window });
+    if (!parsed.success) {
+      throw new BadRequestException(parsed.error.flatten());
+    }
+    return this.jobsService.getJobSeries(parsed.data);
   }
 
   @Get(':id')

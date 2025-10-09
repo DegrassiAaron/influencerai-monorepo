@@ -2,7 +2,7 @@ import { Injectable, Logger as NestLogger, LoggerService, Optional } from '@nest
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { PrismaService } from '../prisma/prisma.service';
-import { ListJobsQuery, UpdateJobDto } from './dto';
+import { JobSeriesQuery, ListJobsQuery, UpdateJobDto } from './dto';
 
 type JobType = 'content-generation' | 'lora-training' | 'video-generation';
 
@@ -58,6 +58,50 @@ export class JobsService {
     });
   }
 
+  async getJobSeries(params: JobSeriesQuery) {
+    const { amount, unit, unitMs, unitName } = this.parseWindow(params.window);
+    const now = new Date();
+    const currentBucket = this.truncateToUnit(now, unitName);
+    const from = new Date(currentBucket.getTime() - (amount - 1) * unitMs);
+
+    const query = `
+      SELECT
+        date_trunc('${unitName}', "createdAt") AS bucket,
+        COUNT(*) FILTER (WHERE "status" IN ('succeeded', 'completed')) AS success,
+        COUNT(*) FILTER (WHERE "status" = 'failed') AS failed
+      FROM "Job"
+      WHERE "createdAt" >= $1
+        AND "status" IN ('succeeded', 'failed', 'completed')
+      GROUP BY bucket
+      ORDER BY bucket ASC
+    `;
+
+    const rows = (await this.prisma.$queryRawUnsafe(
+      query,
+      from,
+    )) as Array<{ bucket: Date; success: bigint; failed: bigint }>;
+
+    const normalized = new Map<string, { success: number; failed: number }>();
+    for (const row of rows) {
+      const bucketDate = row.bucket instanceof Date ? row.bucket : new Date(row.bucket);
+      const key = bucketDate.toISOString();
+      normalized.set(key, {
+        success: Number(row.success ?? 0n),
+        failed: Number(row.failed ?? 0n),
+      });
+    }
+
+    const series: Array<{ t: string; success: number; failed: number }> = [];
+    for (let i = amount - 1; i >= 0; i -= 1) {
+      const bucketStart = new Date(currentBucket.getTime() - i * unitMs);
+      const key = bucketStart.toISOString();
+      const totals = normalized.get(key) ?? { success: 0, failed: 0 };
+      series.push({ t: key, success: totals.success, failed: totals.failed });
+    }
+
+    return series;
+  }
+
   async getJob(id: string) {
     return this.prisma.job.findUnique({ where: { id } });
   }
@@ -101,5 +145,40 @@ export class JobsService {
       default:
         return this.contentQueue;
     }
+  }
+
+  private parseWindow(window: string) {
+    const match = /^([0-9]+)(m|h|d)$/.exec(window);
+    if (!match) {
+      throw new Error('Invalid window format. Expected something like 1h or 24h.');
+    }
+    const amount = Number(match[1]);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      throw new Error('Window amount must be a positive integer.');
+    }
+
+    const unit = match[2] as 'm' | 'h' | 'd';
+    const unitConfig: Record<typeof unit, { unitMs: number; unitName: 'minute' | 'hour' | 'day' }>
+      = {
+        m: { unitMs: 60 * 1000, unitName: 'minute' },
+        h: { unitMs: 60 * 60 * 1000, unitName: 'hour' },
+        d: { unitMs: 24 * 60 * 60 * 1000, unitName: 'day' },
+      };
+
+    const { unitMs, unitName } = unitConfig[unit];
+
+    return { amount, unit, unitMs, unitName };
+  }
+
+  private truncateToUnit(date: Date, unit: 'minute' | 'hour' | 'day') {
+    const copy = new Date(date);
+    copy.setSeconds(0, 0);
+    if (unit === 'hour' || unit === 'day') {
+      copy.setMinutes(0);
+    }
+    if (unit === 'day') {
+      copy.setHours(0);
+    }
+    return copy;
   }
 }
