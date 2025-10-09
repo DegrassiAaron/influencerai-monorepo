@@ -137,6 +137,21 @@ describe('PrismaService', () => {
       });
     });
 
+    it('scopes job queries to the active tenant', async () => {
+      const query = jest.fn().mockResolvedValue(['job']);
+
+      await runWithContext({ tenantId: 'tenant_a' }, () =>
+        tenantScopedOperations.findMany({
+          model: 'Job',
+          operation: 'findMany',
+          args: { where: { status: 'pending' } },
+          query,
+        }),
+      );
+
+      expect(query).toHaveBeenCalledWith({ where: { status: 'pending', tenantId: 'tenant_a' } });
+    });
+
     it('preserves explicit tenant filters on findUnique', async () => {
       const query = jest.fn().mockResolvedValue({ id: 'inf_1' });
 
@@ -165,6 +180,23 @@ describe('PrismaService', () => {
       );
 
       expect(query).toHaveBeenCalledWith({ data: { name: 'Jane Doe', tenantId: 'tenant_a' } });
+    });
+
+    it('injects tenant id when creating jobs', async () => {
+      const query = jest.fn().mockResolvedValue({ id: 'job_1' });
+
+      await runWithContext({ tenantId: 'tenant_a' }, () =>
+        tenantScopedOperations.create({
+          model: 'Job',
+          operation: 'create',
+          args: { data: { type: 'content-generation', payload: { foo: 'bar' } } },
+          query,
+        }),
+      );
+
+      expect(query).toHaveBeenCalledWith({
+        data: { type: 'content-generation', payload: { foo: 'bar' }, tenantId: 'tenant_a' },
+      });
     });
 
     it('enforces tenant constraint on updates while leaving other models untouched', async () => {

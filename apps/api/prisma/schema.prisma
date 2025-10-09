@@ -21,6 +21,7 @@ model Tenant {
   influencers Influencer[]
   datasets    Dataset[]
   users       User[]
+  jobs        Job[]
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 }
@@ -54,6 +55,7 @@ model Dataset {
 
 model Job {
   id         String    @id @default(cuid())
+  tenantId   String
   type       String
   status     JobStatus @default(pending)
   payload    Json
@@ -62,11 +64,13 @@ model Job {
   startedAt  DateTime?
   finishedAt DateTime?
   assets     Asset[]
+  Tenant     Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
 
   @@index([status])
   @@index([type])
+  @@index([tenantId])
 }
 
 model Asset {
