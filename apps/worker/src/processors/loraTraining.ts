@@ -4,7 +4,7 @@ import path from 'node:path';
 import { once } from 'node:events';
 import type { Processor } from 'bullmq';
 import type { LoRAConfig } from '@influencerai/core-schemas';
-import type { S3Client } from '@aws-sdk/client-s3';
+import type { S3Helpers } from '../s3Helpers';
 
 export type LoraTrainingJobData = {
   jobId?: string;
@@ -60,17 +60,7 @@ export type LoraTrainingPayload = {
 export type LoraTrainingProcessorDeps = {
   logger: { info: (...args: any[]) => void; warn: (...args: any[]) => void; error: (...args: any[]) => void };
   patchJobStatus: PatchJobStatusFn;
-  s3: {
-    getClient: () => { client: S3Client; bucket: string } | null;
-    putBinaryObject: (
-      client: S3Client,
-      bucket: string,
-      key: string,
-      body: NodeJS.ReadableStream | Uint8Array | Buffer,
-      contentType?: string
-    ) => Promise<void>;
-    getSignedGetUrl: (client: S3Client, bucket: string, key: string, expiresInSeconds?: number) => Promise<string>;
-  };
+  s3: Pick<S3Helpers, 'getClient' | 'putBinaryObject' | 'getSignedGetUrl'>;
   fetchDataset?: (datasetId: string) => Promise<LoraDatasetInfo | null>;
   fetchLoraConfig?: (configId: string) => Promise<LoraConfigInfo | null>;
   spawn?: typeof defaultSpawn;

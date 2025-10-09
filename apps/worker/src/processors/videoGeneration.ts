@@ -1,10 +1,11 @@
 import type { Job, Processor } from 'bullmq';
 import type { Logger } from 'pino';
-import type { S3Client } from '@aws-sdk/client-s3';
 import { mkdtemp, readFile, rm, writeFile } from 'fs/promises';
 import { tmpdir } from 'os';
 import path from 'path';
 import type { PatchJobStatus } from './contentGeneration';
+import type { S3Helpers } from '../s3Helpers';
+import type { FfmpegRunner } from '../ffmpeg';
 
 type FetchLike = (input: string, init?: RequestInit) => Promise<Response>;
 
@@ -15,25 +16,10 @@ type ComfyOutputAsset = {
   url?: string;
 };
 
-type S3ClientInfo = { client: S3Client; bucket: string };
-
-export type S3Helper = {
-  getClient: (logger?: Pick<Logger, 'info' | 'warn' | 'error'>) => S3ClientInfo | null;
-  putBinaryObject: (
-    client: S3Client,
-    bucket: string,
-    key: string,
-    body: NodeJS.ReadableStream | Uint8Array | Buffer,
-    contentType?: string
-  ) => Promise<void>;
-  putTextObject: (client: S3Client, bucket: string, key: string, content: string) => Promise<void>;
-  getSignedGetUrl: (client: S3Client, bucket: string, key: string, expiresInSeconds?: number) => Promise<string>;
-};
-
 export type VideoGenerationDependencies = {
   logger: Pick<Logger, 'info' | 'warn' | 'error'>;
   patchJobStatus: PatchJobStatus;
-  s3: S3Helper;
+  s3: S3Helpers;
   comfy: {
     baseUrl: string;
     clientId: string;
@@ -42,12 +28,7 @@ export type VideoGenerationDependencies = {
     pollIntervalMs?: number;
     maxPollAttempts?: number;
   };
-  ffmpeg: {
-    aspectRatio: string;
-    audioFilter: string;
-    preset: string;
-    run: (input: { inputPath: string; outputPath: string; aspectRatio: string; audioFilter: string; preset: string }) => Promise<void>;
-  };
+  ffmpeg: FfmpegRunner;
 };
 
 export type VideoGenerationPayload = {

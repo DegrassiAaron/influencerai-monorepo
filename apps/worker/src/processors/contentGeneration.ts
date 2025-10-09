@@ -1,22 +1,7 @@
 import type { Job, Processor } from 'bullmq';
 import type { Logger } from 'pino';
 import type { JobResponse } from '@influencerai/sdk';
-
-export type OpenRouterUsage = {
-  prompt_tokens?: number;
-  completion_tokens?: number;
-  total_tokens?: number;
-};
-
-export type OpenRouterMessage = {
-  role: 'system' | 'user' | 'assistant';
-  content: string;
-};
-
-export type CallOpenRouter = (
-  messages: OpenRouterMessage[],
-  opts?: { responseFormat?: 'json_object' | 'text' }
-) => Promise<{ content: string; usage?: OpenRouterUsage }>;
+import type { CallOpenRouter, OpenRouterMessage, OpenRouterUsage } from '../httpClient';
 
 export type PatchJobStatus = (
   jobId: string,
