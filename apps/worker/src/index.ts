@@ -8,6 +8,11 @@ import { imageCaptionPrompt, videoScriptPrompt } from '@influencerai/prompts';
 import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import {
+  createLoraTrainingProcessor,
+  type LoraTrainingJobData,
+  type LoraTrainingResult,
+} from './processors/loraTraining';
+import {
   createContentGenerationProcessor,
   type ContentGenerationJobData,
   type ContentGenerationResult,
@@ -161,6 +166,18 @@ async function putTextObjectS3(client: S3Client, bucket: string, key: string, co
   );
 }
 
+async function putBinaryObjectS3(
+  client: S3Client,
+  bucket: string,
+  key: string,
+  body: NodeJS.ReadableStream | Uint8Array | Buffer,
+  contentType = 'application/octet-stream'
+) {
+  await client.send(
+    new PutObjectCommand({ Bucket: bucket, Key: key, Body: body, ContentType: contentType })
+  );
+}
+
 async function getSignedGetUrlS3(client: S3Client, bucket: string, key: string, expiresInSeconds = 3600): Promise<string> {
   const cmd = new GetObjectCommand({ Bucket: bucket, Key: key });
   return getSignedUrl(client, cmd, { expiresIn: expiresInSeconds });
@@ -185,6 +202,7 @@ export type WorkerApi = {
 export type S3Helpers = {
   getClient: typeof getS3Client;
   putTextObject: typeof putTextObjectS3;
+  putBinaryObject: typeof putBinaryObjectS3;
   getSignedGetUrl: typeof getSignedGetUrlS3;
 };
 
@@ -193,20 +211,14 @@ export type WorkerDependencies = {
   api: WorkerApi;
   connection: Redis;
   s3: S3Helpers;
-};
-
-type LoraTrainingJobData = {
-  jobId?: string;
-  payload?: Record<string, unknown>;
-};
-
-type LoraTrainingResult = {
-  success: true;
-  result: string;
+  fetchDataset?: (datasetId: string) => Promise<{ id?: string; path: string; meta?: Record<string, unknown> | null } | null>;
+  fetchLoraConfig?: (
+    configId: string
+  ) => Promise<Partial<Record<string, unknown>> & { modelName?: string; outputPath?: string } | null>;
 };
 
 export function createWorkers(deps: WorkerDependencies) {
-  const { logger: depLogger, api, connection, s3 } = deps;
+  const { logger: depLogger, api, connection, s3, fetchDataset, fetchLoraConfig } = deps;
 
   async function patchJobStatus(jobId: string, data: UpdateJobInput) {
     const maxAttempts = 2;
@@ -264,23 +276,13 @@ export function createWorkers(deps: WorkerDependencies) {
     { connection, prefix: process.env.BULL_PREFIX }
   );
 
-  const loraProcessor: Processor<LoraTrainingJobData, LoraTrainingResult, 'lora-training'> = async (job) => {
-    depLogger.info({ id: job.id, data: job.data }, 'Processing LoRA training job');
-    const jobData = job.data ?? {};
-    const jobId = typeof jobData.jobId === 'string' ? jobData.jobId : undefined;
-    if (jobId) await patchJobStatus(jobId, { status: 'running' });
-
-    // TODO: Implement LoRA training logic
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    const result: LoraTrainingResult = { success: true, result: 'Training completed' };
-    if (jobId) {
-      const { success: _success, ...jobResult } = result;
-      void _success;
-      await patchJobStatus(jobId, { status: 'succeeded', result: jobResult });
-    }
-    return result;
-  };
+  const loraProcessor: Processor<LoraTrainingJobData, LoraTrainingResult, 'lora-training'> = createLoraTrainingProcessor({
+    logger: depLogger,
+    patchJobStatus,
+    s3,
+    fetchDataset,
+    fetchLoraConfig,
+  });
 
   const loraWorker = new Worker<LoraTrainingJobData, LoraTrainingResult, 'lora-training'>(
     'lora-training',
@@ -342,7 +344,51 @@ if (process.env.NODE_ENV !== 'test') {
     s3: {
       getClient: getS3Client,
       putTextObject: putTextObjectS3,
+      putBinaryObject: putBinaryObjectS3,
       getSignedGetUrl: getSignedGetUrlS3,
+    },
+    fetchDataset: async (datasetId: string) => {
+      try {
+        const res = await fetchWithTimeout(`${apiBaseUrl}/datasets/${datasetId}`);
+        if (!res.ok) {
+          throw new HTTPError('Failed to fetch dataset', {
+            status: (res as any).status ?? 500,
+            body: await safeReadBody(res),
+            url: `${apiBaseUrl}/datasets/${datasetId}`,
+            method: 'GET',
+          });
+        }
+        const data = await res.json();
+        if (!data || typeof data.path !== 'string') {
+          throw new Error('Invalid dataset response');
+        }
+        return data;
+      } catch (err) {
+        logger.warn({ err, datasetId }, 'Unable to fetch dataset for LoRA training');
+        throw err;
+      }
+    },
+    fetchLoraConfig: async (configId: string) => {
+      try {
+        const url = `${apiBaseUrl}/lora-configs/${configId}`;
+        const res = await fetchWithTimeout(url);
+        if (!res.ok) {
+          throw new HTTPError('Failed to fetch LoRA config', {
+            status: (res as any).status ?? 500,
+            body: await safeReadBody(res),
+            url,
+            method: 'GET',
+          });
+        }
+        const data = await res.json();
+        if (!data || typeof data !== 'object') {
+          throw new Error('Invalid LoRA config response');
+        }
+        return data as any;
+      } catch (err) {
+        logger.warn({ err, configId }, 'Unable to fetch LoRA config');
+        throw err;
+      }
     },
   });
 }
