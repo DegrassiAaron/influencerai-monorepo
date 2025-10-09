@@ -463,10 +463,10 @@ issues:
 - title: 'WORK-05: Pipeline video con ComfyUI e FFmpeg'
   body: "### Contesto\nLa README descrive generazione video ma il worker non integra\
     \ ComfyUI né FFmpeg. Va creato un processor che interagisce con le API locali\
-    \ di ComfyUI e normalizza i file video finali.\n\n### DoD\n- [ ] Job video-generation\
-    \ che chiama ComfyUI REST e gestisce il polling dello stato.\n- [ ] Post-processing\
-    \ FFmpeg (aspect ratio, audio leveling) configurabile.\n- [ ] Asset video caricati\
-    \ su MinIO e registrati nel DB.\n- [ ] Test manuale con ComfyUI locale documentato.\n\
+    \ di ComfyUI e normalizza i file video finali.\n\n### DoD\n- [x] Job video-generation\
+    \ che chiama ComfyUI REST e gestisce il polling dello stato.\n- [x] Post-processing\
+    \ FFmpeg (aspect ratio, audio leveling) configurabile.\n- [x] Asset video caricati\
+    \ su MinIO e registrati nel DB.\n- [x] Test manuale con ComfyUI locale documentato.\n\
     \n### Dipendenze\n- [WORK-01] Sincronizzare stato job con l'API\n- [API-05] Dataset\
     \ ingestion e storage su MinIO\n"
   labels:
