@@ -22,7 +22,14 @@ export class AuthService {
     return { access_token };
   }
 
+  isMagicLoginEnabled() {
+    return process.env.NODE_ENV !== 'production';
+  }
+
   async loginWithMagicToken(token: string) {
+    if (!this.isMagicLoginEnabled()) {
+      throw new UnauthorizedException('Magic login is disabled in production');
+    }
     // For dev only: token format tenantId:email
     const [tenantId, email] = String(token || '').split(':');
     if (!tenantId || !email) throw new UnauthorizedException('Invalid token');
