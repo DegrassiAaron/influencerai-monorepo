@@ -100,6 +100,7 @@ Note:
 
 - Esecuzione test
   - Avvia i test E2E: `pnpm --filter @influencerai/api test:e2e`
+  - Forza un reset del database di test prima dell'esecuzione con `SKIP_DB_RESET=0 pnpm --filter @influencerai/api test:e2e`
   - Le suite interessate sono:
     - `apps/api/test/jobs.roundtrip.redis.e2e-spec.ts` (worker inline di test)
     - `apps/api/test/jobs.roundtrip.realworker.e2e-spec.ts` (worker reale `apps/worker`)
@@ -195,6 +196,7 @@ Note:
 
 - Esecuzione test
   - Avvia i test E2E: `pnpm --filter @influencerai/api test:e2e`
+  - Per forzare un reset completo del database prima della run imposta `SKIP_DB_RESET=0`, ad esempio: `SKIP_DB_RESET=0 pnpm --filter @influencerai/api test:e2e`
   - Le suite interessate sono:
     - `apps/api/test/jobs.roundtrip.redis.e2e-spec.ts` (worker inline di test)
     - `apps/api/test/jobs.roundtrip.realworker.e2e-spec.ts` (worker reale `apps/worker`)

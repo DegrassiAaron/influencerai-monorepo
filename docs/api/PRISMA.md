@@ -19,6 +19,7 @@ This adds a production-ready Prisma bootstrapping layer to the NestJS API.
 - Unit: `pnpm --filter @influencerai/api test`
   - `PrismaService` connect/disconnect lifecycle, error propagation, shutdown hook wiring.
 - E2E: `pnpm --filter @influencerai/api test:e2e`
+  - Forza un reset completo del DB prima dell'esecuzione con `SKIP_DB_RESET=0 pnpm --filter @influencerai/api test:e2e`.
   - Health endpoint boots the app and verifies `{ status: 'ok', timestamp }`.
 
 ## Local run
