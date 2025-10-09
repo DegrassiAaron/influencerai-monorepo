@@ -1,6 +1,7 @@
 import { Worker } from 'bullmq';
 import type { Processor } from 'bullmq';
 import Redis from 'ioredis';
+import { spawn } from 'child_process';
 import { logger as defaultLogger } from './logger';
 import { InfluencerAIClient } from '@influencerai/sdk';
 import type { JobResponse } from '@influencerai/sdk';
@@ -17,6 +18,11 @@ import {
   type ContentGenerationJobData,
   type ContentGenerationResult,
 } from './processors/contentGeneration';
+import {
+  createVideoGenerationProcessor,
+  type VideoGenerationJobData,
+  type VideoGenerationResult,
+} from './processors/videoGeneration';
 
 // Lightweight HTTP helpers (aligned with API app)
 class HTTPError extends Error {
@@ -217,6 +223,99 @@ export type WorkerDependencies = {
   ) => Promise<Partial<Record<string, unknown>> & { modelName?: string; outputPath?: string } | null>;
 };
 
+type FfmpegRunner = {
+  aspectRatio: string;
+  audioFilter: string;
+  preset: string;
+  run: (input: { inputPath: string; outputPath: string; aspectRatio: string; audioFilter: string; preset: string }) => Promise<void>;
+};
+
+function buildAspectRatioFilter(aspectRatio: string): string {
+  const [wStr, hStr] = aspectRatio.split(':');
+  const width = Number(wStr);
+  const height = Number(hStr);
+  if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) {
+    return "scale=-2:1080:force_original_aspect_ratio=decrease,setsar=1";
+  }
+  const ratio = width / height;
+  let targetWidth: number;
+  let targetHeight: number;
+  if (ratio >= 1) {
+    targetWidth = 1920;
+    targetHeight = Math.round(targetWidth / ratio);
+  } else {
+    targetHeight = 1920;
+    targetWidth = Math.round(targetHeight * ratio);
+  }
+  targetWidth = Math.max(2, Math.round(targetWidth / 2) * 2);
+  targetHeight = Math.max(2, Math.round(targetHeight / 2) * 2);
+  return `scale=${targetWidth}:-2:force_original_aspect_ratio=decrease,pad=${targetWidth}:${targetHeight}:(ow-iw)/2:(oh-ih)/2,setsar=1`;
+}
+
+function createFfmpegRunner(logger: WorkerLogger): FfmpegRunner {
+  const ffmpegPath = process.env.FFMPEG_PATH || 'ffmpeg';
+  const aspectRatio = process.env.FFMPEG_ASPECT_RATIO || '9:16';
+  const audioFilter = process.env.FFMPEG_AUDIO_FILTER || 'loudnorm=I=-16:TP=-1.5:LRA=11';
+  const preset = process.env.FFMPEG_VIDEO_PRESET || 'medium';
+
+  return {
+    aspectRatio,
+    audioFilter,
+    preset,
+    run: ({ inputPath, outputPath, aspectRatio: ar, audioFilter: af, preset: pr }) =>
+      new Promise<void>((resolve, reject) => {
+        const args = [
+          '-y',
+          '-i',
+          inputPath,
+          '-vf',
+          buildAspectRatioFilter(ar),
+          '-af',
+          af,
+          '-c:v',
+          'libx264',
+          '-preset',
+          pr,
+          '-pix_fmt',
+          'yuv420p',
+          '-movflags',
+          '+faststart',
+          '-c:a',
+          'aac',
+          '-b:a',
+          '192k',
+          outputPath,
+        ];
+
+        logger.info({ args }, 'Running FFmpeg post-processing');
+
+        const proc = spawn(ffmpegPath, args, { stdio: ['ignore', 'ignore', 'pipe'] });
+        let stderr = '';
+
+        proc.stderr?.on('data', (chunk) => {
+          stderr += chunk.toString();
+        });
+
+        proc.on('close', (code) => {
+          if (code === 0) {
+            if (stderr.trim()) {
+              logger.info({ stderr: stderr.trim() }, 'FFmpeg completed with diagnostics');
+            }
+            resolve();
+          } else {
+            logger.error({ code, stderr: stderr.trim() }, 'FFmpeg failed');
+            reject(new Error(`FFmpeg exited with code ${code ?? -1}`));
+          }
+        });
+
+        proc.on('error', (err) => {
+          logger.error({ err }, 'Unable to start FFmpeg');
+          reject(err);
+        });
+      }),
+  };
+}
+
 export function createWorkers(deps: WorkerDependencies) {
   const { logger: depLogger, api, connection, s3, fetchDataset, fetchLoraConfig } = deps;
 
@@ -290,6 +389,42 @@ export function createWorkers(deps: WorkerDependencies) {
     { connection, prefix: process.env.BULL_PREFIX }
   );
 
+  const comfyBaseUrl = process.env.COMFYUI_API_URL || 'http://127.0.0.1:8188';
+  const comfyClientId = process.env.COMFYUI_CLIENT_ID || 'influencerai-worker';
+  const comfyTimeoutMs = Number(process.env.COMFYUI_TIMEOUT_MS || 120000);
+  const comfyPollIntervalMs = Number(process.env.COMFYUI_POLL_INTERVAL_MS || 5000);
+  const comfyMaxPollAttempts = Number(process.env.COMFYUI_MAX_POLL_ATTEMPTS || 120);
+
+  let workflowPayload: Record<string, unknown> | undefined;
+  if (process.env.COMFYUI_VIDEO_WORKFLOW_JSON) {
+    try {
+      workflowPayload = JSON.parse(process.env.COMFYUI_VIDEO_WORKFLOW_JSON);
+    } catch (err) {
+      depLogger.warn({ err }, 'Invalid COMFYUI_VIDEO_WORKFLOW_JSON value; ignoring');
+    }
+  }
+
+  const ffmpegRunner = createFfmpegRunner(depLogger);
+
+  const videoWorker = new Worker<VideoGenerationJobData, VideoGenerationResult, 'video-generation'>(
+    'video-generation',
+    createVideoGenerationProcessor({
+      logger: depLogger,
+      patchJobStatus,
+      s3,
+      comfy: {
+        baseUrl: comfyBaseUrl,
+        clientId: comfyClientId,
+        fetch: (url: string, init?: RequestInit) => fetchWithTimeout(url, init, comfyTimeoutMs),
+        workflowPayload,
+        pollIntervalMs: comfyPollIntervalMs,
+        maxPollAttempts: comfyMaxPollAttempts,
+      },
+      ffmpeg: ffmpegRunner,
+    }),
+    { connection, prefix: process.env.BULL_PREFIX }
+  );
+
   contentWorker.on('completed', (job) => {
     depLogger.info({ id: job.id }, 'Job completed successfully');
   });
@@ -318,9 +453,23 @@ export function createWorkers(deps: WorkerDependencies) {
     }
   });
 
+  videoWorker.on('completed', (job) => {
+    depLogger.info({ id: job.id }, 'Video generation job completed successfully');
+  });
+
+  videoWorker.on('failed', (job, err) => {
+    depLogger.error({ id: job?.id, err }, 'Video generation job failed');
+    const jobId = (job?.data as any)?.jobId as string | undefined;
+    if (jobId) {
+      patchJobStatus(jobId, { status: 'failed', result: { message: (err as any)?.message, stack: (err as any)?.stack } }).catch(
+        () => {}
+      );
+    }
+  });
+
   depLogger.info('Workers started and listening for jobs...');
 
-  return { contentWorker, loraWorker };
+  return { contentWorker, loraWorker, videoWorker };
 }
 
 if (process.env.NODE_ENV !== 'test') {
