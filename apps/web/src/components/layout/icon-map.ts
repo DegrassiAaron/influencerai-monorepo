@@ -5,6 +5,7 @@ import {
   Briefcase,
   LayoutDashboard,
   Library,
+  ListChecks,
   LucideIcon,
 } from "lucide-react";
 
@@ -15,4 +16,5 @@ export const iconMap: Record<string, LucideIcon> = {
   library: Library,
   activity: Activity,
   "book-open": BookOpen,
+  "list-checks": ListChecks,
 };

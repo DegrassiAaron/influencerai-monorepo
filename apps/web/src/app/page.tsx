@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { ArrowUpRight, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { ModeToggle } from "../components/mode-toggle";

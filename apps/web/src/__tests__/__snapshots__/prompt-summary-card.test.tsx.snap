@@ -1,0 +1,74 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`PromptSummaryCard > matches the snapshot 1`] = `
+<DocumentFragment>
+  <div
+    class="rounded-xl border border-border bg-card text-card-foreground shadow-sm"
+    data-testid="prompt-summary"
+  >
+    <div
+      class="flex flex-col space-y-1.5 p-6"
+    >
+      <h3
+        class="tracking-tight text-xl font-semibold"
+      >
+        Review prompt configuration
+      </h3>
+      <p
+        class="text-sm text-muted-foreground"
+      >
+        Conferma i parametri che verranno inviati alla generazione del piano editoriale.
+      </p>
+    </div>
+    <div
+      class="p-6 pt-0 space-y-4"
+    >
+      <section>
+        <h3
+          class="text-sm font-medium text-muted-foreground"
+        >
+          Persona
+        </h3>
+        <p
+          class="mt-1 text-sm leading-relaxed text-foreground"
+        >
+          Energetic AI influencer with a focus on wellness
+        </p>
+      </section>
+      <section>
+        <h3
+          class="text-sm font-medium text-muted-foreground"
+        >
+          Theme
+        </h3>
+        <p
+          class="mt-1 text-sm text-foreground"
+        >
+          Summer Glow
+        </p>
+      </section>
+      <section>
+        <h3
+          class="text-sm font-medium text-muted-foreground"
+        >
+          Target platforms
+        </h3>
+        <div
+          class="mt-2 flex flex-wrap gap-2"
+        >
+          <div
+            class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors text-foreground"
+          >
+            Instagram
+          </div>
+          <div
+            class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors text-foreground"
+          >
+            TikTok
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+</DocumentFragment>
+`;
