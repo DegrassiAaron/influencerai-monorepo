@@ -1,6 +1,6 @@
 "use client";
 
-import * as React from "react";
+import React, { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
 
 export function ModeToggle() {

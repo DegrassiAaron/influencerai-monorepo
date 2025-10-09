@@ -1,174 +1,145 @@
 import React from "react";
+import { beforeEach, describe, expect, it, vi, type Mock } from "vitest";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ContentPlanWizard } from "../components/content-plans/ContentPlanWizard";
+import type {
+  ContentPlanJob,
+  CreateContentPlanInput,
+  UpdateContentPlanApprovalInput,
+} from "../lib/content-plans";
 
-function renderWithProviders(ui: React.ReactElement) {
-  const queryClient = new QueryClient();
+const { createContentPlan, updateContentPlanApproval } = vi.hoisted(() => ({
+  createContentPlan: vi.fn<
+    [CreateContentPlanInput],
+    Promise<ContentPlanJob>
+  >(),
+  updateContentPlanApproval: vi.fn<
+    [UpdateContentPlanApprovalInput],
+    Promise<unknown>
+  >(),
+})) as {
+  createContentPlan: Mock<[CreateContentPlanInput], Promise<ContentPlanJob>>;
+  updateContentPlanApproval: Mock<[UpdateContentPlanApprovalInput], Promise<unknown>>;
+};
 
+vi.mock("../lib/content-plans", () => ({
+  createContentPlan,
+  updateContentPlanApproval,
+}));
+
+function renderWizard() {
+  const client = new QueryClient();
   return render(
-    <QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>
+    <QueryClientProvider client={client}>
+      <ContentPlanWizard />
+    </QueryClientProvider>,
   );
 }
 
 describe("ContentPlanWizard", () => {
-  const API_BASE_URL = "https://api.example.com";
-
   beforeEach(() => {
-    vi.restoreAllMocks();
-    process.env.NEXT_PUBLIC_API_BASE_URL = API_BASE_URL;
+    vi.clearAllMocks();
+    createContentPlan.mockReset();
+    updateContentPlanApproval.mockReset();
   });
 
-  it("guides the user through persona and theme steps before showing a preview", async () => {
-    const user = userEvent.setup();
+  it("guides the user through steps and generates a preview", async () => {
+    const response: ContentPlanJob = {
+      id: "job_123",
+      plan: {
+        influencerId: "inf_1",
+        theme: "Summer Glow",
+        targetPlatforms: ["instagram", "tiktok"],
+        posts: [
+          { caption: "Caption 1", hashtags: ["#glow"] },
+          { caption: "Caption 2", hashtags: ["#vibes"] },
+        ],
+        createdAt: new Date("2024-01-01T00:00:00Z").toISOString(),
+      },
+    };
+    createContentPlan.mockResolvedValue(response);
 
-    const fetchMock = vi.fn(async (input: RequestInfo, init?: RequestInit) => {
-      if (typeof input === "string" && input.endsWith("/content-plans")) {
-        return {
-          ok: true,
-          json: async () => ({
-            id: "plan-123",
-            status: "DRAFT",
-            persona: {
-              name: "Social Media Manager",
-              audience: "Marketing Team",
-            },
-            prompt: "Generated prompt",
-            posts: [
-              { id: "post-1", title: "Post 1", summary: "Summary 1", callToAction: "CTA 1" },
-              { id: "post-2", title: "Post 2", summary: "Summary 2", callToAction: "CTA 2" },
-            ],
-          }),
-        } as Response;
-      }
+    renderWizard();
 
-      throw new Error(`Unexpected fetch call: ${input}`);
-    });
+    fireEvent.change(screen.getByLabelText(/influencer id/i), { target: { value: "inf_1" } });
+    fireEvent.change(screen.getByLabelText(/persona summary/i), { target: { value: "Energetic AI" } });
+    fireEvent.click(screen.getByRole("button", { name: /next/i }));
 
-    vi.stubGlobal("fetch", fetchMock as typeof fetch);
+    fireEvent.change(screen.getByLabelText(/theme/i), { target: { value: "Summer Glow" } });
+    fireEvent.click(screen.getByRole("button", { name: /tiktok/i }));
+    fireEvent.click(screen.getByRole("button", { name: /next/i }));
 
-    renderWithProviders(<ContentPlanWizard />);
+    expect(screen.getByText(/review prompt/i)).toBeInTheDocument();
 
-    await user.type(screen.getByLabelText(/^persona$/i), "Social Media Manager");
-    await user.type(screen.getByLabelText(/audience/i), "Marketing Team");
-    await user.type(
-      screen.getByLabelText(/contesto della persona/i),
-      "Gestisce i contenuti dei social media"
-    );
-
-    await user.click(screen.getByRole("button", { name: /prossimo/i }));
-
-    await user.type(screen.getByLabelText(/tema del piano/i), "Lancio prodotto");
-    await user.type(screen.getByLabelText(/tono/i), "Ispirazionale");
-    await user.clear(screen.getByLabelText(/numero di post/i));
-    await user.type(screen.getByLabelText(/numero di post/i), "3");
-    await user.type(screen.getByLabelText(/call to action/i), "Scarica ora");
-
-    await user.click(screen.getByRole("button", { name: /genera anteprima/i }));
+    fireEvent.click(screen.getByRole("button", { name: /generate content plan/i }));
 
     await waitFor(() => {
-      expect(screen.getByText("Post 1")).toBeInTheDocument();
+      expect(createContentPlan).toHaveBeenCalled();
     });
 
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    const [url, init] = fetchMock.mock.calls[0];
-    expect(url).toBe(`${API_BASE_URL}/content-plans`);
-    expect(init?.method).toBe("POST");
+    expect(createContentPlan.mock.calls[0][0]).toEqual({
+      influencerId: "inf_1",
+      theme: "Summer Glow",
+      targetPlatforms: ["instagram", "tiktok"],
+    });
+
+    expect(await screen.findByText(/caption 1/i)).toBeInTheDocument();
+    expect(screen.getByText(/#glow/i)).toBeInTheDocument();
   });
 
-  it("allows regenerating the preview and approving the plan", async () => {
-    const user = userEvent.setup();
-
-    const responses = [
-      {
-        id: "plan-123",
-        status: "DRAFT",
-        persona: {
-          name: "Social Media Manager",
-          audience: "Marketing Team",
-        },
-        prompt: "Generated prompt",
-        posts: [
-          { id: "post-1", title: "Post 1", summary: "Summary 1", callToAction: "CTA 1" },
-        ],
+  it("allows regenerating and approving a plan", async () => {
+    const firstResponse: ContentPlanJob = {
+      id: "job_123",
+      plan: {
+        influencerId: "inf_1",
+        theme: "Summer Glow",
+        targetPlatforms: ["instagram"],
+        posts: [{ caption: "First", hashtags: ["#one"] }],
+        createdAt: new Date("2024-01-01T00:00:00Z").toISOString(),
       },
-      {
-        id: "plan-123",
-        status: "DRAFT",
-        persona: {
-          name: "Social Media Manager",
-          audience: "Marketing Team",
-        },
-        prompt: "Generated prompt",
-        posts: [
-          { id: "post-1", title: "Post 1", summary: "Summary 1", callToAction: "CTA 1" },
-          { id: "post-2", title: "Post 2", summary: "Summary 2", callToAction: "CTA 2" },
-        ],
+    };
+    const secondResponse: ContentPlanJob = {
+      ...firstResponse,
+      plan: {
+        ...firstResponse.plan,
+        posts: [{ caption: "Second", hashtags: ["#two"] }],
       },
-      {
-        id: "plan-123",
-        status: "APPROVED",
-      },
-    ];
+    };
 
-    const fetchMock = vi.fn(async (input: RequestInfo, init?: RequestInit) => {
-      if (typeof input === "string" && input.endsWith("/content-plans")) {
-        return {
-          ok: true,
-          json: async () => responses.shift(),
-        } as Response;
-      }
-
-      if (typeof input === "string" && input.includes("/content-plans/plan-123/status")) {
-        return {
-          ok: true,
-          json: async () => responses.pop(),
-        } as Response;
-      }
-
-      throw new Error(`Unexpected fetch call: ${input}`);
+    createContentPlan.mockResolvedValueOnce(firstResponse).mockResolvedValueOnce(secondResponse);
+    updateContentPlanApproval.mockResolvedValue({
+      id: "job_123",
+      approvalStatus: "approved",
+      plan: { ...secondResponse.plan, approvalStatus: "approved" },
     });
 
-    vi.stubGlobal("fetch", fetchMock as typeof fetch);
+    renderWizard();
 
-    renderWithProviders(<ContentPlanWizard />);
+    fireEvent.change(screen.getByLabelText(/influencer id/i), { target: { value: "inf_1" } });
+    fireEvent.change(screen.getByLabelText(/persona summary/i), { target: { value: "Energetic AI" } });
+    fireEvent.click(screen.getByRole("button", { name: /next/i }));
 
-    await user.type(screen.getByLabelText(/^persona$/i), "Social Media Manager");
-    await user.type(screen.getByLabelText(/audience/i), "Marketing Team");
-    await user.type(
-      screen.getByLabelText(/contesto della persona/i),
-      "Gestisce i contenuti dei social media"
-    );
-    await user.click(screen.getByRole("button", { name: /prossimo/i }));
-    await user.type(screen.getByLabelText(/tema del piano/i), "Lancio prodotto");
-    await user.type(screen.getByLabelText(/tono/i), "Ispirazionale");
-    await user.clear(screen.getByLabelText(/numero di post/i));
-    await user.type(screen.getByLabelText(/numero di post/i), "1");
-    await user.type(screen.getByLabelText(/call to action/i), "Scarica ora");
-    await user.click(screen.getByRole("button", { name: /genera anteprima/i }));
+    fireEvent.change(screen.getByLabelText(/theme/i), { target: { value: "Summer Glow" } });
+    fireEvent.click(screen.getByRole("button", { name: /next/i }));
+
+    fireEvent.click(screen.getByRole("button", { name: /generate content plan/i }));
+    await screen.findByText(/first/i);
+
+    fireEvent.click(screen.getByRole("button", { name: /regenerate plan/i }));
+    await screen.findByText(/second/i);
+
+    fireEvent.click(screen.getByRole("button", { name: /approve plan/i }));
 
     await waitFor(() => {
-      expect(screen.getByText("Post 1")).toBeInTheDocument();
+      expect(updateContentPlanApproval).toHaveBeenCalled();
     });
 
-    await user.click(screen.getByRole("button", { name: /rigenera piano/i }));
-
-    await waitFor(() => {
-      expect(screen.getByText("Post 2")).toBeInTheDocument();
-    });
-
-    await user.click(screen.getByRole("button", { name: /approva piano/i }));
-
-    await waitFor(() => {
-      expect(fetchMock).toHaveBeenCalledWith(
-        `${API_BASE_URL}/content-plans/plan-123/status`,
-        expect.objectContaining({
-          method: "PATCH",
-        })
-      );
+    expect(updateContentPlanApproval.mock.calls[0][0]).toEqual({
+      id: "job_123",
+      approvalStatus: "approved",
+      plan: secondResponse.plan,
     });
   });
 });

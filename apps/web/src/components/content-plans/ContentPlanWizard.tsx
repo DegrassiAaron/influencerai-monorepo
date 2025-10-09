@@ -1,511 +1,317 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { z } from "zod";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "../ui/button";
+import { Input } from "../ui/input";
+import { Label } from "../ui/label";
+import { Badge } from "../ui/badge";
+import { Textarea } from "../ui/textarea";
+import { cn } from "../../lib/utils";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  ContentPlan,
-  ContentPlanGenerateInput,
   createContentPlan,
-  updateContentPlanStatus,
-} from "@/lib/content-plans";
+  updateContentPlanApproval,
+  type ApprovalStatus,
+  type ContentPlanJob,
+} from "../../lib/content-plans";
 
-const personaSchema = z.object({
-  name: z.string().min(1, "La persona è obbligatoria"),
-  audience: z.string().min(1, "L'audience è obbligatoria"),
-  context: z.string().min(1, "Descrivi il contesto"),
-});
+import { PromptSummaryCard } from "./PromptSummaryCard";
+import { PlanPreview } from "./PlanPreview";
 
-const promptSchema = z.object({
-  theme: z.string().min(1, "Il tema è obbligatorio"),
-  tone: z.string().min(1, "Il tono è obbligatorio"),
-  callToAction: z.string().min(1, "Specifica una call to action"),
-  postCount: z
-    .number()
-    .int("Inserisci un numero intero")
-    .min(1, "Almeno un post")
-    .max(10, "Massimo 10 post"),
-});
+type WizardStep = 0 | 1 | 2;
 
-type PersonaFormState = z.infer<typeof personaSchema>;
-
-type PromptFormState = {
+type WizardState = {
+  influencerId: string;
+  personaSummary: string;
   theme: string;
-  tone: string;
-  callToAction: string;
-  postCount: string;
+  targetPlatforms: Platform[];
 };
 
-type WizardStep = "persona" | "prompt" | "preview";
+type Platform = "instagram" | "tiktok" | "youtube";
 
-type FieldErrors<TKeys extends string> = Partial<Record<TKeys, string>>;
-
-const initialPersonaState: PersonaFormState = {
-  name: "",
-  audience: "",
-  context: "",
-};
-
-const initialPromptState: PromptFormState = {
-  theme: "",
-  tone: "",
-  callToAction: "",
-  postCount: "3",
-};
-
-const STEPS: { id: WizardStep; label: string }[] = [
-  { id: "persona", label: "Persona" },
-  { id: "prompt", label: "Parametri" },
-  { id: "preview", label: "Anteprima" },
+const platformOptions: Array<{ value: Platform; label: string; description: string }> = [
+  {
+    value: "instagram",
+    label: "Instagram",
+    description: "Stories e reel brevi per mantenere ingaggio costante.",
+  },
+  {
+    value: "tiktok",
+    label: "TikTok",
+    description: "Short form video con trend del momento.",
+  },
+  {
+    value: "youtube",
+    label: "YouTube Shorts",
+    description: "Clip verticali ottimizzate per discovery.",
+  },
 ];
 
-function mapZodErrors<TKeys extends string>(
-  errors: Record<string, string[] | undefined>
-): FieldErrors<TKeys> {
-  return Object.entries(errors).reduce<FieldErrors<TKeys>>(
-    (acc, [key, messages]) => {
-      if (messages && messages.length > 0) {
-        acc[key as TKeys] = messages[0];
-      }
-      return acc;
-    },
-    {}
-  );
-}
+const steps: Array<{ title: string; description: string }> = [
+  {
+    title: "Persona",
+    description: "Identifica l'influencer virtuale e sintetizza i tratti chiave.",
+  },
+  {
+    title: "Parametri",
+    description: "Definisci tema editoriale e piattaforme prioritarie.",
+  },
+  {
+    title: "Revisione",
+    description: "Controlla il prompt e avvia la generazione del piano.",
+  },
+];
+
+const initialState: WizardState = {
+  influencerId: "",
+  personaSummary: "",
+  theme: "",
+  targetPlatforms: ["instagram"],
+};
 
 export function ContentPlanWizard() {
-  const [step, setStep] = useState<WizardStep>("persona");
-  const [personaForm, setPersonaForm] = useState<PersonaFormState>(
-    initialPersonaState
-  );
-  const [promptForm, setPromptForm] = useState<PromptFormState>(
-    initialPromptState
-  );
-  const [personaErrors, setPersonaErrors] = useState<
-    FieldErrors<keyof PersonaFormState>
-  >({});
-  const [promptErrors, setPromptErrors] = useState<
-    FieldErrors<keyof PromptFormState>
-  >({});
-  const [plan, setPlan] = useState<ContentPlan | null>(null);
-  const [feedback, setFeedback] = useState<string | null>(null);
+  const [step, setStep] = useState<WizardStep>(0);
+  const [state, setState] = useState<WizardState>(initialState);
+  const [job, setJob] = useState<ContentPlanJob | null>(null);
+  const [approvalStatus, setApprovalStatus] = useState<ApprovalStatus | null>(null);
 
-  const generateMutation = useMutation({
+  const createPlanMutation = useMutation({
     mutationFn: createContentPlan,
-    onSuccess: (nextPlan) => {
-      setPlan(nextPlan);
-      setStep("preview");
-      setFeedback("Piano generato correttamente.");
-    },
-    onError: (error: unknown) => {
-      const message =
-        error instanceof Error
-          ? error.message
-          : "Impossibile generare il piano. Riprova.";
-      setFeedback(message);
+    onSuccess: (result) => {
+      setJob(result);
+      setApprovalStatus(null);
     },
   });
 
-  const statusMutation = useMutation({
-    mutationFn: updateContentPlanStatus,
-    onSuccess: (updatedPlan) => {
-      setPlan((current) => {
-        if (!current) {
-          return updatedPlan;
-        }
-        return { ...current, status: updatedPlan.status };
-      });
-      setFeedback("Stato del piano aggiornato.");
-    },
-    onError: (error: unknown) => {
-      const message =
-        error instanceof Error
-          ? error.message
-          : "Aggiornamento stato non riuscito.";
-      setFeedback(message);
+  const approvalMutation = useMutation({
+    mutationFn: updateContentPlanApproval,
+    onSuccess: (data) => {
+      setApprovalStatus(data.approvalStatus);
+      setJob((prev) => (prev ? { ...prev, plan: data.plan } : prev));
     },
   });
 
-  const isLoadingPlan = generateMutation.isPending;
-  const isUpdatingStatus = statusMutation.isPending;
-
-  const parsedPromptInput = useMemo(() => {
-    const parsedPostCount = Number.parseInt(promptForm.postCount, 10);
-    return {
-      theme: promptForm.theme,
-      tone: promptForm.tone,
-      callToAction: promptForm.callToAction,
-      postCount: Number.isNaN(parsedPostCount) ? 0 : parsedPostCount,
-    };
-  }, [promptForm]);
-
-  function handlePersonaSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const result = personaSchema.safeParse(personaForm);
-
-    if (!result.success) {
-      setPersonaErrors(mapZodErrors(result.error.flatten().fieldErrors));
-      return;
+  const canGoNext = useMemo(() => {
+    if (step === 0) {
+      return state.influencerId.trim().length > 0 && state.personaSummary.trim().length > 0;
     }
-
-    setPersonaErrors({});
-    setPersonaForm(result.data);
-    setStep("prompt");
-    setFeedback(null);
-  }
-
-  function handlePromptSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const result = promptSchema.safeParse(parsedPromptInput);
-
-    if (!result.success) {
-      setPromptErrors(mapZodErrors(result.error.flatten().fieldErrors));
-      return;
+    if (step === 1) {
+      return state.theme.trim().length > 0 && state.targetPlatforms.length > 0;
     }
+    return true;
+  }, [state.influencerId, state.personaSummary, state.theme, state.targetPlatforms, step]);
 
-    setPromptErrors({});
-
-    const payload: ContentPlanGenerateInput = {
-      persona: personaForm,
-      ...result.data,
-    };
-
-    setFeedback("Generazione del piano in corso...");
-    generateMutation.mutate(payload);
-  }
-
-  function handleRegenerate() {
-    const result = promptSchema.safeParse(parsedPromptInput);
-    if (!result.success) {
-      setPromptErrors(mapZodErrors(result.error.flatten().fieldErrors));
-      setStep("prompt");
-      return;
+  const handleNext = () => {
+    if (step < 2 && canGoNext) {
+      setStep((prev) => (prev + 1) as WizardStep);
     }
+  };
 
-    const payload: ContentPlanGenerateInput = {
-      persona: personaForm,
-      ...result.data,
-    };
-
-    setFeedback("Rigenerazione del piano in corso...");
-    generateMutation.mutate(payload);
-  }
-
-  function handleStatusChange(status: "APPROVED" | "REJECTED") {
-    if (!plan) {
-      return;
+  const handleBack = () => {
+    if (step > 0) {
+      setStep((prev) => (prev - 1) as WizardStep);
     }
+  };
 
-    setFeedback("Aggiornamento stato in corso...");
-    statusMutation.mutate({ planId: plan.id, status });
-  }
+  const resetGeneratedPlan = () => {
+    if (job) {
+      setJob(null);
+    }
+    setApprovalStatus(null);
+  };
+
+  const setField = <K extends keyof WizardState>(key: K, value: WizardState[K]) => {
+    setState((prev) => ({ ...prev, [key]: value }));
+    resetGeneratedPlan();
+  };
+
+  const togglePlatform = (platform: Platform) => {
+    setState((prev) => {
+      const exists = prev.targetPlatforms.includes(platform);
+      const targetPlatforms = exists
+        ? prev.targetPlatforms.filter((p) => p !== platform)
+        : [...prev.targetPlatforms, platform];
+      return { ...prev, targetPlatforms };
+    });
+    resetGeneratedPlan();
+  };
+
+  const handleGenerate = () => {
+    createPlanMutation.mutate({
+      influencerId: state.influencerId.trim(),
+      theme: state.theme.trim(),
+      targetPlatforms: state.targetPlatforms,
+    });
+  };
+
+  const handleApproval = (status: ApprovalStatus) => {
+    if (!job) return;
+    approvalMutation.mutate({
+      id: job.id,
+      approvalStatus: status,
+      plan: {
+        ...job.plan,
+        posts: job.plan.posts,
+      },
+    });
+  };
+
+  const resetWizard = () => {
+    setState(initialState);
+    setStep(0);
+    setJob(null);
+    setApprovalStatus(null);
+  };
 
   return (
-    <div className="space-y-6">
-      <ol className="flex flex-wrap items-center gap-2 text-sm font-medium text-muted-foreground">
-        {STEPS.map((wizardStep, index) => {
-          const isActive = wizardStep.id === step;
-          const isCompleted = STEPS.findIndex(({ id }) => id === step) > index;
-          return (
+    <div className="mx-auto flex w-full max-w-5xl flex-col gap-8">
+      <header className="space-y-4">
+        <h1 className="text-3xl font-semibold text-foreground">Content plan wizard</h1>
+        <p className="max-w-3xl text-sm text-muted-foreground">
+          Guida marketing step-by-step per configurare i prompt, generare anteprime dei post e condividere decisioni di approvazione
+          con il team operativo.
+        </p>
+        <ol className="flex flex-col gap-3 md:flex-row md:gap-4">
+          {steps.map((item, index) => (
             <li
-              key={wizardStep.id}
-              className="flex items-center gap-2"
-              aria-current={isActive ? "step" : undefined}
+              key={item.title}
+              className={cn(
+                "flex-1 rounded-lg border p-3",
+                index === step ? "border-brand-500 bg-brand-50" : "border-border",
+              )}
             >
-              <span
-                className={`flex h-8 w-8 items-center justify-center rounded-full border text-xs ${
-                  isActive
-                    ? "border-brand-500 bg-brand-100 text-brand-700"
-                    : isCompleted
-                      ? "border-brand-200 bg-brand-50 text-brand-600"
-                      : "border-border"
-                }`}
-              >
-                {index + 1}
-              </span>
-              <span className={isActive ? "text-foreground" : undefined}>
-                {wizardStep.label}
-              </span>
-              {index < STEPS.length - 1 ? <span className="text-xs">›</span> : null}
+              <div className="flex items-center gap-2">
+                <Badge variant={index === step ? "brand" : "outline"}>{index + 1}</Badge>
+                <span className="text-sm font-medium text-foreground">{item.title}</span>
+              </div>
+              <p className="mt-1 text-xs text-muted-foreground">{item.description}</p>
             </li>
-          );
-        })}
-      </ol>
+          ))}
+        </ol>
+      </header>
 
-      {step === "persona" ? (
-        <Card>
-          <form onSubmit={handlePersonaSubmit} className="space-y-4">
-            <CardHeader>
-              <CardTitle>Definisci la persona</CardTitle>
-              <CardDescription>
-                Identifica la figura a cui è destinato il piano editoriale e il
-                suo contesto.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="persona-name">Persona</Label>
-                <Input
-                  id="persona-name"
-                  value={personaForm.name}
-                  onChange={(event) =>
-                    setPersonaForm((current) => ({
-                      ...current,
-                      name: event.target.value,
-                    }))
-                  }
-                />
-                {personaErrors.name ? (
-                  <p className="text-sm text-destructive">{personaErrors.name}</p>
-                ) : null}
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="persona-audience">Audience</Label>
-                <Input
-                  id="persona-audience"
-                  value={personaForm.audience}
-                  onChange={(event) =>
-                    setPersonaForm((current) => ({
-                      ...current,
-                      audience: event.target.value,
-                    }))
-                  }
-                />
-                {personaErrors.audience ? (
-                  <p className="text-sm text-destructive">
-                    {personaErrors.audience}
-                  </p>
-                ) : null}
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="persona-context">Contesto della persona</Label>
-                <textarea
-                  id="persona-context"
-                  className="min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  value={personaForm.context}
-                  onChange={(event) =>
-                    setPersonaForm((current) => ({
-                      ...current,
-                      context: event.target.value,
-                    }))
-                  }
-                />
-                {personaErrors.context ? (
-                  <p className="text-sm text-destructive">
-                    {personaErrors.context}
-                  </p>
-                ) : null}
-              </div>
-            </CardContent>
-            <div className="flex justify-end gap-2 border-t border-border/60 px-6 py-4">
-              <Button type="submit">Prossimo</Button>
-            </div>
-          </form>
-        </Card>
-      ) : null}
-
-      {step === "prompt" ? (
-        <Card>
-          <form onSubmit={handlePromptSubmit} className="space-y-4">
-            <CardHeader>
-              <CardTitle>Parametri del piano</CardTitle>
-              <CardDescription>
-                Definisci il tema, il tono e il numero di post da generare.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="plan-theme">Tema del piano</Label>
-                <Input
-                  id="plan-theme"
-                  value={promptForm.theme}
-                  onChange={(event) =>
-                    setPromptForm((current) => ({
-                      ...current,
-                      theme: event.target.value,
-                    }))
-                  }
-                />
-                {promptErrors.theme ? (
-                  <p className="text-sm text-destructive">{promptErrors.theme}</p>
-                ) : null}
-              </div>
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="plan-tone">Tono</Label>
-                  <Input
-                    id="plan-tone"
-                    value={promptForm.tone}
-                    onChange={(event) =>
-                      setPromptForm((current) => ({
-                        ...current,
-                        tone: event.target.value,
-                      }))
-                    }
-                  />
-                  {promptErrors.tone ? (
-                    <p className="text-sm text-destructive">{promptErrors.tone}</p>
-                  ) : null}
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="plan-post-count">Numero di post</Label>
-                  <Input
-                    id="plan-post-count"
-                    inputMode="numeric"
-                    value={promptForm.postCount}
-                    onChange={(event) =>
-                      setPromptForm((current) => ({
-                        ...current,
-                        postCount: event.target.value,
-                      }))
-                    }
-                  />
-                  {promptErrors.postCount ? (
-                    <p className="text-sm text-destructive">
-                      {promptErrors.postCount}
-                    </p>
-                  ) : null}
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="plan-cta">Call to action</Label>
-                <Input
-                  id="plan-cta"
-                  value={promptForm.callToAction}
-                  onChange={(event) =>
-                    setPromptForm((current) => ({
-                      ...current,
-                      callToAction: event.target.value,
-                    }))
-                  }
-                />
-                {promptErrors.callToAction ? (
-                  <p className="text-sm text-destructive">
-                    {promptErrors.callToAction}
-                  </p>
-                ) : null}
-              </div>
-            </CardContent>
-            <div className="flex justify-between gap-2 border-t border-border/60 px-6 py-4">
-              <Button variant="outline" type="button" onClick={() => setStep("persona")}>
-                Indietro
-              </Button>
-              <Button type="submit" disabled={isLoadingPlan}>
-                {isLoadingPlan ? "Generazione..." : "Genera anteprima"}
-              </Button>
-            </div>
-          </form>
-        </Card>
-      ) : null}
-
-      {step === "preview" ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Anteprima contenuti</CardTitle>
-            <CardDescription>
-              Rivedi i post generati prima di approvare o richiedere una nuova
-              iterazione.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {isLoadingPlan ? (
-              <p role="status" className="text-sm text-muted-foreground">
-                Generazione del piano in corso...
+      <section className="rounded-xl border border-border bg-card p-6 shadow-sm">
+        {step === 0 ? (
+          <div className="space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="influencerId">Influencer ID</Label>
+              <Input
+                id="influencerId"
+                placeholder="es. inf_1234"
+                value={state.influencerId}
+                onChange={(event) => setField("influencerId", event.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">
+                Inserisci l'identificativo dell'influencer virtuale da utilizzare nell'API.
               </p>
-            ) : null}
-            {!isLoadingPlan && plan ? (
-              <div className="space-y-4">
-                <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-                  <span className="font-medium text-foreground">Stato:</span>
-                  <span className="rounded-full bg-muted px-3 py-1 capitalize">
-                    {plan.status.toLowerCase()}
-                  </span>
-                </div>
-                <div className="grid gap-4 md:grid-cols-2">
-                  {plan.posts.map((post) => (
-                    <article
-                      key={post.id}
-                      className="rounded-lg border border-border/60 bg-card p-4 shadow-sm"
-                    >
-                      <h3 className="text-lg font-semibold text-foreground">
-                        {post.title}
-                      </h3>
-                      <p className="text-sm text-muted-foreground">
-                        {post.summary}
-                      </p>
-                      <div className="mt-4 text-xs uppercase text-muted-foreground">
-                        Call to action
-                      </div>
-                      <p className="text-sm text-foreground">{post.callToAction}</p>
-                      {post.formatSuggestion ? (
-                        <p className="mt-2 text-xs text-muted-foreground">
-                          Formato suggerito: {post.formatSuggestion}
-                        </p>
-                      ) : null}
-                    </article>
-                  ))}
-                </div>
-              </div>
-            ) : null}
-            {!isLoadingPlan && !plan ? (
-              <p className="text-sm text-muted-foreground">
-                Compila i passaggi precedenti per generare un piano editoriale.
-              </p>
-            ) : null}
-          </CardContent>
-          <div className="flex flex-col gap-2 border-t border-border/60 p-6 md:flex-row md:items-center md:justify-between">
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                type="button"
-                onClick={() => setStep("prompt")}
-              >
-                Modifica parametri
-              </Button>
-              <Button
-                variant="secondary"
-                type="button"
-                onClick={handleRegenerate}
-                disabled={isLoadingPlan}
-              >
-                {isLoadingPlan ? "Rigenerazione..." : "Rigenera piano"}
-              </Button>
             </div>
-            <div className="flex gap-2">
-              <Button
-                variant="destructive"
-                type="button"
-                onClick={() => handleStatusChange("REJECTED")}
-                disabled={isUpdatingStatus}
-              >
-                {isUpdatingStatus ? "Aggiornamento..." : "Rifiuta piano"}
-              </Button>
-              <Button
-                type="button"
-                onClick={() => handleStatusChange("APPROVED")}
-                disabled={isUpdatingStatus}
-              >
-                {isUpdatingStatus ? "Aggiornamento..." : "Approva piano"}
-              </Button>
+            <div className="space-y-2">
+              <Label htmlFor="personaSummary">Persona summary</Label>
+              <Textarea
+                id="personaSummary"
+                placeholder="Descrivi tono di voce, interessi e community dell'influencer virtuale"
+                value={state.personaSummary}
+                onChange={(event) => setField("personaSummary", event.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">
+                Questa descrizione aiuta il team a contestualizzare il piano generato e resta disponibile nella revisione finale.
+              </p>
             </div>
           </div>
-        </Card>
-      ) : null}
+        ) : null}
 
-      <p aria-live="polite" className="text-sm text-muted-foreground">
-        {feedback}
-      </p>
+        {step === 1 ? (
+          <div className="space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="theme">Theme</Label>
+              <Input
+                id="theme"
+                placeholder="es. Lancio programma Summer Glow"
+                value={state.theme}
+                onChange={(event) => setField("theme", event.target.value)}
+              />
+            </div>
+            <div className="space-y-3">
+              <span className="text-sm font-medium text-foreground">Target platforms</span>
+              <div className="grid gap-3 md:grid-cols-3">
+                {platformOptions.map((option) => {
+                  const checked = state.targetPlatforms.includes(option.value);
+                  return (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => togglePlatform(option.value)}
+                      className={cn(
+                        "rounded-lg border p-3 text-left transition",
+                        checked ? "border-brand-500 bg-brand-50" : "border-border hover:border-brand-300",
+                      )}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-semibold text-foreground">{option.label}</span>
+                        {checked ? <Badge variant="brand">Selected</Badge> : null}
+                      </div>
+                      <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{option.description}</p>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        ) : null}
+
+        {step === 2 ? (
+          <div className="space-y-6">
+            <PromptSummaryCard
+              personaSummary={state.personaSummary}
+              theme={state.theme}
+              targetPlatforms={state.targetPlatforms}
+            />
+            {createPlanMutation.isError ? (
+              <p className="text-sm text-destructive">
+                {(createPlanMutation.error as Error)?.message ?? "Errore durante la generazione del piano."}
+              </p>
+            ) : null}
+            <div className="flex flex-wrap gap-3">
+              <Button onClick={handleGenerate} disabled={createPlanMutation.isPending}>
+                {createPlanMutation.isPending ? "Generazione..." : job ? "Regenerate content plan" : "Generate content plan"}
+              </Button>
+              <Button variant="ghost" onClick={resetWizard}>
+                Reset form
+              </Button>
+            </div>
+            {job ? (
+              <PlanPreview
+                job={job}
+                approvalStatus={approvalStatus}
+                onRegenerate={handleGenerate}
+                onApprove={() => handleApproval("approved")}
+                onReject={() => handleApproval("rejected")}
+                isRegenerating={createPlanMutation.isPending}
+                isUpdatingApproval={approvalMutation.isPending}
+              />
+            ) : null}
+            {approvalMutation.isError ? (
+              <p className="text-sm text-destructive">
+                {(approvalMutation.error as Error)?.message ?? "Impossibile aggiornare lo stato di approvazione."}
+              </p>
+            ) : null}
+          </div>
+        ) : null}
+      </section>
+
+      <footer className="flex items-center justify-between">
+        <Button variant="outline" onClick={handleBack} disabled={step === 0}>
+          Back
+        </Button>
+        {step < 2 ? (
+          <Button onClick={handleNext} disabled={!canGoNext}>
+            Next
+          </Button>
+        ) : (
+          <div className="h-10" aria-hidden="true" />
+        )}
+      </footer>
     </div>
   );
 }

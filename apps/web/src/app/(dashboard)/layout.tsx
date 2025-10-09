@@ -7,6 +7,7 @@ const navItems = [
   { title: "Content Plans", href: "/dashboard/content-plans" },
   { title: "Jobs", href: "/dashboard/jobs" },
   { title: "Queues", href: "/dashboard/queues" },
+  { title: "Content Plans", href: "/dashboard/content-plans" },
 ];
 
 const breadcrumbs = [

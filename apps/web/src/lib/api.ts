@@ -10,8 +10,10 @@ export class ApiError extends Error {
   }
 }
 
-async function apiRequest<T>(path: string, init?: ApiRequestInit): Promise<T> {
-  const baseUrl = getApiBaseUrl();
+async function apiRequest<T>(path: string, init: ApiRequestInit): Promise<T> {
+  if (!API_BASE_URL) {
+    throw new ApiError("Missing NEXT_PUBLIC_API_BASE_URL environment variable");
+  }
 
   const response = await fetch(`${baseUrl}${path}`, {
     cache: "no-store",
@@ -26,7 +28,35 @@ async function apiRequest<T>(path: string, init?: ApiRequestInit): Promise<T> {
     return undefined as T;
   }
 
-  return response.json() as Promise<T>;
+  return (await response.json()) as T;
+}
+
+export async function apiGet<T>(path: string, init?: ApiRequestInit): Promise<T> {
+  return apiRequest<T>(path, { method: "GET", ...init });
+}
+
+export async function apiPost<T>(path: string, body: unknown, init?: ApiRequestInit): Promise<T> {
+  return apiRequest<T>(path, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(init?.headers ?? {}),
+    },
+    body: JSON.stringify(body),
+    ...init,
+  });
+}
+
+export async function apiPatch<T>(path: string, body: unknown, init?: ApiRequestInit): Promise<T> {
+  return apiRequest<T>(path, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      ...(init?.headers ?? {}),
+    },
+    body: JSON.stringify(body),
+    ...init,
+  });
 }
 
 export async function apiGet<T>(path: string, init?: ApiRequestInit): Promise<T> {

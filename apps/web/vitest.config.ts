@@ -7,10 +7,6 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
-  esbuild: {
-    loader: "tsx",
-    jsx: "automatic",
-  },
   test: {
     environment: "jsdom",
     setupFiles: ["./src/setupTests.ts"],

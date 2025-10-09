@@ -25,6 +25,12 @@ export const mainNav: NavItem[] = [
     description: "Pipeline di generazione e stato dei job.",
   },
   {
+    title: "Content Plans",
+    href: "/dashboard/content-plans",
+    icon: "list-checks",
+    description: "Wizard per generare, approvare e archiviare i piani editoriali.",
+  },
+  {
     title: "Library",
     href: "/library",
     icon: "library",
