@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PrismaModule } from './prisma/prisma.module';
@@ -14,22 +14,41 @@ import { HealthModule } from './health/health.module';
 import { AuthModule } from './auth/auth.module';
 import { DatasetsModule } from './datasets/datasets.module';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
+import { AppConfig, computeBullEnabled, validateEnv } from './config/env.validation';
 
-const enableBull = !(process.env.NODE_ENV === 'test' || ['1', 'true', 'yes'].includes(String(process.env.DISABLE_BULL).toLowerCase()));
+const enableBull = computeBullEnabled(process.env);
 const extraImports = enableBull
-  ? [BullModule.forRoot({ connection: parseRedisUrl(process.env.REDIS_URL), prefix: process.env.BULL_PREFIX })]
+  ? [
+      BullModule.forRootAsync({
+        imports: [ConfigModule],
+        inject: [ConfigService],
+        useFactory: (config: ConfigService<AppConfig, true>) => ({
+          connection: parseRedisUrl(config.get('REDIS_URL', { infer: true })),
+          prefix: config.get('BULL_PREFIX', { infer: true }),
+        }),
+      }),
+    ]
   : [];
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
-    LoggerModule.forRoot({
-      pinoHttp: {
-        level: process.env.LOG_LEVEL || (process.env.NODE_ENV === 'production' ? 'info' : 'debug'),
-        transport: process.env.NODE_ENV === 'production' ? undefined : {
-          target: 'pino-pretty',
-          options: { colorize: true, singleLine: false },
-        },
+    ConfigModule.forRoot({ isGlobal: true, validate: validateEnv }),
+    LoggerModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (config: ConfigService<AppConfig, true>) => {
+        const pretty = config.get('LOGGER_PRETTY', { infer: true });
+        return {
+          pinoHttp: {
+            level: config.get('LOG_LEVEL', { infer: true }),
+            transport: pretty
+              ? {
+                  target: 'pino-pretty',
+                  options: { colorize: true, singleLine: false },
+                }
+              : undefined,
+          },
+        };
       },
     }),
     PrismaModule,

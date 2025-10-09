@@ -2,6 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import Redis from 'ioredis';
 import { StorageService } from '../storage/storage.service';
+import { ConfigService } from '@nestjs/config';
+import { AppConfig } from '../config/env.validation';
 
 export interface CheckResult {
   status: 'ok' | 'error';
@@ -21,7 +23,11 @@ export interface HealthReport {
 
 @Injectable()
 export class HealthService {
-  constructor(private readonly prisma: PrismaService, private readonly storage: StorageService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly storage: StorageService,
+    private readonly config: ConfigService<AppConfig, true>,
+  ) {}
 
   private async time<T>(fn: () => Promise<T>): Promise<{ ms: number; error?: Error }>
   {
@@ -43,7 +49,7 @@ export class HealthService {
   }
 
   async checkRedis(): Promise<CheckResult> {
-    const url = process.env.REDIS_URL || 'redis://localhost:6379';
+    const url = this.config.get('REDIS_URL', { infer: true });
     const { ms, error } = await this.time(async () => {
       const client = new Redis(url, { lazyConnect: true, maxRetriesPerRequest: 1, connectTimeout: 2000 });
       try {

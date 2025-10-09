@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { S3Client, HeadBucketCommand, CreateBucketCommand, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { Readable } from 'node:stream';
+import { AppConfig } from '../config/env.validation';
 
 function streamToString(stream: Readable): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -18,12 +19,12 @@ export class StorageService {
   private readonly client: S3Client;
   private readonly bucket: string;
 
-  constructor(private readonly config: ConfigService) {
-    const endpoint = this.config.get<string>('S3_ENDPOINT') || 'http://localhost:9000';
-    const region = this.config.get<string>('AWS_REGION') || 'us-east-1';
-    const accessKeyId = this.config.get<string>('S3_KEY') || 'minio';
-    const secretAccessKey = this.config.get<string>('S3_SECRET') || 'minio12345';
-    this.bucket = this.config.get<string>('S3_BUCKET') || 'assets';
+  constructor(private readonly config: ConfigService<AppConfig, true>) {
+    const endpoint = this.config.get('S3_ENDPOINT', { infer: true });
+    const region = this.config.get('AWS_REGION', { infer: true });
+    const accessKeyId = this.config.get('S3_KEY', { infer: true });
+    const secretAccessKey = this.config.get('S3_SECRET', { infer: true });
+    this.bucket = this.config.get('S3_BUCKET', { infer: true });
 
     this.client = new S3Client({
       region,
@@ -39,7 +40,7 @@ export class StorageService {
 
   async ensureBucket(): Promise<void> {
     // Allow tests or callers to skip S3 connectivity checks entirely
-    if (process.env.SKIP_S3_INIT === 'true' || process.env.SKIP_S3_INIT === '1') return;
+    if (this.config.get('SKIP_S3_INIT', { infer: true })) return;
     try {
       await this.client.send(new HeadBucketCommand({ Bucket: this.bucket }));
     } catch (err: any) {
@@ -51,7 +52,8 @@ export class StorageService {
       // Ignore Forbidden/200 if user lacks permissions but bucket exists
       if (err?.$metadata?.httpStatusCode === 403) return;
       // In test environments, don't fail startup on missing/invalid S3
-      if (process.env.NODE_ENV === 'test') return;
+      const nodeEnv = this.config.get('NODE_ENV', { infer: true });
+      if (nodeEnv === 'test') return;
       throw err;
     }
   }

@@ -13,6 +13,32 @@
 
 Richiede `DATABASE_URL` configurata (in `apps/api/.env` o nella root `.env`).
 
+## Variabili d'ambiente
+
+La configurazione viene validata all'avvio tramite Zod. In assenza delle variabili richieste (`DATABASE_URL`, `OPENROUTER_API_KEY` fuori dai test, credenziali S3) il bootstrap fallisce immediatamente.
+
+| Variabile | Default | Descrizione |
+| --- | --- | --- |
+| `DATABASE_URL` | – (obbligatoria) | Connessione PostgreSQL usata da Prisma. |
+| `OPENROUTER_API_KEY` | `''` | Necessaria per generare i content plan (non richiesta nei test). |
+| `PORT` | `3001` | Porta HTTP dell'API. |
+| `NODE_ENV` | `development` | Influenza log e flag automatici. |
+| `LOG_LEVEL` | `debug` (`info` in produzione) | Livello log Pino. |
+| `LOGGER_PRETTY` | `true` se non in produzione | Abilita output leggibile in locale. |
+| `REDIS_URL` | `redis://localhost:6379` | Connessione BullMQ/health check. |
+| `BULL_PREFIX` | `bull` | Prefisso code BullMQ. |
+| `DISABLE_BULL` | `false` (coerce `1/true` → `true`) | Se impostato disattiva Bull e usa stub in memoria. |
+| `WORKER_JOB_ATTEMPTS` | `3` | Tentativi di retry per i job enqueued. |
+| `WORKER_JOB_BACKOFF_DELAY_MS` | `5000` | Delay base (ms) per backoff esponenziale. |
+| `S3_ENDPOINT` | `http://localhost:9000` | Endpoint MinIO/S3. |
+| `S3_KEY` / `S3_SECRET` | `minio` / `minio12345` | Credenziali MinIO di sviluppo. |
+| `S3_BUCKET` | `assets` | Bucket usato per gli upload. |
+| `AWS_REGION` | `us-east-1` | Regione client S3. |
+| `SKIP_S3_INIT` | `false` | Salta il check/creazione bucket (utile in CI). |
+| `JWT_SECRET` | `dev_jwt_secret_change_me` | Secret per i token firmati dall'API. |
+
+Altre variabili (retry OpenRouter, ecc.) hanno fallback documentati in `.env.example`.
+
 ## Login "magico" (solo sviluppo/test)
 
 - L'endpoint `POST /auth/login` accetta il campo opzionale `magic` con il formato `tenantId:email` per ottenere un token JWT senza password durante lo sviluppo.

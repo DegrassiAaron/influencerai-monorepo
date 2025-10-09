@@ -1,20 +1,24 @@
 import { ContentPlansService } from './content-plans.service';
+import { validateEnv, AppConfig } from '../config/env.validation';
+import { ConfigService } from '@nestjs/config';
 
 describe('ContentPlansService', () => {
   const prismaMock: any = {
     influencer: { findUnique: jest.fn() },
     job: { create: jest.fn() },
   };
+  let config: ConfigService<AppConfig, true>;
+  let configValues: AppConfig;
 
   beforeEach(() => {
     // Configure prisma mocks
     prismaMock.influencer.findUnique.mockImplementation(async ({ where: { id } }: any) => (id === 'inf_1' ? { id, tenantId: 'ten_1', persona: { name: 'A' } } : null));
     prismaMock.job.create.mockImplementation(async ({ data }: any) => ({ id: 'job_cp_1', ...data }));
+    configValues = validateEnv({ DATABASE_URL: 'postgresql://user:pass@localhost:5432/db' });
+    config = {
+      get: jest.fn((key: keyof AppConfig) => configValues[key]),
+    } as unknown as ConfigService<AppConfig, true>;
     // Mock global fetch to simulate OpenRouter returning JSON array in content
-    process.env.OPENROUTER_MAX_RETRIES = '3';
-    process.env.OPENROUTER_TIMEOUT_MS = '50';
-    process.env.OPENROUTER_BACKOFF_BASE_MS = '1';
-    process.env.OPENROUTER_BACKOFF_JITTER_MS = '0';
     global.fetch = jest.fn(async () => ({
       ok: true,
       status: 200,
@@ -24,7 +28,7 @@ describe('ContentPlansService', () => {
   });
 
   it('createPlan parses posts and persists job with influencer/tenant association', async () => {
-    const svc = new ContentPlansService(prismaMock);
+    const svc = new ContentPlansService(prismaMock, config);
     const res = await svc.createPlan({ influencerId: 'inf_1', theme: 't' });
     expect(res.id).toBe('job_cp_1');
     expect(res.plan.posts[0]).toEqual({ caption: 'post1', hashtags: ['x'] });
@@ -51,7 +55,7 @@ describe('ContentPlansService', () => {
         json: async () => ({ choices: [{ message: { content: JSON.stringify([{ caption: 'ok', hashtags: ['h'] }]) } }] }),
       }));
 
-    const svc = new ContentPlansService(prismaMock);
+    const svc = new ContentPlansService(prismaMock, config);
     const posts = await svc.generatePlanPosts('{}', 't');
     expect(posts[0]).toEqual({ caption: 'ok', hashtags: ['h'] });
     expect((global.fetch as jest.Mock).mock.calls.length).toBeGreaterThanOrEqual(2);
@@ -64,7 +68,7 @@ describe('ContentPlansService', () => {
       err.name = 'AbortError';
       throw err;
     });
-    const svc = new ContentPlansService(prismaMock);
+    const svc = new ContentPlansService(prismaMock, config);
     await expect(svc.generatePlanPosts('{}', 't')).rejects.toBeTruthy();
     expect((global.fetch as jest.Mock).mock.calls.length).toBeGreaterThanOrEqual(3);
   });
@@ -85,7 +89,7 @@ describe('ContentPlansService', () => {
         headers: { get: () => null },
         json: async () => ({ choices: [{ message: { content: JSON.stringify([{ caption: 'ok2', hashtags: ['h2'] }]) } }] }),
       }));
-    const svc = new ContentPlansService(prismaMock);
+    const svc = new ContentPlansService(prismaMock, config);
     const posts = await svc.generatePlanPosts('{}', 't');
     expect(posts[0]).toEqual({ caption: 'ok2', hashtags: ['h2'] });
     expect((global.fetch as jest.Mock).mock.calls.length).toBeGreaterThanOrEqual(2);

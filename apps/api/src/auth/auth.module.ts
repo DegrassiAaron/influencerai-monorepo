@@ -4,6 +4,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { PrismaModule } from '../prisma/prisma.module';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
+import { AppConfig } from '../config/env.validation';
 
 @Module({
   imports: [
@@ -12,8 +13,8 @@ import { AuthController } from './auth.controller';
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: (cfg: ConfigService) => ({
-        secret: cfg.get<string>('JWT_SECRET') || 'dev_jwt_secret_change_me',
+      useFactory: (cfg: ConfigService<AppConfig, true>) => ({
+        secret: cfg.get('JWT_SECRET', { infer: true }),
         signOptions: { expiresIn: '12h' },
       }),
     }),

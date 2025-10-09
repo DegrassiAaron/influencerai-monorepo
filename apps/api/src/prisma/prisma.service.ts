@@ -13,14 +13,15 @@ type PrismaMiddlewareParams = {
 
 type PrismaMiddlewareNext = (params: PrismaMiddlewareParams) => Promise<any>;
 import { getRequestContext } from '../lib/request-context';
+import { AppConfig } from '../config/env.validation';
 
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(PrismaService.name);
   private readonly databaseUrl: string;
 
-  constructor(private readonly configService: ConfigService) {
-    const databaseUrl = configService.get<string>('DATABASE_URL');
+  constructor(private readonly configService: ConfigService<AppConfig, true>) {
+    const databaseUrl = configService.get('DATABASE_URL', { infer: true });
 
     if (!databaseUrl) {
       throw new Error('DATABASE_URL environment variable is not configured');

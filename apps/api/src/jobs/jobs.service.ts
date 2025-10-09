@@ -1,8 +1,10 @@
-import { Injectable, Logger as NestLogger, LoggerService, Optional } from '@nestjs/common';
+import { Injectable, LoggerService, Optional } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { PrismaService } from '../prisma/prisma.service';
 import { JobSeriesQuery, ListJobsQuery, UpdateJobDto } from './dto';
+import { ConfigService } from '@nestjs/config';
+import { AppConfig } from '../config/env.validation';
 
 type JobType = 'content-generation' | 'lora-training' | 'video-generation';
 
@@ -13,6 +15,7 @@ export class JobsService {
     @InjectQueue('content-generation') private readonly contentQueue: Queue,
     @InjectQueue('lora-training') private readonly loraQueue: Queue,
     @InjectQueue('video-generation') private readonly videoQueue: Queue,
+    private readonly config: ConfigService<AppConfig, true>,
     @Optional() private readonly logger?: LoggerService,
   ) {}
 
@@ -27,8 +30,8 @@ export class JobsService {
 
     const queue = this.getQueue(input.type);
     this.logger?.debug?.({ jobId: job.id, type: input.type } as any, 'Enqueueing job');
-    const attempts = Number(process.env.WORKER_JOB_ATTEMPTS || 3);
-    const backoffDelay = Number(process.env.WORKER_JOB_BACKOFF_DELAY_MS || 5000);
+    const attempts = this.config.get('WORKER_JOB_ATTEMPTS', { infer: true });
+    const backoffDelay = this.config.get('WORKER_JOB_BACKOFF_DELAY_MS', { infer: true });
     await queue.add(
       input.type,
       { jobId: job.id, payload: input.payload },

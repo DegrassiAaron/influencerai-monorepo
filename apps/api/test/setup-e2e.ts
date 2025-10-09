@@ -10,6 +10,10 @@ if (!process.env.DISABLE_BULL) {
 
 loadE2eEnv();
 
+if (!process.env.DATABASE_URL) {
+  process.env.DATABASE_URL = 'postgresql://postgres:postgres@localhost:5432/influencerai?schema=public';
+}
+
 // Avoid triggering DB resets multiple times when Jest spins up several workers.
 const globalSetupState = global as unknown as {
   __E2E_DB_RESET_INITIALIZED__?: boolean;
