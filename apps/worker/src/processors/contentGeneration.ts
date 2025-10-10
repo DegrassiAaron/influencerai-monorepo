@@ -86,6 +86,11 @@ export function createContentGenerationProcessor(deps: ContentGenerationDependen
         { responseFormat: 'text' }
       );
 
+      const caption = (captionResult.content ?? '').trim();
+      if (!caption) {
+        throw new Error('Caption generation returned empty content');
+      }
+
       const scriptPrompt = prompts.videoScriptPrompt(captionResult.content || 'A short engaging caption', durationSec);
       const scriptResult = await callOpenRouter(
         [
@@ -95,6 +100,11 @@ export function createContentGenerationProcessor(deps: ContentGenerationDependen
         { responseFormat: 'text' }
       );
 
+      const script = (scriptResult.content ?? '').trim();
+      if (!script) {
+        throw new Error('Script generation returned empty content');
+      }
+
       const totalTokens = (captionResult.usage?.total_tokens || 0) + (scriptResult.usage?.total_tokens || 0);
 
       let childJobId: string | undefined;
@@ -102,8 +112,8 @@ export function createContentGenerationProcessor(deps: ContentGenerationDependen
         try {
           const childJob = await createChildJob({
             parentJobId: jobId,
-            caption: captionResult.content,
-            script: scriptResult.content,
+            caption,
+            script,
             persona: payload.persona ?? payload.personaText,
             context,
             durationSec,
@@ -120,8 +130,8 @@ export function createContentGenerationProcessor(deps: ContentGenerationDependen
         try {
           const uploadResult = await uploadTextAssets({
             jobIdentifier: jobId || String(job.id),
-            caption: captionResult.content,
-            script: scriptResult.content,
+            caption,
+            script,
           });
           captionUrl = uploadResult.captionUrl;
           scriptUrl = uploadResult.scriptUrl;
@@ -132,8 +142,8 @@ export function createContentGenerationProcessor(deps: ContentGenerationDependen
 
       const result: ContentGenerationResult = {
         success: true,
-        caption: (captionResult.content || '').trim(),
-        script: (scriptResult.content || '').trim(),
+        caption,
+        script,
         captionUrl,
         scriptUrl,
         childJobId,

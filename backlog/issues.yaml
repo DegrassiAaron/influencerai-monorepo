@@ -374,13 +374,13 @@ issues:
 
     ### DoD
 
-    - [ ] Implementato processor che richiama OpenRouter usando prompts.
+    - [x] Implementato processor che richiama OpenRouter usando prompts.
 
-    - [ ] Salvataggio output testuale su S3/Asset e collegamento al job.
+    - [x] Salvataggio output testuale su S3/Asset e collegamento al job.
 
-    - [ ] Gestione errori con retry e logging strutturato.
+    - [x] Gestione errori con retry e logging strutturato.
 
-    - [ ] Test unit/integration con mock OpenRouter.
+    - [x] Test unit/integration con mock OpenRouter.
 
 
     ### Dipendenze
