@@ -1,4 +1,6 @@
-type ApiRequestInit = globalThis.RequestInit;
+type ApiRequestInit = Omit<globalThis.RequestInit, "body"> & { body?: globalThis.BodyInit | null };
+
+const DEFAULT_TIMEOUT_MS = 30_000;
 
 export class ApiError extends Error {
   readonly status?: number;
@@ -10,76 +12,88 @@ export class ApiError extends Error {
   }
 }
 
-async function apiRequest<T>(path: string, init: ApiRequestInit): Promise<T> {
-  if (!API_BASE_URL) {
-    throw new ApiError("Missing NEXT_PUBLIC_API_BASE_URL environment variable");
-  }
-
-  const response = await fetch(`${baseUrl}${path}`, {
-    cache: "no-store",
-    ...init,
-  });
-
-  if (!response.ok) {
-    throw new ApiError(`Request failed with status ${response.status}`, response.status);
-  }
-
-  if (response.status === 204) {
-    return undefined as T;
-  }
-
-  return (await response.json()) as T;
-}
-
-export async function apiGet<T>(path: string, init?: ApiRequestInit): Promise<T> {
-  return apiRequest<T>(path, { method: "GET", ...init });
-}
-
-export async function apiPost<T>(path: string, body: unknown, init?: ApiRequestInit): Promise<T> {
-  return apiRequest<T>(path, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      ...(init?.headers ?? {}),
-    },
-    body: JSON.stringify(body),
-    ...init,
-  });
-}
-
-export async function apiPatch<T>(path: string, body: unknown, init?: ApiRequestInit): Promise<T> {
-  return apiRequest<T>(path, {
-    method: "PATCH",
-    headers: {
-      "Content-Type": "application/json",
-      ...(init?.headers ?? {}),
-    },
-    body: JSON.stringify(body),
-    ...init,
-  });
-}
-
-export async function apiGet<T>(path: string, init?: ApiRequestInit): Promise<T> {
-  return apiRequest<T>(path, init);
-}
-
 function getApiBaseUrl(): string {
   const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
-
   if (!baseUrl) {
     throw new ApiError("Missing NEXT_PUBLIC_API_BASE_URL environment variable");
   }
-
   return baseUrl;
 }
 
-export async function apiPost<TBody, TResponse>(
+async function readErrorMessage(response: Response): Promise<string> {
+  const contentType = response.headers.get("content-type") ?? "";
+
+  if (contentType.includes("application/json")) {
+    try {
+      const payload = (await response.json()) as { message?: string };
+      if (payload && typeof payload.message === "string") {
+        return payload.message;
+      }
+    } catch {
+      // ignore JSON parsing errors
+    }
+  }
+
+  try {
+    const text = await response.text();
+    if (text) {
+      return text;
+    }
+  } catch {
+    // ignore text parsing errors
+  }
+
+  return `Request failed with status ${response.status}`;
+}
+
+async function apiRequest<TResponse>(path: string, init: ApiRequestInit = {}): Promise<TResponse> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT_MS);
+
+  try {
+    const response = await fetch(`${getApiBaseUrl()}${path}`, {
+      cache: "no-store",
+      ...init,
+      signal: init.signal ?? controller.signal,
+    });
+
+    if (!response.ok) {
+      throw new ApiError(await readErrorMessage(response), response.status);
+    }
+
+    if (response.status === 204) {
+      return undefined as TResponse;
+    }
+
+    const contentType = response.headers.get("content-type") ?? "";
+    if (contentType.includes("application/json")) {
+      return (await response.json()) as TResponse;
+    }
+
+    return undefined as TResponse;
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") {
+      throw new ApiError("Request timed out", 408);
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+export function apiGet<TResponse>(path: string, init?: ApiRequestInit): Promise<TResponse> {
+  return apiRequest<TResponse>(path, { method: "GET", ...init });
+}
+
+export function apiPost<TBody, TResponse>(
   path: string,
   body: TBody,
-  init?: ApiRequestInit
+  init?: ApiRequestInit,
 ): Promise<TResponse> {
   const headers = new Headers(init?.headers ?? {});
-  headers.set("Content-Type", "application/json");
+  if (!headers.has("Content-Type")) {
+    headers.set("Content-Type", "application/json");
+  }
 
   return apiRequest<TResponse>(path, {
     ...init,
@@ -89,13 +103,15 @@ export async function apiPost<TBody, TResponse>(
   });
 }
 
-export async function apiPatch<TBody, TResponse>(
+export function apiPatch<TBody, TResponse>(
   path: string,
   body: TBody,
-  init?: ApiRequestInit
+  init?: ApiRequestInit,
 ): Promise<TResponse> {
   const headers = new Headers(init?.headers ?? {});
-  headers.set("Content-Type", "application/json");
+  if (!headers.has("Content-Type")) {
+    headers.set("Content-Type", "application/json");
+  }
 
   return apiRequest<TResponse>(path, {
     ...init,

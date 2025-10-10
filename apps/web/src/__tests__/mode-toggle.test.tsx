@@ -9,6 +9,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 const STORAGE_KEY = "influencerai:theme";
 
 function mockMatchMedia(prefersDark: boolean) {
+  // eslint-disable-next-line no-unused-vars
   const listeners = new Set<(event: MediaQueryListEvent) => void>();
 
   const mediaQueryList: MediaQueryList = {
@@ -16,10 +17,10 @@ function mockMatchMedia(prefersDark: boolean) {
     media: "(prefers-color-scheme: dark)",
     onchange: null,
     addEventListener: (_event, listener) => {
-      listeners.add(listener as EventListener);
+      listeners.add(listener as any);
     },
     removeEventListener: (_event, listener) => {
-      listeners.delete(listener as EventListener);
+      listeners.delete(listener as any);
     },
     addListener: () => {
       /* deprecated */
@@ -35,11 +36,11 @@ function mockMatchMedia(prefersDark: boolean) {
   return {
     update(matches: boolean) {
       mediaQueryList.matches = matches;
-      const event = new Event("change") as MediaQueryListEvent;
-      Object.defineProperty(event, "matches", { value: matches });
+      const changeEvent = new Event("change") as MediaQueryListEvent;
+      Object.defineProperty(changeEvent, "matches", { value: matches });
       listeners.forEach((listener) => {
         if (typeof listener === "function") {
-          listener(event);
+          listener(changeEvent);
         }
       });
     },

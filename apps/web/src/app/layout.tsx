@@ -5,6 +5,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Providers } from "./providers";
+import { cn } from "@/lib/utils";
 
 const font = Inter({ subsets: ["latin"] });
 
@@ -20,7 +21,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${font.className} min-h-screen bg-background font-sans antialiased`}>
+      <body className={cn("min-h-screen bg-background font-sans antialiased", font.className)}>
         <ThemeProvider>
           <Providers>{children}</Providers>
         </ThemeProvider>

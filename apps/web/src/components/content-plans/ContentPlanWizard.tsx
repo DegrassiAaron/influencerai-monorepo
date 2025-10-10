@@ -203,14 +203,14 @@ export function ContentPlanWizard() {
                 onChange={(event) => setField("influencerId", event.target.value)}
               />
               <p className="text-xs text-muted-foreground">
-                Inserisci l'identificativo dell'influencer virtuale da utilizzare nell'API.
+                Inserisci l&apos;identificativo dell&apos;influencer virtuale da utilizzare nell&apos;API.
               </p>
             </div>
             <div className="space-y-2">
               <Label htmlFor="personaSummary">Persona summary</Label>
               <Textarea
                 id="personaSummary"
-                placeholder="Descrivi tono di voce, interessi e community dell'influencer virtuale"
+                placeholder="Descrivi tono di voce, interessi e community dell&apos;influencer virtuale"
                 value={state.personaSummary}
                 onChange={(event) => setField("personaSummary", event.target.value)}
               />
