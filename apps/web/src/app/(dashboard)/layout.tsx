@@ -6,22 +6,21 @@ import type {
   AppShellNavItem,
 } from "@/components/layout/AppShell";
 
-const navItems: AppShellNavItem[] = [
+const NAV_ITEMS: AppShellNavItem[] = [
   { title: "Dashboard", href: "/dashboard" },
   { title: "Content Plans", href: "/dashboard/content-plans" },
   { title: "Jobs", href: "/dashboard/jobs" },
   { title: "Queues", href: "/dashboard/queues" },
-  { title: "Content Plans", href: "/dashboard/content-plans" },
 ];
 
-const breadcrumbs: AppShellBreadcrumb[] = [
+const ROOT_BREADCRUMBS: AppShellBreadcrumb[] = [
   { label: "Home", href: "/" },
   { label: "Dashboard" },
 ];
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   return (
-    <AppShell breadcrumbs={breadcrumbs} navItems={navItems}>
+    <AppShell breadcrumbs={ROOT_BREADCRUMBS} navItems={NAV_ITEMS}>
       {children}
     </AppShell>
   );

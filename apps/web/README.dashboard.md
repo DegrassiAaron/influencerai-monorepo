@@ -18,7 +18,7 @@ Files:
 - `apps/web/src/app/dashboard/page.tsx`
 - `apps/web/src/components/{HealthCard,QueuesWidget,JobsChart}.tsx`
 - `apps/web/src/app/providers.tsx` (React Query client)
-- `apps/web/src/app/layout.tsx` wraps `Providers`
+- `apps/web/src/app/layout.tsx` registers providers and global styles
 
 Notes:
 - Replace polling with websockets when API supports it.
@@ -34,7 +34,7 @@ Notes:
   - `src/lib/utils.ts` → `cn()` merges class names using `clsx` and `tailwind-merge`.
   - `src/components/theme-provider.tsx` exposes `ThemeProvider`/`useTheme` for light/dark toggling.
 - Application shell:
-  - Implemented in `src/components/layout/app-shell.tsx` with `AppSidebar`, `AppHeader`, and automatic breadcrumbs (`AppBreadcrumbs`).
-  - `src/app/layout.tsx` wires the shell + providers and applies the required global classes on `<body>`.
+  - Implemented in `src/components/layout/AppShell.tsx` with sidebar navigation, header actions, and breadcrumb rendering.
+  - `src/app/(dashboard)/layout.tsx` configures navigation/breadcrumb data for dashboard routes.
   - Mobile navigation uses the shared `Sheet` primitive via `MobileNavigation`.
 - When adding new views, render page content directly; the shell handles padding, chrome, and breadcrumbs.
