@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { createContentGenerationProcessor } from './contentGeneration';
 
 const noopLogger = {
@@ -16,6 +16,8 @@ describe('content generation processor', () => {
     const patchCalls: Array<{ id: string; data: Record<string, unknown> }> = [];
     const uploadCalls: Array<{ jobIdentifier: string; caption: string; script: string }> = [];
     let childJobPayload: Record<string, unknown> | undefined;
+
+    const videoScriptPrompt = vi.fn((caption, duration) => `SCRIPT_PROMPT:${caption}:${duration}`);
 
     const processor = createContentGenerationProcessor({
       logger: noopLogger,
@@ -37,7 +39,7 @@ describe('content generation processor', () => {
       },
       prompts: {
         imageCaptionPrompt: (value) => `CAPTION_PROMPT:${value}`,
-        videoScriptPrompt: (caption, duration) => `SCRIPT_PROMPT:${caption}:${duration}`,
+        videoScriptPrompt,
       },
     });
 
@@ -90,6 +92,8 @@ describe('content generation processor', () => {
         costTok: 30,
       },
     });
+
+    expect(videoScriptPrompt).toHaveBeenCalledWith('caption one', 45);
   });
 
   it('reports failure to API when OpenRouter fails', async () => {
