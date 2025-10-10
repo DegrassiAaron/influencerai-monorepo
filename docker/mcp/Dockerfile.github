@@ -1,0 +1,58 @@
+# GitHub Project Manager MCP Server Dockerfile
+# Secure, minimal image for GitHub API integration
+
+FROM node:23-alpine AS builder
+
+WORKDIR /build
+
+# Install build dependencies
+RUN apk add --no-cache python3 make g++
+
+# Copy package files
+COPY mcp/github-project-manager/package*.json ./
+
+# Install dependencies
+RUN npm install --omit=dev && \
+    npm cache clean --force
+
+# Copy source code
+COPY mcp/github-project-manager/src ./src
+
+# Build TypeScript
+RUN npm run build 2>/dev/null || echo "No build script, using source directly"
+
+# ============================================================================
+# Production stage
+# ============================================================================
+FROM node:23-alpine
+
+WORKDIR /app
+
+# Copy dependencies from builder
+COPY --from=builder --chown=node:node /build/node_modules ./node_modules
+
+# Copy application code
+COPY --chown=node:node mcp/github-project-manager/src ./src
+COPY --chown=node:node mcp/github-project-manager/package.json ./
+
+# Install minimal runtime dependencies
+RUN apk add --no-cache \
+    ca-certificates \
+    && rm -rf /var/cache/apk/*
+
+# Switch to non-root user
+USER node
+
+# Environment variables (will be overridden at runtime)
+ENV NODE_ENV=production \
+    GITHUB_API_URL=https://api.github.com
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD node -e "require('http').get('http://localhost:3000/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1))" || exit 1
+
+# Expose port for stdio communication (MCP protocol)
+# Note: MCP typically uses stdio, not HTTP
+
+# Start the MCP server
+CMD ["node", "src/index.js"]

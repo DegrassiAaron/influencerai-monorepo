@@ -1,0 +1,14 @@
+FROM python:3.12-alpine
+RUN GROUP_NAME=$(getent group 1000 | cut -d: -f1) && \
+    if [ -z "$GROUP_NAME" ]; then \
+        addgroup -g 1000 mcp && GROUP_NAME=mcp; \
+    fi && \
+    adduser -D -u 1000 -G "$GROUP_NAME" mcp || \
+    (id mcp && echo "User mcp already exists")
+WORKDIR /app
+RUN pip install --no-cache-dir mcp>=0.5.0
+COPY --chown=mcp:mcp mcp/claude-context/ ./
+RUN mkdir -p /data && chown mcp:mcp /data
+USER mcp
+# Keep container alive - MCP servers are meant to be accessed via stdio
+CMD ["tail", "-f", "/dev/null"]

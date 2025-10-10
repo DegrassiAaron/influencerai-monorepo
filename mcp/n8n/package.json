@@ -1,0 +1,32 @@
+{
+  "name": "@meepleai/mcp-n8n-manager",
+  "version": "1.0.0",
+  "description": "MCP server for n8n workflow management",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js",
+    "test": "echo \"No tests yet\" && exit 0"
+  },
+  "keywords": [
+    "mcp",
+    "n8n",
+    "workflow",
+    "automation",
+    "claude"
+  ],
+  "author": "MeepleAI Team",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^0.5.0",
+    "axios": "^1.6.0",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

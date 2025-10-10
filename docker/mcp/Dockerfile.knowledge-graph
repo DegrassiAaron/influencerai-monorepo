@@ -1,0 +1,14 @@
+FROM python:3.12-alpine
+RUN apk add --no-cache gcc musl-dev
+RUN GROUP_NAME=$(getent group 1000 | cut -d: -f1) && \
+    if [ -z "$GROUP_NAME" ]; then \
+        addgroup -g 1000 mcp && GROUP_NAME=mcp; \
+    fi && \
+    adduser -D -u 1000 -G "$GROUP_NAME" mcp || \
+    (id mcp && echo "User mcp already exists")
+WORKDIR /app
+RUN pip install --no-cache-dir mcp>=0.5.0 qdrant-client openai
+COPY --chown=mcp:mcp mcp/knowledge-graph/ ./
+USER mcp
+# Keep container alive for stdio access
+CMD ["tail", "-f", "/dev/null"]
