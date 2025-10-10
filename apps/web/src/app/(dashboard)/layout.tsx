@@ -1,8 +1,12 @@
 import type { ReactNode } from "react";
 
 import { AppShell } from "@/components/layout/AppShell";
+import type {
+  AppShellBreadcrumb,
+  AppShellNavItem,
+} from "@/components/layout/AppShell";
 
-const navItems = [
+const navItems: AppShellNavItem[] = [
   { title: "Dashboard", href: "/dashboard" },
   { title: "Content Plans", href: "/dashboard/content-plans" },
   { title: "Jobs", href: "/dashboard/jobs" },
@@ -10,7 +14,7 @@ const navItems = [
   { title: "Content Plans", href: "/dashboard/content-plans" },
 ];
 
-const breadcrumbs = [
+const breadcrumbs: AppShellBreadcrumb[] = [
   { label: "Home", href: "/" },
   { label: "Dashboard" },
 ];
