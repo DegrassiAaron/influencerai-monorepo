@@ -61,14 +61,14 @@ describe('content generation processor', () => {
     expect(result.childJobId).toBe('child-123');
 
     expect(uploadCalls).toEqual([
-      { jobIdentifier: 'job-1', caption: ' caption one ', script: ' script one ' },
+      { jobIdentifier: 'job-1', caption: 'caption one', script: 'script one' },
     ]);
 
     expect(childJobPayload).toBeDefined();
     expect(childJobPayload).toEqual({
       parentJobId: 'job-1',
-      caption: ' caption one ',
-      script: ' script one ',
+      caption: 'caption one',
+      script: 'script one',
       persona: 'persona',
       context: 'launch',
       durationSec: 45,
@@ -125,5 +125,58 @@ describe('content generation processor', () => {
     expect(patchCalls[0]).toEqual({ id: 'job-err', data: { status: 'running' } });
     expect(patchCalls[1]?.id).toBe('job-err');
     expect(patchCalls[1]?.data?.status).toBe('failed');
+  });
+
+  it('bubbles up error when caption result is empty and reports failure', async () => {
+    const patchCalls: Array<{ id: string; data: Record<string, unknown> }> = [];
+    const openRouterCalls: Array<{ messages: unknown; opts: unknown }> = [];
+
+    const processor = createContentGenerationProcessor({
+      logger: noopLogger,
+      callOpenRouter: async (messages, opts) => {
+        openRouterCalls.push({ messages, opts });
+        return { content: '   ', usage: { total_tokens: 7 } } as any;
+      },
+      patchJobStatus: async (id, data) => {
+        patchCalls.push({ id, data });
+      },
+      prompts: {
+        imageCaptionPrompt: (value) => `CAPTION_PROMPT:${value}`,
+        videoScriptPrompt: (caption, duration) => `SCRIPT_PROMPT:${caption}:${duration}`,
+      },
+    });
+
+    await expect(
+      processor({
+        id: 'queue-empty',
+        name: 'content-job',
+        data: {
+          jobId: 'job-empty',
+          payload: {
+            persona: { name: 'Alex' },
+            context: 'product teaser',
+            durationSec: 30,
+          },
+        },
+      } as any)
+    ).rejects.toThrow(/caption generation returned empty content/i);
+
+    expect(openRouterCalls).toHaveLength(1);
+    expect(openRouterCalls[0]?.messages).toEqual([
+      { role: 'system', content: 'You generate concise, vivid social captions.' },
+      {
+        role: 'user',
+        content: 'CAPTION_PROMPT:Persona: {"name":"Alex"}\nContext/Theme: product teaser',
+      },
+    ]);
+    expect(openRouterCalls[0]?.opts).toEqual({ responseFormat: 'text' });
+
+    expect(patchCalls).toHaveLength(2);
+    expect(patchCalls[0]).toEqual({ id: 'job-empty', data: { status: 'running' } });
+    expect(patchCalls[1]?.id).toBe('job-empty');
+    expect(patchCalls[1]?.data?.status).toBe('failed');
+    expect(patchCalls[1]?.data?.result).toMatchObject({
+      message: expect.stringMatching(/caption generation returned empty content/i),
+    });
   });
 });
