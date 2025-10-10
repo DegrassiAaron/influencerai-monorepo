@@ -231,7 +231,7 @@ issues:
 
     - [x] Endpoint PATCH /datasets/:id/status per aggiornare stato (es. READY, PROCESSING).
 
-    - [ ] Integrazione test con MinIO locale via docker compose.
+    - [x] Integrazione test con MinIO locale via docker compose (`apps/api/test/datasets.minio.e2e-spec.ts`).
 
 
     ### Dipendenze
