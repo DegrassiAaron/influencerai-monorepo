@@ -760,13 +760,13 @@ issues:
 
     ### DoD
 
-    - [ ] Vitest configurato per core-schemas, sdk, prompts.
+    - [x] Vitest configurato per core-schemas, sdk, prompts.
 
-    - [ ] Test validazione per tutti gli Zod schemas principali.
+    - [x] Test validazione per tutti gli Zod schemas principali.
 
-    - [ ] Test client SDK e prompt templates.
+    - [x] Test client SDK e prompt templates.
 
-    - [ ] `pnpm test` in root esegue test di tutti i packages.
+    - [x] `pnpm test` in root esegue test di tutti i packages.
 
     '
   labels:

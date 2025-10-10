@@ -1,0 +1,8 @@
+# Codex MCP config — usa i wrapper STDIO del repo
+
+[mcp_servers.github]
+command = "powershell"
+args = [
+  "-NoProfile","-ExecutionPolicy","Bypass",
+  "-File","${workspaceFolder}/tools/mcp-kit/wrappers/github-mcp.ps1"
+]

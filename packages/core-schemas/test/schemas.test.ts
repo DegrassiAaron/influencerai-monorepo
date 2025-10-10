@@ -4,6 +4,7 @@ import {
   DatasetSpecSchema,
   JobSpecSchema,
   LoRAConfigSchema,
+  QueueSummarySchema,
 } from '../src';
 
 describe('JobSpecSchema', () => {
@@ -114,6 +115,31 @@ describe('LoRAConfigSchema', () => {
         networkDim: 32,
         networkAlpha: 16,
       });
+    }
+  });
+});
+
+describe('QueueSummarySchema', () => {
+  it('accepts non-negative integers for all counters', () => {
+    const result = QueueSummarySchema.safeParse({
+      active: 4,
+      waiting: 10,
+      failed: 0,
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it('rejects negative counters', () => {
+    const result = QueueSummarySchema.safeParse({
+      active: -1,
+      waiting: 2,
+      failed: 0,
+    });
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0]?.message).toMatch(/greater than or equal to 0/);
     }
   });
 });
