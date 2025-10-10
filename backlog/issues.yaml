@@ -1085,7 +1085,7 @@ issues:
   impact: High
   estimate: M
   code: CODE-04
-- title: 'WEB-07: Implementare l\'interfaccia progettata su Lovable.dev'
+  - title: 'WEB-07: Implementare l\'interfaccia progettata su Lovable.dev'
   body: '### Contesto
 
     È stata definita un\'interfaccia utente su Lovable.dev (mockup/prototipo). Occorre
