@@ -91,7 +91,7 @@ export function createContentGenerationProcessor(deps: ContentGenerationDependen
         throw new Error('Caption generation returned empty content');
       }
 
-      const scriptPrompt = prompts.videoScriptPrompt(captionResult.content || 'A short engaging caption', durationSec);
+      const scriptPrompt = prompts.videoScriptPrompt(caption, durationSec);
       const scriptResult = await callOpenRouter(
         [
           { role: 'system', content: 'You write short timestamped scripts for short-form videos.' },
