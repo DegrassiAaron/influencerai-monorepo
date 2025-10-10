@@ -4,7 +4,14 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import * as React from "react";
 
-import { Breadcrumb, type BreadcrumbItem as BreadcrumbEntry } from "@/components/ui/breadcrumb";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 import { Separator } from "@/components/ui/separator";
 import {
   Sidebar,
@@ -29,10 +36,15 @@ export type AppShellNavItem = {
   icon?: React.ComponentType<{ className?: string }>;
 };
 
+export type AppShellBreadcrumb = {
+  label: string;
+  href?: string;
+};
+
 export type AppShellProps = {
   children: React.ReactNode;
   navItems: AppShellNavItem[];
-  breadcrumbs?: BreadcrumbEntry[];
+  breadcrumbs?: AppShellBreadcrumb[];
   headerActions?: React.ReactNode;
   sidebarFooter?: React.ReactNode;
   sidebarTitle?: string;
@@ -89,7 +101,26 @@ export function AppShell({
           <header className="flex h-16 items-center justify-between gap-4 border-b bg-background px-4">
             <div className="flex flex-1 items-center gap-3">
               <SidebarTrigger />
-              {breadcrumbs.length > 0 ? <Breadcrumb items={breadcrumbs} /> : null}
+              {breadcrumbs.length > 0 ? (
+                <Breadcrumb className="w-full">
+                  <BreadcrumbList>
+                    {breadcrumbs.map((crumb, index) => {
+                      const isLast = index === breadcrumbs.length - 1;
+
+                      return (
+                        <BreadcrumbItem key={`${crumb.label}-${index}`}>
+                          {index > 0 ? <BreadcrumbSeparator /> : null}
+                          {isLast || !crumb.href ? (
+                            <BreadcrumbPage>{crumb.label}</BreadcrumbPage>
+                          ) : (
+                            <BreadcrumbLink href={crumb.href}>{crumb.label}</BreadcrumbLink>
+                          )}
+                        </BreadcrumbItem>
+                      );
+                    })}
+                  </BreadcrumbList>
+                </Breadcrumb>
+              ) : null}
             </div>
             {headerActions ? <div className="flex items-center gap-2">{headerActions}</div> : null}
           </header>
