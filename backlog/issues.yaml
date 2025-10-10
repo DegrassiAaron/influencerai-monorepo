@@ -644,13 +644,13 @@ issues:
 
     ### DoD
 
-    - [ ] Wizard multi-step (persona, tema, parametri prompt) che chiama /content-plans.
+    - [x] Wizard multi-step (persona, tema, parametri prompt) che chiama /content-plans.
 
-    - [ ] Preview dei post generati con possibilità di rigenerare.
+    - [x] Preview dei post generati con possibilità di rigenerare.
 
-    - [ ] Stato "Approved"/"Rejected" sincronizzato con l''API.
+    - [x] Stato "Approved"/"Rejected" sincronizzato con l''API.
 
-    - [ ] Test componenti principali e snapshot prompt.
+    - [x] Test componenti principali e snapshot prompt.
 
 
     ### Dipendenze
