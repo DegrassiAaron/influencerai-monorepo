@@ -407,13 +407,13 @@ issues:
 
     ### DoD
 
-    - [x] Vitest configurato per ambiente Node.js.
+    - [x] Vitest configurato per ambiente Node.js in `apps/worker/vitest.config.ts` con alias workspace.
 
-    - [x] Test base per worker initialization e job processing.
+    - [x] Test base per bootstrap worker e job processing (`apps/worker/src/index.test.ts`, `src/processors/*.test.ts`).
 
-    - [x] Mock di BullMQ e ioredis per test unitari.
+    - [x] Mock di BullMQ/Redis nella suite unit per isolare `createWorkers` e i processor.
 
-    - [x] Script `test` funzionante in package.json.
+    - [x] Script `test` in `apps/worker/package.json` esegue l''intera suite senza errori.
 
     '
   labels:
@@ -677,13 +677,13 @@ issues:
 
     ### DoD
 
-    - [ ] Configurato shadcn/ui con palette brand e dark mode.
+    - [x] Configurato `tailwind.config.ts` con preset shadcn, palette brand e dark mode tramite `tailwind.preset.ts` e `src/app/globals.css`.
 
-    - [ ] Layout principale con sidebar, header e breadcrumb.
+    - [x] Shell composta da `AppSidebar`, `AppHeader`, `AppBreadcrumbs` e `MobileNavigation` in `src/components/layout/` disponibile per desktop e mobile.
 
-    - [ ] Componenti base (Button, Card, Badge) centralizzati.
+    - [x] Primitivi UI (`Button`, `Card`, `Badge`, `Breadcrumb`, `Sheet`) centralizzati in `src/components/ui/`.
 
-    - [ ] Documentazione sull''uso dei componenti custom.
+    - [x] Documentazione aggiornata in `apps/web/README.ui.md` e `apps/web/README.dashboard.md`.
 
     '
   labels:
