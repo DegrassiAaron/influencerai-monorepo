@@ -3,7 +3,7 @@
 import React from "react";
 import { ArrowUpRight, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { ModeToggle } from "../components/mode-toggle";
+import { ModeToggle } from "@/components/mode-toggle";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

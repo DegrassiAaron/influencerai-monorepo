@@ -2,6 +2,7 @@ import React from "react";
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import Home from "../app/page";
+import { ThemeProvider } from "@/components/theme-provider";
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({
@@ -11,7 +12,11 @@ vi.mock("next/navigation", () => ({
 
 describe("Home page", () => {
   it("renders the dashboard headline and description", () => {
-    render(<Home />);
+    render(
+      <ThemeProvider>
+        <Home />
+      </ThemeProvider>
+    );
 
     expect(
       screen.getByRole("heading", { name: /influencerai dashboard/i })
