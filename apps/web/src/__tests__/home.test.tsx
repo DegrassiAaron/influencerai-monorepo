@@ -19,10 +19,10 @@ describe("Home page", () => {
     );
 
     expect(
-      screen.getByRole("heading", { name: /influencerai dashboard/i })
+      screen.getByRole("heading", { name: /control center di influencerai/i })
     ).toBeInTheDocument();
     expect(
-      screen.getByText(/virtual influencer content generation platform/i)
+      screen.getByText(/Monitora campagne, job e content plan in un unico spazio/i)
     ).toBeInTheDocument();
   });
 });
