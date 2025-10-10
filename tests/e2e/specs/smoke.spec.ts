@@ -1,7 +1,8 @@
 import puppeteer from 'puppeteer';
+
 const BASE = process.env.E2E_BASE ?? 'http://localhost:5173';
 
-test('home→login', async () => {
+test('home->login', async () => {
   const browser = await puppeteer.launch({
     headless: 'new',
     args: ['--no-sandbox', '--disable-setuid-sandbox'],

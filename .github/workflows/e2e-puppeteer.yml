@@ -1,4 +1,4 @@
-name: E2E — Puppeteer MCV
+name: E2E - Puppeteer MCV
 
 on:
   pull_request:
@@ -12,23 +12,39 @@ jobs:
   e2e:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'pnpm'
-      - name: Enable Corepack
-        run: corepack enable
-      - name: Install dependencies
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Enable Corepack and pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.17.1 --activate
+
+      - name: Install workspace dependencies
         run: pnpm -w install --frozen-lockfile
+
       - name: Install Chrome for Puppeteer
-        run: pnpm exec puppeteer browsers install chrome
+        run: pnpm --filter "@influencerai/e2e" exec puppeteer browsers install chrome
+
       - name: Launch MCV server
         run: |
-          pnpm run e2e:server > server.log 2>&1 &
-          pnpm exec wait-on http-get://localhost:5173/healthz
+          pnpm --filter "@influencerai/e2e" run e2e:server > server.log 2>&1 &
+
+      - name: Wait for health endpoint
+        run: pnpm --filter "@influencerai/e2e" exec wait-on http-get://localhost:5173/healthz
+
       - name: Run E2E tests (Puppeteer)
-        run: pnpm run e2e:test
+        env:
+          E2E_BASE: http://localhost:5173
+        run: pnpm --filter "@influencerai/e2e" run e2e:test
+
       - name: Upload artifacts
         if: always()
         uses: actions/upload-artifact@v4

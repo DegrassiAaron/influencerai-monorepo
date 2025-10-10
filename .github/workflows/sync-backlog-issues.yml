@@ -170,7 +170,7 @@ jobs:
                 const parts = [];
                 if (bodyChanged) parts.push('body');
                 if (labelsChanged) parts.push('labels');
-                if (desiredState && full.state !== desiredState) parts.push(`state→${desiredState}`);
+                if (desiredState && full.state !== desiredState) parts.push(`state=${desiredState}`);
                 console.log(`Updated #${item.number} (${code}): ${parts.join('+')}`);
               } else {
                 console.log(`No change for #${item.number} (${code})`);
@@ -179,3 +179,4 @@ jobs:
             }
           })().catch(err => { console.error(err); process.exit(1); });
           NODE
+

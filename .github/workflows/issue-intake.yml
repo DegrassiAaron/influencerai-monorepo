@@ -1,17 +1,38 @@
-name: Issue Intake — Create Issue
+name: Issue Intake - Create Issue
 
 on:
   issue_comment:
     types: [created]
   workflow_dispatch:
     inputs:
-      app: { description: "Which app env", required: true, type: choice, options: [app-foo, app-bar] }
-      title: { description: "Issue title", required: true }
-      type:  { description: "feature|fix|chore|docs|test", required: true, default: feature }
-      priority: { description: "P0|P1|P2|P3", required: false, default: P2 }
-      area:  { description: "api|ui|db|infra|e2e|security|deps", required: false, default: "" }
-      size:  { description: "XS|S|M|L|XL", required: false, default: M }
-      assignees: { description: "comma-separated @users", required: false, default: "" }
+      app:
+        description: Which app env
+        required: true
+        type: choice
+        options: [app-foo, app-bar]
+      title:
+        description: Issue title
+        required: true
+      type:
+        description: feature|fix|chore|docs|test
+        required: true
+        default: feature
+      priority:
+        description: P0|P1|P2|P3
+        required: false
+        default: P2
+      area:
+        description: api|ui|db|infra|e2e|security|deps
+        required: false
+        default: ""
+      size:
+        description: XS|S|M|L|XL
+        required: false
+        default: M
+      assignees:
+        description: comma-separated @users
+        required: false
+        default: ""
 
 permissions:
   contents: read
@@ -38,32 +59,36 @@ jobs:
             if [[ "$body" =~ ^/issue[[:space:]]+new ]]; then
               kv(){ echo "$body" | sed -n "s/.*$1:\([^ ]*\).*/\1/p" | head -n1; }
               qv(){ echo "$body" | sed -n "s/.*$1:\"\([^\"]\+\)\".*/\1/p" | head -n1; }
-              app=$(kv app); [ -z "$app" ] && app=app-foo
-              t=$(kv type); [ -z "$t" ] && t=feature
-              ttl=$(qv title); [ -z "$ttl" ] && ttl=New
-              prio=$(kv priority); [ -z "$prio" ] && prio=P2
+              app=$(kv app); [[ -z "$app" ]] && app=app-foo
+              t=$(kv type); [[ -z "$t" ]] && t=feature
+              ttl=$(qv title); [[ -z "$ttl" ]] && ttl=New
+              prio=$(kv priority); [[ -z "$prio" ]] && prio=P2
               area=$(kv area); size=$(kv size)
               asg=$(echo "$body" | sed -n "s/.*assign:\([^ ]*\).*/\1/p" | head -n1)
-              echo "run=true" >> $GITHUB_OUTPUT
-              echo "app=$app" >> $GITHUB_OUTPUT
-              echo "title=$ttl" >> $GITHUB_OUTPUT
-              echo "type=$t" >> $GITHUB_OUTPUT
-              echo "priority=$prio" >> $GITHUB_OUTPUT
-              echo "area=$area" >> $GITHUB_OUTPUT
-              echo "size=$size" >> $GITHUB_OUTPUT
-              echo "assignees=$asg" >> $GITHUB_OUTPUT
+              {
+                echo "run=true"
+                echo "app=$app"
+                echo "title=$ttl"
+                echo "type=$t"
+                echo "priority=$prio"
+                echo "area=$area"
+                echo "size=$size"
+                echo "assignees=$asg"
+              } >> "$GITHUB_OUTPUT"
             else
-              echo "run=false" >> $GITHUB_OUTPUT
+              echo "run=false" >> "$GITHUB_OUTPUT"
             fi
           else
-            echo "run=true" >> $GITHUB_OUTPUT
-            echo "app=${{ inputs.app }}" >> $GITHUB_OUTPUT
-            echo "title=${{ inputs.title }}" >> $GITHUB_OUTPUT
-            echo "type=${{ inputs.type }}" >> $GITHUB_OUTPUT
-            echo "priority=${{ inputs.priority }}" >> $GITHUB_OUTPUT
-            echo "area=${{ inputs.area }}" >> $GITHUB_OUTPUT
-            echo "size=${{ inputs.size }}" >> $GITHUB_OUTPUT
-            echo "assignees=${{ inputs.assignees }}" >> $GITHUB_OUTPUT
+            {
+              echo "run=true"
+              echo "app=${{ inputs.app }}"
+              echo "title=${{ inputs.title }}"
+              echo "type=${{ inputs.type }}"
+              echo "priority=${{ inputs.priority }}"
+              echo "area=${{ inputs.area }}"
+              echo "size=${{ inputs.size }}"
+              echo "assignees=${{ inputs.assignees }}"
+            } >> "$GITHUB_OUTPUT"
           fi
 
   create_issue:
@@ -72,8 +97,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: ${{ needs.gate.outputs.app }}
     steps:
-      - uses: cli/cli@v2
-      - name: Normalize & build labels
+      - name: Normalize and build labels
         id: meta
         env:
           TITLE: ${{ needs.gate.outputs.title }}
@@ -86,26 +110,37 @@ jobs:
           t=$(norm "$TYPE"); prio=$(norm "$PRIORITY"); area=$(norm "$AREA"); size=$(norm "$SIZE")
           case "$t" in feature|fix|chore|docs|test) ;; *) t=feature ;; esac
           case "$prio" in p0|p1|p2|p3|p0-critical|p1-high|p2-medium|p3-low) ;; *) prio=p2 ;; esac
-          lbls=("type: $t" "status: todo")
-          [[ "$prio" =~ ^p[0-3]$ ]] && lbls+=("priority: ${prio^^}") || lbls+=("priority: ${prio}")
-          [ -n "$area" ] && lbls+=("area: $area")
-          [ -n "$size" ] && lbls+=("size: ${size^^}")
-          printf "%s
-" "${lbls[@]}" > labels.txt
+          labels=("type: $t" "status: todo")
+          if [[ "$prio" =~ ^p[0-3]$ ]]; then
+            labels+=("priority: ${prio^^}")
+          else
+            labels+=("priority: ${prio}")
+          fi
+          [[ -n "$area" ]] && labels+=("area: $area")
+          [[ -n "$size" ]] && labels+=("size: ${size^^}")
+          printf "%s\n" "${labels[@]}" > labels.txt
           slug=$(echo "$TITLE" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/-/g; s/^-+|-+$//g')
-          echo "labels=$(paste -sd, - < labels.txt)" >> $GITHUB_OUTPUT
-          echo "slug=$slug" >> $GITHUB_OUTPUT
+          echo "labels=$(paste -sd, - < labels.txt)" >> "$GITHUB_OUTPUT"
+          echo "slug=$slug" >> "$GITHUB_OUTPUT"
 
       - name: Create issue
         id: issue
-        env: { GH_TOKEN: ${{ secrets.GITHUB_TOKEN }} }
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          tmpl="feature.md"; [ "${{ needs.gate.outputs.type }}" = "fix" ] && tmpl="bug.md"
-          num=$(gh issue create --title "${{ needs.gate.outputs.title }}" --label "${{ steps.meta.outputs.labels }}" --template "$tmpl" --json number --jq .number)
-          echo "number=$num" >> $GITHUB_OUTPUT
+          template="feature.md"
+          [[ "${{ needs.gate.outputs.type }}" == "fix" ]] && template="bug.md"
+          num=$(gh issue create \
+            --title "${{ needs.gate.outputs.title }}" \
+            --label "${{ steps.meta.outputs.labels }}" \
+            --template "$template" \
+            --json number \
+            --jq .number)
+          echo "number=$num" >> "$GITHUB_OUTPUT"
 
-      - name: Ensure DoD checklist in Issue body
-        env: { GH_TOKEN: ${{ secrets.GITHUB_TOKEN }} }
+      - name: Ensure DoD checklist in issue body
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           num=${{ steps.issue.outputs.number }}
           body=$(gh issue view "$num" --json body -q .body)
@@ -125,24 +160,28 @@ EOF
           fi
 
       - name: Comment with branch suggestion
-        env: { GH_TOKEN: ${{ secrets.GITHUB_TOKEN }} }
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          n=${{ steps.issue.outputs.number }}
-          t=${{ needs.gate.outputs.type }}
+          number=${{ steps.issue.outputs.number }}
+          type=${{ needs.gate.outputs.type }}
           slug=${{ steps.meta.outputs.slug }}
-          echo "**Branch suggerito**:" > c.md
-          echo "\`$t/$n-$slug\`" >> c.md
-          echo "" >> c.md
-          echo "Comandi:" >> c.md
-          echo "\`\`\`bash" >> c.md
-          echo "git switch develop && git pull" >> c.md
-          echo "git switch -c $t/$n-$slug" >> c.md
-          echo "\`\`\`" >> c.md
-          gh issue comment "$n" --body-file c.md
+          cat <<EOF > comment.md
+**Branch suggerito**:
+\`$type/$number-$slug\`
+
+Comandi:
+\`\`\`bash
+git switch develop && git pull
+git switch -c $type/$number-$slug
+\`\`\`
+EOF
+          gh issue comment "$number" --body-file comment.md
 
       - name: Assign (optional)
         if: ${{ needs.gate.outputs.assignees != '' }}
-        env: { GH_TOKEN: ${{ secrets.GITHUB_TOKEN }} }
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           IFS=',' read -r -a arr <<< "${{ needs.gate.outputs.assignees }}"
           gh issue edit ${{ steps.issue.outputs.number }} --add-assignee "${arr[@]}"

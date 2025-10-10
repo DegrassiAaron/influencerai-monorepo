@@ -1,4 +1,4 @@
-name: CI - install & build
+name: CI
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
     branches: [ main ]
 
 concurrency:
-  group: ci-install-build
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -22,11 +22,13 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: 'pnpm'
+          cache-dependency-path: pnpm-lock.yaml
 
       - name: Enable Corepack and prepare pnpm
         run: |
           corepack enable
-          corepack prepare pnpm@latest --activate
+          corepack prepare pnpm@10.17.1 --activate
 
       - name: Install dependencies (frozen lockfile)
         run: pnpm -w install --frozen-lockfile
@@ -42,4 +44,3 @@ jobs:
           path: |
             apps/**/dist/**
             packages/**/dist/**
-

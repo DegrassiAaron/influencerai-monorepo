@@ -1,0 +1,21 @@
+{
+  "name": "@influencerai/e2e",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "e2e:server": "tsx --tsconfig tsconfig.json mcv-server/server.ts",
+    "e2e:test": "vitest run",
+    "e2e:test:watch": "vitest watch"
+  },
+  "dependencies": {
+    "express": "^4.21.1",
+    "puppeteer": "^23.8.1"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^22.10.5",
+    "tsx": "^4.15.7",
+    "vitest": "^2.1.4",
+    "wait-on": "^7.2.0"
+  }
+}
