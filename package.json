@@ -6,11 +6,13 @@
     "dev": "turbo run dev",
     "prebuild": "pnpm install --frozen-lockfile",
     "build": "turbo run build",
-    "test": "turbo run test",
+    "test": "pnpm run test:unit && pnpm run test:integration",
+    "test:unit": "turbo run test:unit",
+    "test:integration": "turbo run test:integration",
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "e2e:server": "tsx tests/e2e/mcv-server/server.ts",
-    "e2e:test": "vitest run tests/e2e/specs --config tests/e2e/vitest.config.ts"
+    "e2e:server": "pnpm --filter \"@influencerai/e2e\" run e2e:server",
+    "e2e:test": "pnpm --filter \"@influencerai/e2e\" run e2e:test"
   },
   "devDependencies": {
     "express": "^4.21.2",
@@ -18,7 +20,7 @@
     "puppeteer": "^23.11.1",
     "tsx": "^4.19.2",
     "turbo": "^2.3.3",
-    "typescript": "^5.7.2",
+    "typescript": "^5.9.3",
     "vitest": "^2.1.8",
     "wait-on": "^8.0.1"
   },

@@ -7,8 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint ./src --ext .js,.jsx,.ts,.tsx",
-    "test": "vitest run",
-    "test:watch": "vitest watch"
+    "test": "pnpm run test:unit",
+    "test:unit": "node ../../scripts/run-vitest.mjs --config vitest.config.ts",
+    "test:watch": "vitest watch --config vitest.config.ts"
   },
   "dependencies": {
     "@influencerai/core-schemas": "workspace:*",
@@ -22,17 +23,17 @@
     "lucide-react": "^0.456.0",
     "next": "^15.1.4",
     "next-themes": "^0.3.0",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
     "tailwind-merge": "^2.5.4",
     "tailwindcss-animate": "^1.0.7",
     "zod": "^3.24.1"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.0.0",
-    "@eslint/js": "^9.0.0",
+    "@eslint/js": "^9.37.0",
     "@tailwindcss/postcss": "^4.1.13",
-    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.0.1",
     "@testing-library/user-event": "^14.5.2",
     "@types/node": "^22.10.5",
@@ -40,7 +41,7 @@
     "@types/react-dom": "^19.0.2",
     "@vitejs/plugin-react": "^4.3.4",
     "autoprefixer": "^10.4.21",
-    "eslint": "^9.18.0",
+    "eslint": "^9.37.0",
     "eslint-config-next": "^15.1.4",
     "postcss": "^8.4.49",
     "shadcn-ui": "^0.9.5",

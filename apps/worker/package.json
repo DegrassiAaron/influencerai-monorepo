@@ -7,28 +7,30 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "lint": "eslint src/**/*.ts --fix",
-    "test": "vitest run"
+    "test": "pnpm run test:unit",
+    "test:unit": "node ../../scripts/run-vitest.mjs --config vitest.config.ts"
   },
   "dependencies": {
-    "bullmq": "^5.38.2",
-    "ioredis": "^5.4.2",
-    "@influencerai/sdk": "workspace:*",
+    "@aws-sdk/client-s3": "^3.908.0",
+    "@aws-sdk/s3-request-presigner": "^3.908.0",
+    "@influencerai/core-schemas": "workspace:*",
     "@influencerai/prompts": "workspace:*",
-    "@aws-sdk/client-s3": "^3.899.0",
-    "@aws-sdk/s3-request-presigner": "^3.899.0",
-    "zod": "^3.24.1",
-    "undici": "^7.3.0",
+    "@influencerai/sdk": "workspace:*",
+    "bullmq": "^5.38.2",
+    "ioredis": "^5.8.1",
     "p-queue": "^8.0.1",
     "pino": "^9.4.0",
-    "pino-pretty": "^11.3.0"
+    "pino-pretty": "^11.3.0",
+    "undici": "^7.3.0",
+    "zod": "^3.24.1"
   },
   "devDependencies": {
     "@types/node": "^22.10.5",
     "@typescript-eslint/eslint-plugin": "^8.20.0",
     "@typescript-eslint/parser": "^8.20.0",
+    "eslint": "^9.37.0",
     "tsx": "^4.19.2",
-    "typescript": "^5.7.2",
-    "eslint": "^9.18.0",
+    "typescript": "^5.9.3",
     "vitest": "^1.6.0"
   }
 }
