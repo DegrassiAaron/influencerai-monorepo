@@ -12,7 +12,12 @@
     "resolveJsonModule": true,
     "moduleResolution": "node",
     "baseUrl": "./",
-    "types": ["node", "vitest"]
+    "types": ["node", "vitest"],
+    "paths": {
+      "@influencerai/core-schemas": ["../../packages/core-schemas/dist"],
+      "@influencerai/sdk": ["../../packages/sdk/dist"],
+      "@influencerai/prompts": ["../../packages/prompts/dist"]
+    }
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "src/**/*.test.ts", "src/**/*.spec.ts"]
