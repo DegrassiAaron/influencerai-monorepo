@@ -10,10 +10,29 @@
       "persistent": true
     },
     "lint": {
-      "dependsOn": ["^build"]
+      "outputs": []
     },
     "test": {
-      "dependsOn": ["^test"]
+      "dependsOn": ["^test"],
+      "outputs": ["coverage/**", "reports/**"],
+      "env": ["CI_BASE_SHA", "CI_HEAD_SHA"]
+    },
+    "test:unit": {
+      "dependsOn": ["^test:unit"],
+      "outputs": [".vitest-cache/**", "coverage/**", "reports/unit/**"],
+      "env": ["CI_BASE_SHA", "CI_HEAD_SHA", "VITEST_SELECTION_MODE", "VITEST_FORCE_ALL"]
+    },
+    "test:integration": {
+      "dependsOn": ["^test:integration"],
+      "outputs": ["coverage/**", "reports/integration/**"],
+      "env": [
+        "CI_BASE_SHA",
+        "CI_HEAD_SHA",
+        "JEST_SELECTION_MODE",
+        "JEST_FORCE_ALL",
+        "JEST_SHARD_INDEX",
+        "JEST_TOTAL_SHARDS"
+      ]
     }
   }
 }

@@ -4,8 +4,9 @@
   "private": true,
   "scripts": {
     "e2e:server": "tsx --tsconfig tsconfig.json mcv-server/server.ts",
-    "e2e:test": "vitest run",
-    "e2e:test:watch": "vitest watch"
+    "e2e:test": "node ../../scripts/run-vitest.mjs --config vitest.config.ts",
+    "e2e:test:smoke": "pnpm run e2e:test -- --include specs/smoke.spec.ts",
+    "e2e:test:watch": "vitest watch --config vitest.config.ts"
   },
   "dependencies": {
     "express": "^4.21.1",

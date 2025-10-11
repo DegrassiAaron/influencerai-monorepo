@@ -2,29 +2,75 @@ name: CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
+    paths-ignore:
+      - 'docs/**'
+      - '**/*.md'
+      - 'infra/**'
   pull_request:
-    branches: [ main ]
-  workflow_dispatch:
+    branches: [main]
+    paths-ignore:
+      - 'docs/**'
+      - '**/*.md'
+      - 'infra/**'
+  workflow_dispatch: {}
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  install-and-build:
-    name: Install and build (pnpm workspace)
+  prepare:
+    name: Prepare diff context
     runs-on: ubuntu-latest
+    outputs:
+      base_sha: ${{ steps.detect.outputs.base_sha }}
+      head_sha: ${{ steps.detect.outputs.head_sha }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect base/head commits
+        id: detect
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
+            BASE_SHA="${{ github.event.pull_request.base.sha }}"
+          elif [[ -n "${{ github.event.before }}" ]]; then
+            BASE_SHA="${{ github.event.before }}"
+          else
+            BASE_SHA="$(git rev-parse HEAD^ || git rev-parse HEAD)"
+          fi
+
+          HEAD_SHA="$(git rev-parse HEAD)"
+
+          echo "base_sha=${BASE_SHA}" >> "$GITHUB_OUTPUT"
+          echo "head_sha=${HEAD_SHA}" >> "$GITHUB_OUTPUT"
+
+  lint:
+    name: Lint (changed scope)
+    needs: prepare
+    runs-on: ubuntu-latest
+    env:
+      CI: 'true'
+      CI_BASE_SHA: ${{ needs.prepare.outputs.base_sha }}
+      CI_HEAD_SHA: ${{ needs.prepare.outputs.head_sha }}
+      TURBO_CACHE_DIR: .turbo/lint
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
 
-      - name: Enable Corepack and prepare pnpm
+      - name: Enable Corepack / pnpm
         run: |
           corepack enable
           corepack prepare pnpm@10.17.1 --activate
@@ -41,38 +87,258 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pnpm-store-
 
-      - name: Cache workspace node_modules
-        uses: actions/cache@v4
-        with:
-          path: |
-            node_modules
-            apps/**/node_modules
-            packages/**/node_modules
-            tests/**/node_modules
-          key: ${{ runner.os }}-pnpm-modules-${{ hashFiles('pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-modules-
-
-      - name: Cache Prisma engines
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cache/prisma
-          key: ${{ runner.os }}-prisma-${{ hashFiles('pnpm-lock.yaml', 'apps/api/prisma/schema.prisma') }}
-          restore-keys: |
-            ${{ runner.os }}-prisma-
-
-      - name: Install dependencies (frozen lockfile)
+      - name: Install dependencies
         run: pnpm -w install --frozen-lockfile --prefer-offline
 
-      - name: Run workspace build
-        run: pnpm -w build
+      - name: Prepare turbo cache
+        run: mkdir -p "${TURBO_CACHE_DIR}"
 
-      - name: Upload build artifacts (optional)
-        if: success()
-        uses: actions/upload-artifact@v4
+      - name: Cache turbo (lint)
+        uses: actions/cache@v4
         with:
-          name: build-artifacts
-          path: |
-            apps/**/dist/**
-            packages/**/dist/**
+          path: ${{ env.TURBO_CACHE_DIR }}
+          key: ${{ runner.os }}-turbo-lint-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-turbo-lint-
+
+      - name: Run lint (changed packages)
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -n "${CI_BASE_SHA}" ]]; then
+            FILTER="...[${CI_BASE_SHA}]"
+          else
+            FILTER="..."
+          fi
+          echo "Executing turbo filter: ${FILTER}"
+          pnpm turbo run lint --filter="${FILTER}"
+
+  unit-tests:
+    name: Unit tests (changed scope)
+    needs: prepare
+    runs-on: ubuntu-latest
+    env:
+      CI: 'true'
+      CI_BASE_SHA: ${{ needs.prepare.outputs.base_sha }}
+      CI_HEAD_SHA: ${{ needs.prepare.outputs.head_sha }}
+      TURBO_CACHE_DIR: .turbo/unit
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Enable Corepack / pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.17.1 --activate
+
+      - name: Resolve pnpm store directory
+        id: pnpm-store
+        run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache pnpm store
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm -w install --frozen-lockfile --prefer-offline
+
+      - name: Prepare turbo cache
+        run: mkdir -p "${TURBO_CACHE_DIR}"
+
+      - name: Cache turbo (unit)
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.TURBO_CACHE_DIR }}
+          key: ${{ runner.os }}-turbo-unit-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-turbo-unit-
+
+      - name: Run unit tests (changed packages)
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -n "${CI_BASE_SHA}" ]]; then
+            FILTER="...[${CI_BASE_SHA}]"
+          else
+            FILTER="..."
+          fi
+          echo "Executing turbo filter: ${FILTER}"
+          pnpm turbo run test:unit --filter="${FILTER}"
+
+  integration-tests:
+    name: API integration tests
+    needs: prepare
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        shard_index: [1, 2]
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: influencerai
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+      minio:
+        image: minio/minio:latest
+        env:
+          MINIO_ROOT_USER: minio
+          MINIO_ROOT_PASSWORD: minio12345
+        ports:
+          - 9000:9000
+          - 9001:9001
+        options: >-
+          --health-cmd "curl -f http://localhost:9000/minio/health/live"
+          --health-interval 15s
+          --health-timeout 10s
+          --health-retries 10
+        command: server /data --console-address ":9001"
+    env:
+      CI: 'true'
+      CI_BASE_SHA: ${{ needs.prepare.outputs.base_sha }}
+      CI_HEAD_SHA: ${{ needs.prepare.outputs.head_sha }}
+      JEST_FORCE_ALL: 'true'
+      JEST_SHARD_INDEX: ${{ matrix.shard_index }}
+      JEST_TOTAL_SHARDS: 2
+      DATABASE_URL_TEST: postgresql://postgres:postgres@127.0.0.1:5432/influencerai
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/influencerai
+      REDIS_URL: redis://127.0.0.1:6379
+      S3_ENDPOINT: http://127.0.0.1:9000
+      S3_KEY: minio
+      S3_SECRET: minio12345
+      S3_BUCKET: assets
+      TURBO_CACHE_DIR: .turbo/integration
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Enable Corepack / pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.17.1 --activate
+
+      - name: Resolve pnpm store directory
+        id: pnpm-store
+        run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache pnpm store
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm -w install --frozen-lockfile --prefer-offline
+
+      - name: Prepare turbo cache
+        run: mkdir -p "${TURBO_CACHE_DIR}"
+
+      - name: Cache turbo (integration)
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.TURBO_CACHE_DIR }}
+          key: ${{ runner.os }}-turbo-integration-${{ github.sha }}-${{ matrix.shard_index }}
+          restore-keys: |
+            ${{ runner.os }}-turbo-integration-
+
+      - name: Wait for dependent services
+        run: pnpm exec wait-on tcp:127.0.0.1:5432 tcp:127.0.0.1:6379 http://127.0.0.1:9000/minio/health/live
+
+      - name: Reset integration database
+        run: pnpm --filter @influencerai/api run test:e2e:db:reset
+
+      - name: Seed integration fixtures
+        run: pnpm --filter @influencerai/api exec prisma db seed
+
+      - name: Run API integration shard
+        env:
+          SKIP_DB_RESET: '1'
+        run: |
+          echo "Executing shard ${{ matrix.shard_index }} of 2"
+          pnpm turbo run test:integration --filter='@influencerai/api'
+
+  docker-build:
+    name: Build Docker images
+    needs:
+      - lint
+      - unit-tests
+      - integration-tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build API image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/api/Dockerfile
+          push: false
+          load: false
+          tags: local/api:ci
+          cache-from: type=gha,scope=api
+          cache-to: type=gha,mode=max,scope=api
+
+      - name: Build Web image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/web/Dockerfile
+          push: false
+          load: false
+          tags: local/web:ci
+          cache-from: type=gha,scope=web
+          cache-to: type=gha,mode=max,scope=web
+
+      - name: Build Worker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/worker/Dockerfile
+          push: false
+          load: false
+          tags: local/worker:ci
+          cache-from: type=gha,scope=worker
+          cache-to: type=gha,mode=max,scope=worker

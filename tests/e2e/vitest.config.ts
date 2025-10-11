@@ -8,5 +8,10 @@ export default defineConfig({
     threads: false,
     testTimeout: 60000,
     hookTimeout: 60000
+  },
+  browser: {
+    enabled: false,
+    headless: true,
+    screenshotFailures: false
   }
 });
