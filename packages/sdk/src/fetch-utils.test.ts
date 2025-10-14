@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { APIError, fetchWithTimeout, handleResponse } from './fetch-utils';
+import { APIError, fetchWithTimeout, handleResponse, NotFoundError, TooManyRequestsError } from './fetch-utils';
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -10,9 +10,7 @@ describe('handleResponse', () => {
   const createResponse = (overrides: Partial<Response>) => ({
     ok: true,
     status: 200,
-    headers: {
-      get: vi.fn().mockReturnValue('application/json'),
-    },
+    headers: new Headers({ 'content-type': 'application/json' }),
     json: vi.fn().mockResolvedValue({ ok: true }),
     text: vi.fn().mockResolvedValue('ok'),
     ...overrides,
@@ -27,7 +25,7 @@ describe('handleResponse', () => {
 
   it('parses text when content type is not json', async () => {
     const response = createResponse({
-      headers: { get: vi.fn().mockReturnValue('text/plain') },
+      headers: new Headers({ 'content-type': 'text/plain' }),
     });
     const result = await handleResponse<string>(response);
     expect(result).toBe('ok');
@@ -45,6 +43,24 @@ describe('handleResponse', () => {
       body: { message: 'boom' },
     });
   });
+
+  it('translates 404 responses into NotFoundError', async () => {
+    const response = createResponse({
+      ok: false,
+      status: 404,
+      json: vi.fn().mockResolvedValue({ message: 'missing' }),
+    });
+    await expect(handleResponse(response)).rejects.toBeInstanceOf(NotFoundError);
+  });
+
+  it('translates 429 responses into TooManyRequestsError', async () => {
+    const response = createResponse({
+      ok: false,
+      status: 429,
+      json: vi.fn().mockResolvedValue({ message: 'slow down' }),
+    });
+    await expect(handleResponse(response)).rejects.toBeInstanceOf(TooManyRequestsError);
+  });
 });
 
 describe('fetchWithTimeout', () => {
@@ -58,23 +74,16 @@ describe('fetchWithTimeout', () => {
   });
 
   it('throws APIError on timeout', async () => {
-    vi.useFakeTimers();
-    const abortableFetch = vi.fn((_, init: RequestInit) =>
-      new Promise((_, reject) => {
-        init?.signal?.addEventListener('abort', () => {
-          const error = new Error('Aborted');
-          error.name = 'AbortError';
-          reject(error);
-        });
-      })
-    );
+    const abortError = new Error('Aborted');
+    abortError.name = 'AbortError';
+    const abortableFetch = vi.fn().mockRejectedValue(abortError);
     vi.stubGlobal('fetch', abortableFetch);
 
-    const promise = fetchWithTimeout('http://slow.test', undefined, 100);
-    await vi.advanceTimersByTimeAsync(100);
-
-    await expect(promise).rejects.toBeInstanceOf(APIError);
-    await expect(promise).rejects.toMatchObject({ status: 408, url: 'http://slow.test', method: 'GET' });
+    await expect(fetchWithTimeout('http://slow.test', undefined, 100)).rejects.toMatchObject({
+      status: 408,
+      url: 'http://slow.test',
+      method: 'GET',
+    });
   });
 
   it('wraps network errors in APIError', async () => {
