@@ -107,7 +107,10 @@ const runWithContext = async <T>(ctx: Record<string, any>, fn: () => Promise<T>)
 describe('PrismaService', () => {
   const databaseUrl = 'postgresql://user:pass@localhost:5432/db?schema=public';
 
-  const baseConfig = validateEnv({ DATABASE_URL: databaseUrl });
+  const baseConfig = validateEnv({
+    DATABASE_URL: databaseUrl,
+    OPENROUTER_API_KEY: 'sk-test',
+  });
 
   const createConfigService = (value?: string): ConfigService<AppConfig, true> => {
     return {

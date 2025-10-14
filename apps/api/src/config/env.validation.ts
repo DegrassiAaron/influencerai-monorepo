@@ -40,12 +40,23 @@ export const envSchema = z
     SKIP_S3_INIT: booleanLike,
     JWT_SECRET: z.string().min(1).default('dev_jwt_secret_change_me'),
   })
+  .superRefine((config, ctx) => {
+    const trimmedKey = config.OPENROUTER_API_KEY.trim();
+    if (config.NODE_ENV !== 'test' && trimmedKey.length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'OPENROUTER_API_KEY is required outside test environments',
+        path: ['OPENROUTER_API_KEY'],
+      });
+    }
+  })
   .transform((config) => {
     const loggerPretty = (config.LOGGER_PRETTY ?? (config.NODE_ENV !== 'production')) as boolean;
     const logLevel = config.LOG_LEVEL ?? (config.NODE_ENV === 'production' ? 'info' : 'debug');
     const disableBull = (config.DISABLE_BULL ?? false) as boolean;
     const skipS3Init = (config.SKIP_S3_INIT ?? false) as boolean;
     const bullEnabled = config.NODE_ENV !== 'test' && !disableBull;
+    const openRouterApiKey = config.OPENROUTER_API_KEY.trim();
     return {
       ...config,
       DISABLE_BULL: disableBull,
@@ -53,6 +64,7 @@ export const envSchema = z
       LOGGER_PRETTY: loggerPretty,
       SKIP_S3_INIT: skipS3Init,
       BULL_ENABLED: bullEnabled,
+      OPENROUTER_API_KEY: openRouterApiKey,
     };
   });
 
