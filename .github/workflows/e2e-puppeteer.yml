@@ -36,10 +36,10 @@ jobs:
           cache: 'pnpm'
           cache-dependency-path: pnpm-lock.yaml
 
-      - name: Enable Corepack / pnpm
-        run: |
-          corepack enable
-          corepack prepare pnpm@10.17.1 --activate
+      - name: Setup pnpm
+        uses: ./.github/actions/setup-pnpm
+        with:
+          version: '10.17.1'
 
       - name: Warm docker compose services
         run: docker compose -f infra/docker-compose.yml up -d postgres redis minio
@@ -100,10 +100,10 @@ jobs:
           cache: 'pnpm'
           cache-dependency-path: pnpm-lock.yaml
 
-      - name: Enable Corepack / pnpm
-        run: |
-          corepack enable
-          corepack prepare pnpm@10.17.1 --activate
+      - name: Setup pnpm
+        uses: ./.github/actions/setup-pnpm
+        with:
+          version: '10.17.1'
 
       - name: Warm docker compose services
         run: docker compose -f infra/docker-compose.yml up -d postgres redis minio
