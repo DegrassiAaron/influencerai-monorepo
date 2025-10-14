@@ -14,7 +14,10 @@ describe('ContentPlansService', () => {
     // Configure prisma mocks
     prismaMock.influencer.findUnique.mockImplementation(async ({ where: { id } }: any) => (id === 'inf_1' ? { id, tenantId: 'ten_1', persona: { name: 'A' } } : null));
     prismaMock.job.create.mockImplementation(async ({ data }: any) => ({ id: 'job_cp_1', ...data }));
-    configValues = validateEnv({ DATABASE_URL: 'postgresql://user:pass@localhost:5432/db' });
+    configValues = validateEnv({
+      DATABASE_URL: 'postgresql://user:pass@localhost:5432/db',
+      OPENROUTER_API_KEY: 'sk-test',
+    });
     config = {
       get: jest.fn((key: keyof AppConfig) => configValues[key]),
     } as unknown as ConfigService<AppConfig, true>;

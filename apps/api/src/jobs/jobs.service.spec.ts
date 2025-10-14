@@ -7,7 +7,10 @@ import { JobSeriesQuerySchema } from './dto';
 import { AppConfig, validateEnv } from '../config/env.validation';
 
 function createConfigService(overrides: Partial<AppConfig> = {}): ConfigService<AppConfig, true> {
-  const base = validateEnv({ DATABASE_URL: 'postgresql://user:pass@localhost:5432/db' });
+  const base = validateEnv({
+    DATABASE_URL: 'postgresql://user:pass@localhost:5432/db',
+    OPENROUTER_API_KEY: 'sk-test',
+  });
   const values: AppConfig = { ...base, ...overrides };
   return {
     get: jest.fn((key: keyof AppConfig) => values[key]),
