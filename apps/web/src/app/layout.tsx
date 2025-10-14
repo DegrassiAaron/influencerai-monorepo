@@ -1,13 +1,10 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import { Inter } from "next/font/google";
-
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Providers } from "./providers";
 import { cn } from "@/lib/utils";
-
-const font = Inter({ subsets: ["latin"] });
+import { bodyFontClassName } from "@/lib/fonts";
 
 export const metadata: Metadata = {
   title: "InfluencerAI",
@@ -21,7 +18,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={cn("min-h-screen bg-background font-sans antialiased", font.className)}>
+      <body className={cn("min-h-screen bg-background font-sans antialiased", bodyFontClassName)}>
         <ThemeProvider>
           <Providers>{children}</Providers>
         </ThemeProvider>
