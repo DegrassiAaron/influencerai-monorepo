@@ -101,7 +101,7 @@ export function createWorkers(deps: WorkerDependencies) {
           priority: 5,
         }),
       uploadTextAssets: async ({ jobIdentifier, caption, script }) => {
-        const s3Client = s3.getClient();
+        const s3Client = s3.getClient(depLogger);
         if (!s3Client) return {};
         const { client, bucket } = s3Client;
         const baseKey = `content-generation/${jobIdentifier}/`;

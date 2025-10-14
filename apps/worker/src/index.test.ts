@@ -12,6 +12,29 @@ type WorkerMockInstance = {
 
 const workerInstances: WorkerMockInstance[] = [];
 
+const fetchWithTimeoutMock = vi.fn(async () => 'fetch-result');
+const sleepMock = vi.fn(async () => {});
+
+vi.mock('./httpClient', async () => {
+  const actual = await vi.importActual<typeof import('./httpClient')>('./httpClient');
+  return {
+    ...actual,
+    fetchWithTimeout: fetchWithTimeoutMock,
+    sleep: sleepMock,
+  };
+});
+
+const createFfmpegRunnerMock = vi.fn(() => ({
+  aspectRatio: '9:16',
+  audioFilter: 'loudnorm',
+  preset: 'medium',
+  run: vi.fn(),
+}));
+
+vi.mock('./ffmpeg', () => ({
+  createFfmpegRunner: createFfmpegRunnerMock,
+}));
+
 vi.mock('bullmq', () => {
   class WorkerMock {
     queueName: string;
@@ -90,10 +113,19 @@ describe('createWorkers', () => {
 
   afterEach(() => {
     vi.useRealTimers();
+    delete process.env.BULL_PREFIX;
+    delete process.env.COMFYUI_TIMEOUT_MS;
+    delete process.env.COMFYUI_POLL_INTERVAL_MS;
+    delete process.env.COMFYUI_MAX_POLL_ATTEMPTS;
+    delete process.env.COMFYUI_VIDEO_WORKFLOW_JSON;
   });
 
   it('boots BullMQ workers with shared dependencies and wire-up', async () => {
     process.env.BULL_PREFIX = 'test-prefix';
+    process.env.COMFYUI_TIMEOUT_MS = '45000';
+    process.env.COMFYUI_POLL_INTERVAL_MS = '2000';
+    process.env.COMFYUI_MAX_POLL_ATTEMPTS = '8';
+    process.env.COMFYUI_VIDEO_WORKFLOW_JSON = '{"nodes": []}';
     const logger = { info: vi.fn(), warn: vi.fn(), error: vi.fn() };
     const updateJob = vi.fn().mockResolvedValue(undefined);
     const createJob = vi.fn().mockResolvedValue({ id: 'child-123' });
@@ -104,6 +136,8 @@ describe('createWorkers', () => {
       putBinaryObject: vi.fn().mockResolvedValue(undefined),
       getSignedGetUrl: vi.fn(async (_client: unknown, _bucket: string, key: string) => `https://assets.local/${key}`),
     };
+    const fetchDataset = vi.fn();
+    const fetchLoraConfig = vi.fn();
 
     const { createWorkers } = await import('./index');
 
@@ -115,6 +149,8 @@ describe('createWorkers', () => {
       },
       connection: { kind: 'redis-mock' } as any,
       s3,
+      fetchDataset,
+      fetchLoraConfig,
     });
 
     expect(workers.contentWorker).toBeDefined();
@@ -170,6 +206,7 @@ describe('createWorkers', () => {
     });
 
     expect(s3.getClient).toHaveBeenCalledTimes(1);
+    expect(s3.getClient).toHaveBeenCalledWith(logger);
     expect(s3.putTextObject).toHaveBeenCalledWith(s3Client.client, s3Client.bucket, 'content-generation/job-1/caption.txt', 'caption text');
     expect(s3.putTextObject).toHaveBeenCalledWith(s3Client.client, s3Client.bucket, 'content-generation/job-1/script.txt', 'script text');
     expect(s3.getSignedGetUrl).toHaveBeenCalledWith(
@@ -184,6 +221,27 @@ describe('createWorkers', () => {
       scriptUrl: 'https://assets.local/content-generation/job-1/script.txt',
     });
 
+    expect(loraDeps).toHaveLength(1);
+    const loraDependencies = loraDeps[0];
+    expect(loraDependencies.logger).toBe(logger);
+    expect(loraDependencies.fetchDataset).toBe(fetchDataset);
+    expect(loraDependencies.fetchLoraConfig).toBe(fetchLoraConfig);
+
+    expect(videoDeps).toHaveLength(1);
+    const videoDependencies = videoDeps[0];
+    const ffmpegRunnerInstance = createFfmpegRunnerMock.mock.results[0]?.value;
+    expect(createFfmpegRunnerMock).toHaveBeenCalledWith(logger);
+    expect(videoDependencies.ffmpeg).toBe(ffmpegRunnerInstance);
+    expect(videoDependencies.comfy.baseUrl).toBe('http://127.0.0.1:8188');
+    expect(videoDependencies.comfy.clientId).toBe('influencerai-worker');
+    expect(videoDependencies.comfy.pollIntervalMs).toBe(2000);
+    expect(videoDependencies.comfy.maxPollAttempts).toBe(8);
+    expect(videoDependencies.comfy.workflowPayload).toEqual({ nodes: [] });
+
+    const comfyFetchResult = await videoDependencies.comfy.fetch('http://localhost:8188/prompt', { method: 'POST' });
+    expect(fetchWithTimeoutMock).toHaveBeenCalledWith('http://localhost:8188/prompt', { method: 'POST' }, 45000);
+    expect(comfyFetchResult).toBe('fetch-result');
+
     const failedWorker = workerInstances.find((instance) => instance.queueName === 'content-generation');
     expect(failedWorker).toBeDefined();
 
@@ -197,6 +255,19 @@ describe('createWorkers', () => {
       expect(updateJob).toHaveBeenCalledWith('job-failed', expect.objectContaining({ status: 'failed' }));
     });
     expect(logger.error).toHaveBeenCalledWith(expect.objectContaining({ id: undefined, err: expect.any(Error) }), expect.any(String));
+
+    const loraFailedWorker = workerInstances.find((instance) => instance.queueName === 'lora-training');
+    expect(loraFailedWorker).toBeDefined();
+    loraFailedWorker!.emit('failed', { data: { jobId: 'lora-job' } }, new Error('LoRA failed'));
+
+    const videoFailedWorker = workerInstances.find((instance) => instance.queueName === 'video-generation');
+    expect(videoFailedWorker).toBeDefined();
+    videoFailedWorker!.emit('failed', { data: { jobId: 'video-job' } }, new Error('Video failed'));
+
+    await vi.waitFor(() => {
+      expect(updateJob).toHaveBeenCalledWith('lora-job', expect.objectContaining({ status: 'failed' }));
+      expect(updateJob).toHaveBeenCalledWith('video-job', expect.objectContaining({ status: 'failed' }));
+    });
   });
 
   it('retries patchJobStatus once before logging a warning', async () => {
