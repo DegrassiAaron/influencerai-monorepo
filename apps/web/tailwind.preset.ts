@@ -14,7 +14,7 @@ const brandColors = {
   950: "#1e1b4b",
 } as const satisfies Record<number, string>;
 
-export const shadcnPreset: Config = {
+export const shadcnPreset: Partial<Config> = {
   theme: {
     extend: {
       colors: {

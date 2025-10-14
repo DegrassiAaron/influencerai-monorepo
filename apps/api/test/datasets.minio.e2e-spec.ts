@@ -144,6 +144,9 @@ describe('Datasets + MinIO integration (e2e)', () => {
     await app.init();
     await (app.getHttpAdapter().getInstance() as any).ready();
     storage = app.get(StorageService);
+    if (!storage) {
+      throw new Error('StorageService non inizializzato per i test MinIO');
+    }
     await storage.ensureBucket();
   });
 
@@ -158,6 +161,8 @@ describe('Datasets + MinIO integration (e2e)', () => {
       return;
     }
 
+    const storageService = storage;
+
     const res = await request(app.getHttpServer())
       .post('/datasets')
       .send({ kind: 'training', filename: 'dataset.txt', contentType: 'text/plain' })
@@ -167,7 +172,7 @@ describe('Datasets + MinIO integration (e2e)', () => {
       id: expect.any(String),
       uploadUrl: expect.any(String),
       key: expect.any(String),
-      bucket: storage.getBucketName(),
+      bucket: storageService.getBucketName(),
     });
 
     const uploadUrl = res.body.uploadUrl as string;
@@ -181,7 +186,7 @@ describe('Datasets + MinIO integration (e2e)', () => {
     });
     expect(uploadResponse.ok).toBe(true);
 
-    const stored = await storage.getTextObject(objectKey);
+    const stored = await storageService.getTextObject(objectKey);
     expect(stored).toBe(payload);
   });
 });

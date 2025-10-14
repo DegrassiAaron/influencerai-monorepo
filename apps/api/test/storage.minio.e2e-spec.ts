@@ -1,5 +1,6 @@
 import { ConfigService } from '@nestjs/config';
 import { StorageService } from '../src/storage/storage.service';
+import { AppConfig, validateEnv } from '../src/config/env.validation';
 
 describe('MinIO integration (e2e)', () => {
   const endpoint = process.env.S3_ENDPOINT || 'http://localhost:9000';
@@ -12,13 +13,19 @@ describe('MinIO integration (e2e)', () => {
 
   beforeAll(async () => {
     // Provide a minimal ConfigService stub
-    const cfg = new ConfigService({
+    const configValues = validateEnv({
+      NODE_ENV: 'test',
+      DATABASE_URL: 'postgresql://localhost:5432/test',
+      REDIS_URL: 'redis://localhost:6379',
+      BULL_PREFIX: 'bull',
       S3_ENDPOINT: endpoint,
       S3_KEY: key,
       S3_SECRET: secret,
       S3_BUCKET: bucket,
       AWS_REGION: 'us-east-1',
-    } as any);
+    });
+
+    const cfg = new ConfigService<AppConfig, true>(configValues);
 
     storage = new StorageService(cfg);
     try {

@@ -35,7 +35,7 @@ export type UpdateContentPlanApprovalInput = z.infer<typeof UpdateContentPlanApp
 
 export async function createContentPlan(input: CreateContentPlanInput): Promise<ContentPlanJob> {
   const payload = CreateContentPlanInputSchema.parse(input);
-  const response = await apiPost<unknown>("/content-plans", payload);
+  const response = await apiPost<CreateContentPlanInput, unknown>("/content-plans", payload);
   const parsed = ContentPlanJobSchema.safeParse(response);
   if (!parsed.success) {
     throw new Error("Invalid response format from content plan API");
