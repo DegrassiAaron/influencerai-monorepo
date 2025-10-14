@@ -1,6 +1,13 @@
 /// <reference types="vitest" />
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { APIError, fetchWithTimeout, handleResponse } from '../src/fetch-utils';
+import {
+  APIError,
+  fetchWithTimeout,
+  handleResponse,
+  NetworkError,
+  RequestTimeoutError,
+  ServerError,
+} from '../src/fetch-utils';
 
 describe('handleResponse', () => {
   it('parses JSON on success', async () => {
@@ -23,8 +30,13 @@ describe('handleResponse', () => {
       status: 500,
       headers: { 'content-type': 'application/json' },
     });
-    await expect(handleResponse(res)).rejects.toMatchObject({
-      name: 'APIError',
+    await expect(handleResponse(res)).rejects.toBeInstanceOf(ServerError);
+
+    const res2 = new Response(JSON.stringify(errBody), {
+      status: 500,
+      headers: { 'content-type': 'application/json' },
+    });
+    await expect(handleResponse(res2)).rejects.toMatchObject({
       status: 500,
       body: errBody,
     });
@@ -45,10 +57,8 @@ describe('fetchWithTimeout', () => {
 
   it('wraps network errors into APIError(status=0)', async () => {
     vi.spyOn(globalThis, 'fetch' as never).mockImplementation(() => Promise.reject(new Error('ECONNRESET'))) as unknown as typeof fetch;
-    await expect(fetchWithTimeout('https://api.test.example')).rejects.toMatchObject({
-      name: 'APIError',
-      status: 0,
-    });
+    await expect(fetchWithTimeout('https://api.test.example')).rejects.toBeInstanceOf(NetworkError);
+    await expect(fetchWithTimeout('https://api.test.example')).rejects.toMatchObject({ status: 0 });
   });
 
   it('times out after default 30s and throws APIError(408)', async () => {
@@ -67,7 +77,8 @@ describe('fetchWithTimeout', () => {
 
     const p = fetchWithTimeout('https://api.test.example');
     vi.advanceTimersByTime(30_001);
-    await expect(p).rejects.toMatchObject({ name: 'APIError', status: 408 });
+    await expect(p).rejects.toBeInstanceOf(RequestTimeoutError);
+    await expect(p).rejects.toMatchObject({ status: 408 });
   });
 
   it('returns successful response', async () => {

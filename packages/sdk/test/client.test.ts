@@ -63,8 +63,11 @@ describe('InfluencerAIClient error handling', () => {
     fetchWithTimeoutSpy.mockResolvedValue(response);
     handleResponseSpy.mockResolvedValue([{ id: 'job-1' }] as any);
     const result = await client.listJobs();
-    expect(fetchWithTimeoutSpy).toHaveBeenCalledWith('https://api.test.example/jobs');
-    expect(fetchWithTimeoutSpy.mock.calls[0][1]).toBeUndefined();
+    expect(fetchWithTimeoutSpy).toHaveBeenCalledWith(
+      'https://api.test.example/jobs',
+      expect.objectContaining({ method: 'GET' }),
+      undefined
+    );
     expect(handleResponseSpy).toHaveBeenCalledWith(response);
     expect(result).toEqual([{ id: 'job-1' }]);
   });
@@ -73,15 +76,15 @@ describe('InfluencerAIClient error handling', () => {
     const response = {} as Response;
     const update = { status: 'done' };
     fetchWithTimeoutSpy.mockResolvedValue(response);
-    handleResponseSpy.mockResolvedValue({ ok: true } as any);
+    handleResponseSpy.mockResolvedValue({ id: 'job-42', status: 'done' } as any);
     const result = await client.updateJob('job-42', update);
     expect(fetchWithTimeoutSpy).toHaveBeenCalledWith('https://api.test.example/jobs/job-42', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(update),
-    });
+    }, undefined);
     expect(handleResponseSpy).toHaveBeenCalledWith(response);
-    expect(result).toEqual({ ok: true });
+    expect(result).toEqual({ id: 'job-42', status: 'done' });
   });
 
   it('getQueuesSummary fetches queue summary and validates shape', async () => {
@@ -91,7 +94,11 @@ describe('InfluencerAIClient error handling', () => {
 
     const result = await client.getQueuesSummary();
 
-    expect(fetchWithTimeoutSpy).toHaveBeenCalledWith('https://api.test.example/queues/summary');
+    expect(fetchWithTimeoutSpy).toHaveBeenCalledWith(
+      'https://api.test.example/queues/summary',
+      expect.objectContaining({ method: 'GET' }),
+      undefined
+    );
     expect(handleResponseSpy).toHaveBeenCalledWith(response);
     expect(result).toEqual({ active: 3, waiting: 4, failed: 1 });
   });
@@ -108,15 +115,28 @@ describe('InfluencerAIClient error handling', () => {
     const response = {} as Response;
     const plan = { title: 'Plan' } as any;
     fetchWithTimeoutSpy.mockResolvedValue(response);
-    handleResponseSpy.mockResolvedValue({ id: 'plan-1' } as any);
+    handleResponseSpy.mockResolvedValue({
+      id: 'plan-1',
+      plan: {
+        influencerId: 'inf-1',
+        theme: 'theme',
+        targetPlatforms: ['instagram'],
+        posts: [],
+        createdAt: '2024-01-01T00:00:00.000Z',
+      },
+    } as any);
     const result = await client.createContentPlan(plan);
-    expect(fetchWithTimeoutSpy).toHaveBeenCalledWith('https://api.test.example/content-plans', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(plan),
-    });
+    expect(fetchWithTimeoutSpy).toHaveBeenCalledWith(
+      'https://api.test.example/content-plans',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(plan),
+      },
+      undefined
+    );
     expect(handleResponseSpy).toHaveBeenCalledWith(response);
-    expect(result).toEqual({ id: 'plan-1' });
+    expect(result).toMatchObject({ id: 'plan-1' });
   });
 
   it('health checks API status via fetchWithTimeout and handleResponse', async () => {
@@ -124,8 +144,11 @@ describe('InfluencerAIClient error handling', () => {
     fetchWithTimeoutSpy.mockResolvedValue(response);
     handleResponseSpy.mockResolvedValue({ status: 'ok' } as any);
     const result = await client.health();
-    expect(fetchWithTimeoutSpy).toHaveBeenCalledWith('https://api.test.example/health');
-    expect(fetchWithTimeoutSpy.mock.calls[0][1]).toBeUndefined();
+    expect(fetchWithTimeoutSpy).toHaveBeenCalledWith(
+      'https://api.test.example/health',
+      expect.objectContaining({ method: 'GET' }),
+      undefined
+    );
     expect(handleResponseSpy).toHaveBeenCalledWith(response);
     expect(result).toEqual({ status: 'ok' });
   });

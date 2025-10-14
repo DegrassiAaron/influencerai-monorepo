@@ -1,6 +1,40 @@
-import type { JobSpec, ContentPlan, DatasetSpec, LoRAConfig } from '@influencerai/core-schemas';
+import type { z } from 'zod';
 import { fetchWithTimeout, handleResponse, APIError } from './fetch-utils';
-import type { JobResponse, QueueSummary } from './types';
+import {
+  JobResponseSchema,
+  JobListSchema,
+  DatasetListSchema,
+  DatasetCreationSchema,
+  ContentPlanEnvelopeSchema,
+  CreateDatasetInputSchema,
+} from './types';
+import type {
+  JobResponse,
+  QueueSummary,
+  Dataset,
+  CreateDatasetInput,
+  CreateDatasetResponse,
+  ContentPlanEnvelope,
+} from './types';
+import {
+  QueueSummarySchema,
+  JobSpec,
+  ContentPlan,
+  DatasetSpec,
+  LoRAConfig,
+} from './core-schemas';
+
+type QueryValue = string | number | boolean | undefined;
+
+interface RequestConfig<T> {
+  path: string;
+  method?: string;
+  body?: unknown;
+  headers?: Record<string, string>;
+  query?: Record<string, QueryValue>;
+  schema?: z.ZodType<T>;
+  timeoutMs?: number;
+}
 
 export class InfluencerAIClient {
   private baseUrl: string;
@@ -9,70 +43,123 @@ export class InfluencerAIClient {
     this.baseUrl = baseUrl;
   }
 
-  async createJob(spec: JobSpec): Promise<JobResponse> {
-    const response = await fetchWithTimeout(`${this.baseUrl}/jobs`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(spec),
-    });
-    const parsed = await handleResponse<JobResponse>(response);
-    // Basic runtime validation to fail fast if the server returns an unexpected shape
-    if (!parsed || typeof parsed !== 'object' || typeof (parsed as any).id !== 'string') {
-      throw new APIError('Invalid job response shape (missing id)', { status: 502, body: parsed });
+  private buildUrl(path: string, query?: Record<string, QueryValue>) {
+    const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+    const url = new URL(normalizedPath, this.baseUrl);
+    if (query) {
+      for (const [key, value] of Object.entries(query)) {
+        if (value === undefined || value === null) continue;
+        url.searchParams.append(key, String(value));
+      }
     }
-    return parsed;
+    return url.toString();
+  }
+
+  private parseWithSchema<T>(schema: z.ZodType<T>, data: unknown, url: string, method: string) {
+    const parsed = schema.safeParse(data);
+    if (!parsed.success) {
+      throw new APIError('Invalid response shape', { status: 502, body: data, url, method });
+    }
+    return parsed.data;
+  }
+
+  private async request<T>({ path, method = 'GET', body, headers, query, schema, timeoutMs }: RequestConfig<T>): Promise<T> {
+    const url = this.buildUrl(path, query);
+    const finalHeaders: Record<string, string> = { ...(headers || {}) };
+    let finalBody: BodyInit | undefined;
+
+    if (body !== undefined) {
+      if (
+        typeof body === 'string' ||
+        body instanceof ArrayBuffer ||
+        ArrayBuffer.isView(body) ||
+        body instanceof Blob ||
+        body instanceof FormData ||
+        body instanceof URLSearchParams
+      ) {
+        finalBody = body as BodyInit;
+      } else {
+        finalBody = JSON.stringify(body);
+        if (!finalHeaders['Content-Type']) {
+          finalHeaders['Content-Type'] = 'application/json';
+        }
+      }
+    }
+
+    const response = await fetchWithTimeout(
+      url,
+      {
+        method,
+        headers: Object.keys(finalHeaders).length > 0 ? finalHeaders : undefined,
+        body: finalBody,
+      },
+      timeoutMs
+    );
+    const data = await handleResponse<unknown>(response);
+    if (!schema) {
+      return data as T;
+    }
+    return this.parseWithSchema(schema, data, url, method);
+  }
+
+  async createJob(spec: JobSpec): Promise<JobResponse> {
+    return this.request({ path: '/jobs', method: 'POST', body: spec, schema: JobResponseSchema });
   }
 
   async getJob(id: string) {
-    const response = await fetchWithTimeout(`${this.baseUrl}/jobs/${id}`);
-    return handleResponse(response);
+    return this.request({ path: `/jobs/${id}`, schema: JobResponseSchema });
   }
 
-  async listJobs() {
-    const response = await fetchWithTimeout(`${this.baseUrl}/jobs`);
-    return handleResponse(response);
+  async listJobs(params: { status?: string; type?: string; take?: number; skip?: number } = {}) {
+    const query: Record<string, QueryValue> = {
+      status: params.status,
+      type: params.type,
+      take: params.take,
+      skip: params.skip,
+    };
+    return this.request({ path: '/jobs', query, schema: JobListSchema });
   }
 
   async updateJob(id: string, update: { status?: string; result?: unknown; costTok?: number }) {
-    const response = await fetchWithTimeout(`${this.baseUrl}/jobs/${id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(update),
-    });
-    return handleResponse(response);
+    return this.request({ path: `/jobs/${id}`, method: 'PATCH', body: update, schema: JobResponseSchema });
   }
 
   async getQueuesSummary(): Promise<QueueSummary> {
-    const response = await fetchWithTimeout(`${this.baseUrl}/queues/summary`);
-    const parsed = await handleResponse<QueueSummary>(response);
-    if (
-      !parsed ||
-      typeof parsed !== 'object' ||
-      typeof (parsed as QueueSummary).active !== 'number' ||
-      typeof (parsed as QueueSummary).waiting !== 'number' ||
-      typeof (parsed as QueueSummary).failed !== 'number'
-    ) {
-      throw new APIError('Invalid queue summary response shape', { status: 502, body: parsed });
-    }
-
-    return parsed;
+    return this.request({ path: '/queues/summary', schema: QueueSummarySchema });
   }
 
   async createContentPlan(plan: Omit<ContentPlan, 'createdAt'>) {
-    const response = await fetchWithTimeout(`${this.baseUrl}/content-plans`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(plan),
-    });
-    return handleResponse(response);
+    return this.request({ path: '/content-plans', method: 'POST', body: plan, schema: ContentPlanEnvelopeSchema });
   }
 
   async health() {
-    const response = await fetchWithTimeout(`${this.baseUrl}/health`);
-    return handleResponse(response);
+    return this.request({ path: '/health' });
+  }
+
+  async listDatasets(): Promise<Dataset[]> {
+    return this.request({ path: '/datasets', schema: DatasetListSchema });
+  }
+
+  async createDataset(input: CreateDatasetInput): Promise<CreateDatasetResponse> {
+    const parsedInput = CreateDatasetInputSchema.safeParse(input);
+    if (!parsedInput.success) {
+      throw new APIError('Invalid dataset payload', { status: 400, body: parsedInput.error.flatten() });
+    }
+    return this.request({ path: '/datasets', method: 'POST', body: parsedInput.data, schema: DatasetCreationSchema });
+  }
+
+  async getContentPlan(id: string): Promise<ContentPlanEnvelope> {
+    return this.request({ path: `/content-plans/${id}`, schema: ContentPlanEnvelopeSchema });
   }
 }
 
-export type { JobSpec, ContentPlan, DatasetSpec, LoRAConfig };
-export type { JobResponse, QueueSummary } from './types';
+export type { JobSpec, ContentPlan, DatasetSpec, LoRAConfig } from './core-schemas';
+export type {
+  JobResponse,
+  QueueSummary,
+  Dataset,
+  CreateDatasetInput,
+  CreateDatasetResponse,
+  ContentPlanEnvelope,
+} from './types';
 export { APIError as InfluencerAIAPIError } from './fetch-utils';
