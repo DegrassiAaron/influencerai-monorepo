@@ -1,13 +1,7 @@
 name: Verify Backlog Issues
 
 on:
-  push:
-    branches: [ main ]
-    paths:
-      - 'backlog/issues.yaml'
-  pull_request:
-    paths:
-      - 'backlog/issues.yaml'
+  workflow_call:
   workflow_dispatch:
 
 permissions:

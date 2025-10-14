@@ -1,10 +1,12 @@
 name: E2E - Puppeteer MCV
 
 on:
-  pull_request:
-    branches: [develop, main]
-  push:
-    branches: [main]
+  workflow_call:
+    inputs:
+      suite:
+        description: 'Suite da eseguire (smoke|full)'
+        required: false
+        type: string
   schedule:
     - cron: '0 2 * * *'
   workflow_dispatch:
@@ -18,7 +20,8 @@ jobs:
   smoke:
     if: >
       github.event_name == 'pull_request' ||
-      (github.event_name == 'workflow_dispatch' && (github.event.inputs.suite || 'full') == 'smoke')
+      (github.event_name == 'workflow_dispatch' && (github.event.inputs.suite || 'full') == 'smoke') ||
+      (github.event_name == 'workflow_call' && (inputs.suite || 'full') == 'smoke')
     name: Smoke e2e
     runs-on: ubuntu-latest
     env:
@@ -91,9 +94,9 @@ jobs:
 
   full:
     if: >
-      github.event_name == 'push' ||
       github.event_name == 'schedule' ||
-      (github.event_name == 'workflow_dispatch' && (github.event.inputs.suite || 'full') == 'full')
+      (github.event_name == 'workflow_dispatch' && (github.event.inputs.suite || 'full') == 'full') ||
+      (github.event_name == 'workflow_call' && (inputs.suite || 'full') == 'full')
     name: Full e2e
     runs-on: ubuntu-latest
     strategy:

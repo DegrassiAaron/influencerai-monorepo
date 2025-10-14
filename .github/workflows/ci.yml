@@ -26,6 +26,7 @@ jobs:
     outputs:
       base_sha: ${{ steps.detect.outputs.base_sha }}
       head_sha: ${{ steps.detect.outputs.head_sha }}
+      backlog_changed: ${{ steps.backlog.outputs.changed }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -49,6 +50,27 @@ jobs:
 
           echo "base_sha=${BASE_SHA}" >> "$GITHUB_OUTPUT"
           echo "head_sha=${HEAD_SHA}" >> "$GITHUB_OUTPUT"
+
+      - name: Detect backlog changes
+        id: backlog
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE="${{ steps.detect.outputs.base_sha }}"
+          HEAD="${{ steps.detect.outputs.head_sha }}"
+          if [[ -z "${HEAD}" ]]; then
+            HEAD="$(git rev-parse HEAD)"
+          fi
+          if [[ -n "${BASE}" ]]; then
+            DIFF=$(git diff --name-only "${BASE}" "${HEAD}")
+          else
+            DIFF=$(git show --name-only --pretty='' "${HEAD}")
+          fi
+          if echo "${DIFF}" | grep -q '^backlog/issues.yaml$'; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
 
   lint:
     name: Lint (changed scope)
@@ -293,6 +315,45 @@ jobs:
         run: |
           echo "Executing shard ${{ matrix.shard_index }} of 2"
           pnpm turbo run test:integration --filter='@influencerai/api'
+
+  e2e-smoke:
+    name: E2E smoke (PR)
+    needs:
+      - lint
+      - unit-tests
+      - integration-tests
+    if: github.event_name == 'pull_request'
+    uses: ./.github/workflows/e2e-puppeteer.yml
+    with:
+      suite: smoke
+    secrets: inherit
+
+  e2e-full:
+    name: E2E full (main)
+    needs:
+      - lint
+      - unit-tests
+      - integration-tests
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/e2e-puppeteer.yml
+    with:
+      suite: full
+    secrets: inherit
+
+  verify-backlog:
+    name: Verify backlog issues
+    needs: prepare
+    if: needs.prepare.outputs.backlog_changed == 'true'
+    uses: ./.github/workflows/verify-backlog-issues.yml
+    secrets: inherit
+
+  sync-backlog:
+    name: Sync backlog issues
+    needs:
+      - verify-backlog
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.prepare.outputs.backlog_changed == 'true'
+    uses: ./.github/workflows/sync-backlog-issues.yml
+    secrets: inherit
 
   docker-build:
     name: Build Docker images
