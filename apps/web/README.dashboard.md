@@ -1,6 +1,6 @@
 # Operational Dashboard (WEB-02)
 
-This implements `/dashboard` with three widgets:
+This feature area covers the `/` home overview and the `/dashboard` workspace with three widgets:
 - `Job Queues` summary: active, waiting, failed
 - `Health` card: aggregate status from `/healthz`
 - `Jobs` mini chart: recent successes/failures
@@ -15,14 +15,17 @@ Config:
   - `GET /jobs/series?window=1h` -> `Array<{ t:string, success:number, failed:number }>`
 
 Files:
-- `apps/web/src/app/dashboard/page.tsx`
+- `apps/web/src/app/(dashboard)/page.tsx` (home overview)
+- `apps/web/src/app/(dashboard)/dashboard/page.tsx`
+- `apps/web/src/app/(dashboard)/dashboard/content-plans/page.tsx`
+- `apps/web/src/app/(dashboard)/layout.tsx` (shared shell for the group)
 - `apps/web/src/components/{HealthCard,QueuesWidget,JobsChart}.tsx`
 - `apps/web/src/app/providers.tsx` (React Query client)
 - `apps/web/src/app/layout.tsx` registers providers and global styles
 
 Notes:
 - Replace polling with websockets when API supports it.
-- Styles now rely on the shared design system primitives documented below.
+- Styles rely on the shared design system primitives documented below.
 
 ## Design system & layout (WEB-06)
 
@@ -34,7 +37,9 @@ Notes:
   - `src/lib/utils.ts` → `cn()` merges class names using `clsx` and `tailwind-merge`.
   - `src/components/theme-provider.tsx` exposes `ThemeProvider`/`useTheme` for light/dark toggling.
 - Application shell:
-  - Implemented in `src/components/layout/AppShell.tsx` with sidebar navigation, header actions, and breadcrumb rendering.
-  - `src/app/(dashboard)/layout.tsx` configures navigation/breadcrumb data for dashboard routes.
-  - Mobile navigation uses the shared `Sheet` primitive via `MobileNavigation`.
-- When adding new views, render page content directly; the shell handles padding, chrome, and breadcrumbs.
+  - Implemented in `src/components/layout/AppShell.tsx` by composing `AppSidebar`, `AppHeader`, and `AppBreadcrumbs`.
+  - `AppShell` is wired in `src/app/(dashboard)/layout.tsx`; every child page automatically inherits sidebar navigation, header
+    actions, breadcrumb trail, and responsive mobile navigation.
+  - To onboard a new view, place the page under `src/app/(dashboard)/` and render its content directly—the shell handles padding,
+    chrome, and breadcrumbs.
+  - Navigation items live in `src/components/layout/nav-config.ts`; update this file to surface new primary or support links.

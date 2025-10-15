@@ -1,7 +1,7 @@
 import React from "react";
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import Home from "../app/page";
+import Home from "../app/(dashboard)/page";
 import { ThemeProvider } from "@/components/theme-provider";
 
 vi.mock("next/navigation", () => ({
@@ -15,7 +15,7 @@ describe("Home page", () => {
     render(
       <ThemeProvider>
         <Home />
-      </ThemeProvider>
+      </ThemeProvider>,
     );
 
     expect(
