@@ -120,8 +120,8 @@ function resolveErrorFactory(status: number): ErrorFactory {
   return (opts) => new APIError('Request failed', opts);
 }
 
-export async function handleResponse<T = unknown>(response: any): Promise<T> {
-  const contentType = (response.headers?.get?.('content-type') || '') as string;
+export async function handleResponse<T = unknown>(response: Response): Promise<T> {
+  const contentType = response.headers.get('content-type') ?? '';
   const isJson = typeof contentType === 'string' && contentType.includes('application/json');
 
   if (!response.ok) {
@@ -136,7 +136,7 @@ export async function handleResponse<T = unknown>(response: any): Promise<T> {
       status: response.status ?? 0,
       body: errorBody,
       url: response.url,
-      method: (response as unknown as { method?: string }).method,
+      method: (response as Response & { method?: string }).method,
     });
   }
 
@@ -147,16 +147,27 @@ export async function handleResponse<T = unknown>(response: any): Promise<T> {
   return (await response.json()) as T;
 }
 
-export async function fetchWithTimeout(input: any, init: any = {}, timeoutMs = 30_000): Promise<any> {
+export async function fetchWithTimeout(
+  input: RequestInfo | URL,
+  init: RequestInit = {},
+  timeoutMs = 30_000,
+): Promise<Response> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
-  const method = init?.method || 'GET';
+  const method = init?.method || (input instanceof Request ? input.method : 'GET');
   try {
     const response = await fetch(input, { ...init, signal: controller.signal });
     return response;
   } catch (err) {
     // Abort or network error
-    const url = typeof input === 'string' ? input : String(input);
+    const url =
+      typeof input === 'string'
+        ? input
+        : input instanceof URL
+          ? input.toString()
+          : input instanceof Request
+            ? input.url
+            : String(input);
     if ((err as Error)?.name === 'AbortError') {
       throw new RequestTimeoutError({ status: 408, url, method, cause: err });
     }

@@ -6,6 +6,7 @@ import { OpenRouterResponseSchema } from '../types/openrouter';
 import { ContentPlanDataSchema } from '../types/content';
 import { ConfigService } from '@nestjs/config';
 import { AppConfig } from '../config/env.validation';
+import { toInputJson, toInputJsonObject } from '../lib/json';
 
 // Minimal local prompt to avoid build coupling; align with @influencerai/prompts
 function contentPlanPrompt(persona: string, theme: string) {
@@ -125,13 +126,13 @@ export class ContentPlansService {
       data: {
         type: 'content-plan',
         status: 'completed',
-        payload: toJsonObject({
+        payload: toInputJsonObject({
           influencerId: input.influencerId,
           tenantId: infl.tenantId,
           theme: input.theme,
           targetPlatforms: plan.targetPlatforms,
         }),
-        result: toJsonObject(plan),
+        result: toInputJson(plan),
         finishedAt: new Date(),
       },
     })) as { id: string };
@@ -199,40 +200,9 @@ function parsePlan(result: unknown): ContentPlanResponse {
   return { influencerId, theme, targetPlatforms, posts, createdAt };
 }
 
-type JsonValue = string | number | boolean | null | JsonObject | JsonValue[];
-type JsonObject = { [key: string]: JsonValue };
-
-function toJsonValue(value: unknown): JsonValue {
-  if (
-    value === null ||
-    typeof value === 'string' ||
-    typeof value === 'number' ||
-    typeof value === 'boolean'
-  ) {
-    return value;
-  }
-  if (value instanceof Date) {
-    return value.toISOString();
-  }
-  if (Array.isArray(value)) {
-    return value.map((item) => toJsonValue(item));
-  }
-  if (typeof value === 'object') {
-    return toJsonObject(value as Record<string, unknown>);
-  }
-  return null;
-}
-
-function toJsonObject(value: Record<string, unknown>): JsonObject {
-  return Object.entries(value).reduce<JsonObject>((acc, [key, entry]) => {
-    acc[key] = toJsonValue(entry);
-    return acc;
-  }, {});
-}
-
 async function safeReadBody(res: Response) {
   try {
-    const ct = res.headers?.get?.('content-type') || '';
+    const ct = res.headers.get('content-type') ?? '';
     if (ct.includes('application/json')) return await res.json();
     return await res.text();
   } catch {
