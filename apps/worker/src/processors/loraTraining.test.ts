@@ -151,4 +151,53 @@ describe('createLoraTrainingProcessor', () => {
     expect(failedCall).toBeTruthy();
     expect(failedCall?.[1]?.result?.message).toMatch(/kohya_ss exited with code 1/);
   });
+
+  it('supports dry run jobs by returning command preview without spawning process', async () => {
+    const datasetPath = path.join(tmpRoot, 'dataset-dry-run');
+    await fs.mkdir(datasetPath, { recursive: true });
+
+    const spawn = vi.fn();
+    const patchJobStatus = vi.fn().mockResolvedValue(undefined);
+
+    const processor = createLoraTrainingProcessor({
+      logger,
+      patchJobStatus,
+      s3: {
+        getClient: () => null,
+        putBinaryObject: vi.fn(),
+        getSignedGetUrl: vi.fn(),
+      },
+      fetchDataset: vi.fn(async () => ({ path: datasetPath })),
+      spawn,
+    });
+
+    const job: { id: string; data: LoraTrainingJobData } = {
+      id: 'queue-job-dry',
+      data: {
+        jobId: 'job-dry',
+        payload: {
+          dryRun: true,
+          datasetId: 'ds-dry',
+          config: {
+            kohyaCommand: 'accelerate',
+            workingDirectory: '/opt/kohya',
+            learningRate: 0.0001,
+          },
+          kohyaArgs: ['--resolution=512'],
+        },
+      },
+    };
+
+    const result = await processor(job as any);
+
+    expect(result.success).toBe(true);
+    expect(result.command?.command).toBe('accelerate');
+    expect(result.command?.args).toContain('train_network.py');
+    expect(result.command?.cwd).toBe('/opt/kohya');
+    expect(spawn).not.toHaveBeenCalled();
+
+    const finalCall = patchJobStatus.mock.calls.find(([, payload]) => payload?.status === 'succeeded');
+    expect(finalCall?.[1]?.result?.command?.command).toBe('accelerate');
+    expect(finalCall?.[1]?.result?.progress?.stage).toBe('completed');
+  });
 });

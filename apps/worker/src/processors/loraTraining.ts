@@ -13,6 +13,7 @@ import {
   scheduleProgress,
   uploadSafetensors,
   waitForProcess,
+  createCommandPreview,
 } from './loraTraining/helpers';
 import type {
   LoraTrainingJobData,
@@ -55,6 +56,7 @@ export function createLoraTrainingProcessor(
       }
 
       const command = buildKohyaCommand(payload, dataset, config, resolvedOutputDir);
+      const commandPreview = createCommandPreview(command);
       deps.logger.info(
         {
           jobId,
@@ -64,6 +66,31 @@ export function createLoraTrainingProcessor(
         },
         'Launching kohya_ss process'
       );
+
+      if (payload.dryRun) {
+        deps.logger.info({ jobId, command: command.command }, 'Dry run enabled, skipping kohya_ss execution');
+        scheduleProgress({ stage: 'running', message: 'Dry run: kohya_ss command prepared' }, jobId, deps, progressState);
+        if (jobId) {
+          await deps.patchJobStatus(jobId, {
+            status: 'succeeded',
+            result: {
+              command: commandPreview,
+              progress: { stage: 'completed', message: 'Dry run completed' },
+              outputDir: resolvedOutputDir,
+              artifacts: [],
+            },
+          });
+        }
+
+        return {
+          success: true,
+          message: 'Dry run completed',
+          outputDir: resolvedOutputDir,
+          artifacts: [],
+          logs: [],
+          command: commandPreview,
+        } satisfies LoraTrainingResult;
+      }
 
       const child = spawn(command.command, command.args, command.options);
       const buffers: string[] = [];
@@ -114,6 +141,7 @@ export function createLoraTrainingProcessor(
         await deps.patchJobStatus(jobId, {
           status: 'succeeded',
           result: {
+            command: commandPreview,
             progress: { stage: 'completed', percent: 100, message: 'Training completed', logs: collectLogs(buffers) },
             outputDir: resolvedOutputDir,
             artifacts,
@@ -127,6 +155,7 @@ export function createLoraTrainingProcessor(
         outputDir: resolvedOutputDir,
         artifacts,
         logs: collectLogs(buffers),
+        command: commandPreview,
       } satisfies LoraTrainingResult;
     } catch (err) {
       deps.logger.error({ err, jobId }, 'LoRA training job failed');
