@@ -7,7 +7,7 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "lint": "eslint src/**/*.ts --fix",
-    "test": "pnpm run test:unit",
+    "test": "pnpm run test:unit -- --all",
     "test:unit": "node ../../scripts/run-vitest.mjs --config vitest.config.ts"
   },
   "dependencies": {

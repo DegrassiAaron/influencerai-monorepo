@@ -22,12 +22,27 @@ const packageRelative = normalizePath(relative(repoRoot, packageDir));
 const baseSha = process.env.CI_BASE_SHA || process.env.GITHUB_BASE_SHA || '';
 const headSha = process.env.CI_HEAD_SHA || 'HEAD';
 const selectionMode = (process.env.VITEST_SELECTION_MODE || 'auto').toLowerCase();
+
+const FORCE_ALL_FLAGS = new Set(['--all', '--force-all']);
+const rawForwardArgs = process.argv.slice(2);
+const sanitizedArgs = [];
+let cliForceAll = false;
+
+for (const arg of rawForwardArgs) {
+  if (FORCE_ALL_FLAGS.has(String(arg))) {
+    cliForceAll = true;
+    continue;
+  }
+  sanitizedArgs.push(arg);
+}
+
+const forwardArgs = sanitizedArgs;
+
 const forceAll =
+  cliForceAll ||
   process.env.VITEST_FORCE_ALL === '1' ||
   process.env.VITEST_FORCE_ALL === 'true' ||
   selectionMode === 'off';
-
-const forwardArgs = process.argv.slice(2);
 const shardIndexRaw = process.env.VITEST_SHARD_INDEX;
 const totalShardsRaw = process.env.VITEST_TOTAL_SHARDS;
 const shardIndex = shardIndexRaw ? Number(shardIndexRaw) : NaN;
