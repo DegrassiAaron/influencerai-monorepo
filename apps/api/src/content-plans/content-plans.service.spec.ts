@@ -1,6 +1,7 @@
 import { ContentPlansService } from './content-plans.service';
 import { validateEnv, AppConfig } from '../config/env.validation';
 import { ConfigService } from '@nestjs/config';
+import { HTTPError } from '../lib/http-utils';
 
 describe('ContentPlansService', () => {
   const prismaMock: any = {
@@ -14,10 +15,16 @@ describe('ContentPlansService', () => {
     // Configure prisma mocks
     prismaMock.influencer.findUnique.mockImplementation(async ({ where: { id } }: any) => (id === 'inf_1' ? { id, tenantId: 'ten_1', persona: { name: 'A' } } : null));
     prismaMock.job.create.mockImplementation(async ({ data }: any) => ({ id: 'job_cp_1', ...data }));
-    configValues = validateEnv({
-      DATABASE_URL: 'postgresql://user:pass@localhost:5432/db',
-      OPENROUTER_API_KEY: 'sk-test',
-    });
+    configValues = {
+      ...validateEnv({
+        DATABASE_URL: 'postgresql://user:pass@localhost:5432/db',
+        OPENROUTER_API_KEY: 'sk-test',
+      }),
+      OPENROUTER_MAX_RETRIES: 2,
+      OPENROUTER_TIMEOUT_MS: 50,
+      OPENROUTER_BACKOFF_BASE_MS: 0,
+      OPENROUTER_BACKOFF_JITTER_MS: 0,
+    };
     config = {
       get: jest.fn((key: keyof AppConfig) => configValues[key]),
     } as unknown as ConfigService<AppConfig, true>;
@@ -73,7 +80,7 @@ describe('ContentPlansService', () => {
     });
     const svc = new ContentPlansService(prismaMock, config);
     await expect(svc.generatePlanPosts('{}', 't')).rejects.toBeTruthy();
-    expect((global.fetch as jest.Mock).mock.calls.length).toBeGreaterThanOrEqual(3);
+    expect((global.fetch as jest.Mock).mock.calls.length).toBe(configValues.OPENROUTER_MAX_RETRIES);
   });
 
   it('retries on 5xx then succeeds', async () => {
@@ -96,5 +103,27 @@ describe('ContentPlansService', () => {
     const posts = await svc.generatePlanPosts('{}', 't');
     expect(posts[0]).toEqual({ caption: 'ok2', hashtags: ['h2'] });
     expect((global.fetch as jest.Mock).mock.calls.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('wraps network errors into HTTPError after exhausting retries', async () => {
+    (global.fetch as jest.Mock).mockReset();
+    (global.fetch as jest.Mock).mockImplementation(async () => {
+      const err = new Error('ECONNRESET');
+      (err as any).code = 'ECONNRESET';
+      throw err;
+    });
+
+    const svc = new ContentPlansService(prismaMock, config);
+    expect.assertions(2);
+    await svc
+      .generatePlanPosts('{}', 't')
+      .catch((err) => {
+        expect(err).toBeInstanceOf(HTTPError);
+        expect(err).toMatchObject({
+          status: 503,
+          message: 'OpenRouter request network error',
+          body: { name: 'Error', message: 'ECONNRESET', code: 'ECONNRESET' },
+        });
+      });
   });
 });
