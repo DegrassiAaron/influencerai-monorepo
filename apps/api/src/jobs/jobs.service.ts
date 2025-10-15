@@ -5,9 +5,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { JobSeriesQuery, ListJobsQuery, UpdateJobDto } from './dto';
 import { ConfigService } from '@nestjs/config';
 import { AppConfig } from '../config/env.validation';
-type JsonValue = string | number | boolean | null | JsonObject | JsonArray;
-type JsonArray = JsonValue[];
-type JsonObject = { [key: string]: JsonValue };
+import { toInputJson } from '../lib/json';
 
 type JobType = 'content-generation' | 'lora-training' | 'video-generation';
 
@@ -27,7 +25,7 @@ export class JobsService {
       data: {
         type: input.type,
         status: 'pending',
-        payload: toJsonValue(input.payload),
+        payload: toInputJson(input.payload),
       },
     });
 
@@ -117,7 +115,7 @@ export class JobsService {
   async updateJob(id: string, input: UpdateJobDto) {
     const data: Record<string, unknown> = {};
     if (typeof input.status !== 'undefined') data.status = input.status;
-    if (typeof input.result !== 'undefined') data.result = toJsonValue(input.result);
+    if (typeof input.result !== 'undefined') data.result = toInputJson(input.result);
     if (typeof input.costTok !== 'undefined') data.costTok = input.costTok;
 
     // Auto-manage timestamps for common status transitions
@@ -192,32 +190,4 @@ export class JobsService {
     }
     return copy;
   }
-}
-
-function toJsonValue(value: unknown): JsonValue {
-  if (
-    value === null ||
-    typeof value === 'string' ||
-    typeof value === 'number' ||
-    typeof value === 'boolean'
-  ) {
-    return value;
-  }
-
-  if (value instanceof Date) {
-    return value.toISOString();
-  }
-
-  if (Array.isArray(value)) {
-    return value.map((item) => toJsonValue(item)) as JsonArray;
-  }
-
-  if (typeof value === 'object') {
-    return Object.entries(value as Record<string, unknown>).reduce<JsonObject>((acc, [key, val]) => {
-      acc[key] = toJsonValue(val);
-      return acc;
-    }, {});
-  }
-
-  return null;
 }

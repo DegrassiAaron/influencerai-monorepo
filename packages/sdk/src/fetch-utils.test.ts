@@ -1,5 +1,7 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, expectTypeOf, it, vi } from 'vitest';
 import { APIError, fetchWithTimeout, handleResponse, NotFoundError, TooManyRequestsError } from './fetch-utils';
+
+type IsAny<T> = 0 extends (1 & T) ? true : false;
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -7,14 +9,24 @@ afterEach(() => {
 });
 
 describe('handleResponse', () => {
-  const createResponse = (overrides: Partial<Response>) => ({
-    ok: true,
-    status: 200,
-    headers: new Headers({ 'content-type': 'application/json' }),
-    json: vi.fn().mockResolvedValue({ ok: true }),
-    text: vi.fn().mockResolvedValue('ok'),
-    ...overrides,
-  });
+  const createResponse = (overrides: Partial<Response> = {}) => {
+    const status = overrides.status ?? 200;
+    const body = overrides.body ?? JSON.stringify({ ok: true });
+    const headers = overrides.headers ?? new Headers({ 'content-type': 'application/json' });
+    const base = new Response(body, { status, headers });
+
+    Object.defineProperty(base, 'json', {
+      value: overrides.json ?? vi.fn().mockResolvedValue(JSON.parse(body)),
+      configurable: true,
+    });
+
+    Object.defineProperty(base, 'text', {
+      value: overrides.text ?? vi.fn().mockResolvedValue(body),
+      configurable: true,
+    });
+
+    return base;
+  };
 
   it('parses json body on success', async () => {
     const response = createResponse({});
@@ -26,6 +38,9 @@ describe('handleResponse', () => {
   it('parses text when content type is not json', async () => {
     const response = createResponse({
       headers: new Headers({ 'content-type': 'text/plain' }),
+      body: 'ok',
+      json: vi.fn().mockRejectedValue(new Error('unexpected json call')),
+      text: vi.fn().mockResolvedValue('ok'),
     });
     const result = await handleResponse<string>(response);
     expect(result).toBe('ok');
@@ -61,11 +76,30 @@ describe('handleResponse', () => {
     });
     await expect(handleResponse(response)).rejects.toBeInstanceOf(TooManyRequestsError);
   });
+
+  it('maintains strong typing for Response arguments and return type', async () => {
+    const response = createResponse({});
+    expectTypeOf(handleResponse(response)).not.toEqualTypeOf<Promise<any>>();
+    expectTypeOf(handleResponse(response)).toEqualTypeOf<Promise<unknown>>();
+    await handleResponse(response);
+  });
+
+  it('rejects non-Response inputs at compile time', () => {
+    type Param = Parameters<typeof handleResponse>[0];
+    expectTypeOf<Param>().not.toEqualTypeOf<any>();
+    expectTypeOf<Param>().toEqualTypeOf<Response>();
+    type ParamIsAny = IsAny<Param>;
+    const ensureNotAny: ParamIsAny extends true ? never : true = true;
+    void ensureNotAny;
+    // @ts-expect-error -- numeric values are not valid Response objects
+    const invalid: Param = 123;
+    void invalid;
+  });
 });
 
 describe('fetchWithTimeout', () => {
   it('returns fetch response when successful', async () => {
-    const mockResponse = { ok: true };
+    const mockResponse = new Response(null, { status: 204 });
     const mockFetch = vi.fn().mockResolvedValue(mockResponse);
     vi.stubGlobal('fetch', mockFetch);
     const response = await fetchWithTimeout('http://example.com', { method: 'POST' }, 50);
@@ -96,5 +130,29 @@ describe('fetchWithTimeout', () => {
       url: 'http://broken.test',
       method: 'DELETE',
     });
+  });
+
+  it('returns a typed Response instance', async () => {
+    const mockResponse = new Response(JSON.stringify({ ok: true }), {
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+    });
+    const mockFetch = vi.fn().mockResolvedValue(mockResponse);
+    vi.stubGlobal('fetch', mockFetch);
+
+    const result = await fetchWithTimeout('http://typed.test');
+    expect(result).toBe(mockResponse);
+    expectTypeOf(result).toEqualTypeOf<Response>();
+  });
+
+  it('requires supported request inputs', () => {
+    type Input = Parameters<typeof fetchWithTimeout>[0];
+    expectTypeOf<Input>().not.toEqualTypeOf<any>();
+    type InputIsAny = IsAny<Input>;
+    const ensureNotAny: InputIsAny extends true ? never : true = true;
+    void ensureNotAny;
+    // @ts-expect-error -- fetchWithTimeout expects RequestInfo or URL
+    const invalid: Input = 42 as never;
+    void invalid;
   });
 });
