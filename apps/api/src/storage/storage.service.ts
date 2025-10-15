@@ -43,18 +43,26 @@ export class StorageService {
     if (this.config.get('SKIP_S3_INIT', { infer: true })) return;
     try {
       await this.client.send(new HeadBucketCommand({ Bucket: this.bucket }));
-    } catch (err: any) {
+    } catch (error: unknown) {
+      const err = typeof error === 'object' && error !== null ? (error as Record<string, unknown>) : {};
       // Create if missing
-      if (err?.$metadata?.httpStatusCode === 404 || err?.name === 'NotFound' || err?.Code === 'NoSuchBucket') {
+      const metadata = err.$metadata;
+      const status = typeof metadata === 'object' && metadata !== null
+        ? Number((metadata as { httpStatusCode?: number }).httpStatusCode)
+        : undefined;
+      const name = typeof err.name === 'string' ? (err.name as string) : undefined;
+      const code = typeof err.Code === 'string' ? (err.Code as string) : undefined;
+      if (status === 404 || name === 'NotFound' || code === 'NoSuchBucket') {
         await this.client.send(new CreateBucketCommand({ Bucket: this.bucket }));
         return;
       }
       // Ignore Forbidden/200 if user lacks permissions but bucket exists
-      if (err?.$metadata?.httpStatusCode === 403) return;
+      if (status === 403) return;
       // In test environments, don't fail startup on missing/invalid S3
       const nodeEnv = this.config.get('NODE_ENV', { infer: true });
       if (nodeEnv === 'test') return;
-      throw err;
+      const fallbackError = error instanceof Error ? error : new Error(String(error));
+      throw fallbackError;
     }
   }
 

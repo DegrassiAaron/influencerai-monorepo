@@ -10,8 +10,9 @@ export class StorageController {
     try {
       await this.storage.ensureBucket();
       return { ok: true };
-    } catch (e: any) {
-      throw new HttpException({ ok: false, error: String(e?.message || e) }, HttpStatus.SERVICE_UNAVAILABLE);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      throw new HttpException({ ok: false, error: message }, HttpStatus.SERVICE_UNAVAILABLE);
     }
   }
 

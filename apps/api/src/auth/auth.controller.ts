@@ -2,6 +2,7 @@ import { Body, Controller, Post, UnauthorizedException } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { Public } from './public.decorator';
+import { normalizeLoginBody } from './login-body';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -10,10 +11,8 @@ export class AuthController {
 
   @Public()
   @Post('login')
-  async login(@Body() body: any) {
-    const email = String(body?.email || '');
-    const password = String(body?.password || '');
-    const magic = String(body?.magic || '');
+  async login(@Body() body: unknown) {
+    const { email, password, magic } = normalizeLoginBody(body);
     if (magic) {
       if (!this.auth.isMagicLoginEnabled()) {
         throw new UnauthorizedException('Magic login is disabled in production');

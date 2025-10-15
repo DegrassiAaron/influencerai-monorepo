@@ -93,8 +93,8 @@ describe('Jobs Roundtrip + Redis (e2e)', () => {
       baseUrl = `http://127.0.0.1:${port}`;
 
       await (app.getHttpAdapter().getInstance() as any).ready();
-    } catch (e) {
-      console.warn('Impossibile avviare l\'app con Bull/HTTP; salto suite Roundtrip + Redis (e2e)');
+    } catch (error) {
+      console.warn('Impossibile avviare l\'app con Bull/HTTP; salto suite Roundtrip + Redis (e2e)', error);
       skipSuite = true;
       return;
     }

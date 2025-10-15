@@ -58,8 +58,8 @@ describe('Jobs + Redis (e2e)', () => {
       app = moduleFixture.createNestApplication(new FastifyAdapter());
       await app.init();
       await (app.getHttpAdapter().getInstance() as any).ready();
-    } catch (e) {
-      console.warn('Impossibile avviare l\'app con Bull abilitato; salto suite Jobs + Redis (e2e)');
+    } catch (error) {
+      console.warn('Impossibile avviare l\'app con Bull abilitato; salto suite Jobs + Redis (e2e)', error);
       skipSuite = true;
       return;
     }
@@ -78,8 +78,8 @@ describe('Jobs + Redis (e2e)', () => {
       controlQueue = new Queue('content-generation', { connection: new IORedis(redisUrl) as any });
       await controlQueue.waitUntilReady();
       await controlQueue.pause();
-    } catch (e) {
-      console.warn('Impossibile connettersi a Redis per la coda di controllo; salto suite');
+    } catch (error) {
+      console.warn('Impossibile connettersi a Redis per la coda di controllo; salto suite', error);
       skipSuite = true;
       return;
     }

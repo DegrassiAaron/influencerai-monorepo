@@ -1,10 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, LoggerService, Optional } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreateContentPlanDto, ContentPlanResponse } from './dto';
+import { CreateContentPlanDto, ContentPlanResponse, ContentPlanResponseSchema } from './dto';
 import { fetchWithTimeout, HTTPError, parseRetryAfter, shouldRetry, backoffDelay, sleep } from '../lib/http-utils';
 import { OpenRouterResponseSchema } from '../types/openrouter';
 import { ContentPlanDataSchema } from '../types/content';
-import { LoggerService, Optional } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AppConfig } from '../config/env.validation';
 
@@ -70,10 +69,10 @@ export class ContentPlansService {
           throw new HTTPError('OpenRouter invalid response shape', { status: 502, body: raw, url, method: 'POST' });
         }
         const data = parsed.data;
-        try {
-          const usage = data.usage;
-          if (usage) this.logger?.debug?.({ usage } as any, 'OpenRouter usage');
-        } catch {}
+        const usage = data.usage;
+        if (usage && typeof this.logger?.debug === 'function') {
+          this.logger.debug('OpenRouter usage', usage);
+        }
 
         const text = data.choices?.[0]?.message?.content ?? '[]';
         let normalized: { caption: string; hashtags: string[] }[] = [];
@@ -107,7 +106,9 @@ export class ContentPlansService {
   }
 
   async createPlan(input: CreateContentPlanDto): Promise<{ id: string; plan: ContentPlanResponse }> {
-    const infl = await this.prisma.influencer.findUnique({ where: { id: input.influencerId } });
+    const infl = (await this.prisma.influencer.findUnique({ where: { id: input.influencerId } })) as
+      | { tenantId: string; persona?: unknown }
+      | null;
     if (!infl) throw new NotFoundException('Influencer not found');
 
     const posts = await this.generatePlanPosts(JSON.stringify(infl.persona ?? {}), input.theme);
@@ -120,28 +121,30 @@ export class ContentPlansService {
       createdAt,
     };
 
-    const job = await this.prisma.job.create({
+    const job = (await this.prisma.job.create({
       data: {
         type: 'content-plan',
         status: 'completed',
-        payload: {
+        payload: toJsonObject({
           influencerId: input.influencerId,
           tenantId: infl.tenantId,
           theme: input.theme,
           targetPlatforms: plan.targetPlatforms,
-        } as unknown as Record<string, unknown>,
-        result: plan as unknown as Record<string, unknown>,
+        }),
+        result: toJsonObject(plan),
         finishedAt: new Date(),
       },
-    });
+    })) as { id: string };
 
     return { id: job.id, plan };
   }
 
   async getPlan(id: string): Promise<{ id: string; plan: ContentPlanResponse } | null> {
-    const job = await this.prisma.job.findUnique({ where: { id } });
+    const job = (await this.prisma.job.findUnique({ where: { id } })) as
+      | { id: string; type?: string; result: unknown }
+      | null;
     if (!job || job.type !== 'content-plan') return null;
-    const plan = job.result as unknown as ContentPlanResponse;
+    const plan = parsePlan(job.result);
     return { id: job.id, plan };
   }
 
@@ -151,17 +154,80 @@ export class ContentPlansService {
       where.payload = { path: ['influencerId'], equals: params.influencerId };
     }
 
-    const jobs = await this.prisma.job.findMany({
-      where: where as any,
+    const jobs = (await this.prisma.job.findMany({
+      where,
       orderBy: { createdAt: 'desc' },
       take: params.take ?? 20,
       skip: params.skip ?? 0,
-    });
-    return jobs.map((job: { id: string; result: unknown }) => ({
+    })) as Array<{ id: string; result: unknown }>;
+    return jobs.map((job) => ({
       id: job.id,
-      plan: job.result as unknown as ContentPlanResponse,
+      plan: parsePlan(job.result),
     }));
   }
+}
+
+function parsePlan(result: unknown): ContentPlanResponse {
+  const parsed = ContentPlanResponseSchema.safeParse(result);
+  if (parsed.success) {
+    return parsed.data;
+  }
+
+  const fallback = (result && typeof result === 'object' ? result : {}) as Record<string, unknown>;
+  const influencerId = typeof fallback.influencerId === 'string' ? fallback.influencerId : '';
+  const theme = typeof fallback.theme === 'string' ? fallback.theme : '';
+  const targetPlatforms = Array.isArray(fallback.targetPlatforms)
+    ? fallback.targetPlatforms.filter((item): item is 'instagram' | 'tiktok' | 'youtube' =>
+        item === 'instagram' || item === 'tiktok' || item === 'youtube'
+      )
+    : [];
+  const posts = Array.isArray(fallback.posts)
+    ? fallback.posts.flatMap((item) => {
+        if (!item || typeof item !== 'object') {
+          return [];
+        }
+        const entry = item as Record<string, unknown>;
+        const caption = typeof entry.caption === 'string' ? entry.caption : '';
+        const hashtags = Array.isArray(entry.hashtags)
+          ? entry.hashtags.filter((tag): tag is string => typeof tag === 'string')
+          : [];
+        return [{ caption, hashtags }];
+      })
+    : [];
+  const createdAt = typeof fallback.createdAt === 'string' ? fallback.createdAt : new Date(0).toISOString();
+
+  return { influencerId, theme, targetPlatforms, posts, createdAt };
+}
+
+type JsonValue = string | number | boolean | null | JsonObject | JsonValue[];
+type JsonObject = { [key: string]: JsonValue };
+
+function toJsonValue(value: unknown): JsonValue {
+  if (
+    value === null ||
+    typeof value === 'string' ||
+    typeof value === 'number' ||
+    typeof value === 'boolean'
+  ) {
+    return value;
+  }
+  if (value instanceof Date) {
+    return value.toISOString();
+  }
+  if (Array.isArray(value)) {
+    return value.map((item) => toJsonValue(item));
+  }
+  if (typeof value === 'object') {
+    return toJsonObject(value as Record<string, unknown>);
+  }
+  return null;
+}
+
+function toJsonObject(value: Record<string, unknown>): JsonObject {
+  return Object.entries(value).reduce<JsonObject>((acc, [key, entry]) => {
+    acc[key] = toJsonValue(entry);
+    return acc;
+  }, {});
 }
 
 async function safeReadBody(res: Response) {

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 declare module '@prisma/client' {
   export class PrismaClient {
     constructor(...args: any[]);
