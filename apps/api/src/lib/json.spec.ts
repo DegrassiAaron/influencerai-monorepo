@@ -21,6 +21,25 @@ describe('toInputJson helpers', () => {
     });
   });
 
+  it('skips undefined-like object entries while preserving other fields', () => {
+    const fn = () => 'noop';
+    const obj = toInputJsonObject({
+      keep: 'value',
+      dropUndefined: undefined,
+      dropFunction: fn,
+      dropSymbol: Symbol('token'),
+      nested: { count: 1 },
+    });
+
+    expect(obj).toEqual({ keep: 'value', nested: { count: 1 } });
+  });
+
+  it('throws when encountering unsupported values', () => {
+    expect(() => toInputJson(1n)).toThrow(TypeError);
+    expect(() => toInputJson(Symbol('x'))).toThrow(TypeError);
+    expect(() => toInputJson({ count: 1n })).toThrow(TypeError);
+  });
+
   it('enforces Prisma.InputJsonValue typings', () => {
     const value = toInputJson({ count: 1 });
     const ensureAssignable: Prisma.InputJsonValue = value;

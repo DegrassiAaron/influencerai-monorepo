@@ -1,5 +1,21 @@
 import { Prisma } from '@prisma/client';
 
+function assertSupportedPrimitive(value: unknown): void {
+  if (typeof value === 'bigint') {
+    throw new TypeError('Cannot convert bigint value to JSON');
+  }
+  if (typeof value === 'symbol') {
+    throw new TypeError('Cannot convert symbol value to JSON');
+  }
+  if (typeof value === 'function') {
+    throw new TypeError('Cannot convert function value to JSON');
+  }
+}
+
+function shouldOmitObjectEntry(value: unknown): boolean {
+  return typeof value === 'undefined' || typeof value === 'function' || typeof value === 'symbol';
+}
+
 export function toInputJson(value: unknown): Prisma.InputJsonValue {
   if (
     value === null ||
@@ -9,6 +25,8 @@ export function toInputJson(value: unknown): Prisma.InputJsonValue {
   ) {
     return value;
   }
+
+  assertSupportedPrimitive(value);
 
   if (value instanceof Date) {
     return value.toISOString();
@@ -27,6 +45,10 @@ export function toInputJson(value: unknown): Prisma.InputJsonValue {
 
 export function toInputJsonObject(value: Record<string, unknown>): Prisma.JsonObject {
   return Object.entries(value).reduce<Prisma.JsonObject>((acc, [key, entry]) => {
+    if (shouldOmitObjectEntry(entry)) {
+      return acc;
+    }
+
     acc[key] = toInputJson(entry);
     return acc;
   }, {});
