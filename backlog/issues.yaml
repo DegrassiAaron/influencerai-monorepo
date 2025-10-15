@@ -585,13 +585,13 @@ issues:
 
     ### DoD
 
-    - [ ] setupTests.ts contiene import di @testing-library/jest-dom.
+    - [x] setupTests.ts contiene import di @testing-library/jest-dom.
 
-    - [ ] Test esistenti in src/__tests__/home.test.tsx passano.
+    - [x] Test esistenti in src/__tests__/home.test.tsx passano.
 
-    - [ ] Matcher Jest-DOM funzionanti.
+    - [x] Matcher Jest-DOM funzionanti.
 
-    - [ ] Script test e test:watch configurati.
+    - [x] Script test e test:watch configurati.
 
     '
   labels:
@@ -703,13 +703,13 @@ issues:
 
     ### DoD
 
-    - [ ] Metodi listJobs, updateJob, listDatasets, createDataset, getContentPlan.
+    - [x] Metodi listJobs, updateJob, listDatasets, createDataset, getContentPlan.
 
-    - [ ] Gestione errori HTTP con traduzione in eccezioni typed.
+    - [x] Gestione errori HTTP con traduzione in eccezioni typed.
 
-    - [ ] Test unitari con msw o fetch mock.
+    - [x] Test unitari con msw o fetch mock.
 
-    - [ ] Pubblicazione interna (pnpm build) per consumo web/worker.
+    - [x] Pubblicazione interna (pnpm build) per consumo web/worker.
 
 
     ### Dipendenze
@@ -1085,11 +1085,12 @@ issues:
   impact: High
   estimate: M
   code: CODE-04
-  - title: 'WEB-07: Implementare l\'interfaccia progettata su Lovable.dev'
+
+- title: 'WEB-07: Implementare l''interfaccia progettata su Lovable.dev'
   body: '### Contesto
 
-    È stata definita un\'interfaccia utente su Lovable.dev (mockup/prototipo). Occorre
-    implementarla nell\'app web allineando layout, componenti e routing, mantenendo
+    È stata definita un''interfaccia utente su Lovable.dev (mockup/prototipo). Occorre
+    implementarla nell''app web allineando layout, componenti e routing, mantenendo
     coerenza con il design system (shadcn/ui) e le API esistenti.
 
 
