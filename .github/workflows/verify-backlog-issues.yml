@@ -1,0 +1,42 @@
+name: Verify Backlog Issues
+
+on:
+  workflow_call:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - backlog/issues.yaml
+  pull_request:
+    paths:
+      - backlog/issues.yaml
+
+permissions:
+  contents: read
+  issues: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup pnpm
+        uses: ./.github/actions/setup-pnpm
+        with:
+          version: '10.17.1'
+
+      - name: Install dependencies
+        run: pnpm -w install --frozen-lockfile --prefer-offline
+
+      - name: Verify backlog issues
+        env:
+          GH_PAT_READ: ${{ secrets.GH_PAT_READ }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: pnpm --filter @influencerai/backlog-tools exec tsx src/bin/verify.ts

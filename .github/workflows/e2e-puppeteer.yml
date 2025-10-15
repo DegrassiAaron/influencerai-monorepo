@@ -1,0 +1,83 @@
+name: E2E Puppeteer
+
+on:
+  workflow_call:
+    inputs:
+      suite:
+        description: 'Test suite to run (smoke or full)'
+        required: true
+        type: string
+  workflow_dispatch:
+    inputs:
+      suite:
+        description: 'Test suite to run'
+        required: false
+        default: smoke
+        type: choice
+        options:
+          - smoke
+          - full
+
+permissions:
+  contents: read
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      CI: 'true'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup pnpm
+        uses: ./.github/actions/setup-pnpm
+        with:
+          version: '10.17.1'
+
+      - name: Resolve pnpm store
+        id: pnpm-store
+        run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache pnpm store
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm -w install --frozen-lockfile --prefer-offline
+
+      - name: Start E2E server
+        run: |
+          pnpm --filter @influencerai/e2e run e2e:server &
+          echo $! > server.pid
+
+      - name: Wait for server
+        run: pnpm exec wait-on http://127.0.0.1:5173/healthz
+
+      - name: Run E2E tests
+        env:
+          E2E_BASE: http://127.0.0.1:5173
+          TEST_SUITE: ${{ inputs.suite || github.event.inputs.suite || 'smoke' }}
+        run: |
+          if [ "$TEST_SUITE" = "full" ]; then
+            pnpm --filter @influencerai/e2e run e2e:test
+          else
+            pnpm --filter @influencerai/e2e run e2e:test:smoke
+          fi
+
+      - name: Stop server
+        if: always()
+        run: |
+          if [ -f server.pid ]; then
+            kill $(cat server.pid) || true
+          fi
