@@ -21,7 +21,7 @@ import { AppConfig } from '../config/env.validation';
   ],
   controllers: [AuthController],
   providers: [AuthService],
-  exports: [AuthService],
+  exports: [AuthService, JwtModule],
 })
 export class AuthModule {}
 

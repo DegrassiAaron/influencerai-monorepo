@@ -1,16 +1,14 @@
 import localFont from "next/font/local";
 
-import { interFontSources } from "./font-paths";
-
 export const interFont = localFont({
   src: [
     {
-      path: interFontSources.normal,
+      path: "../../node_modules/@fontsource-variable/inter/files/inter-latin-wght-normal.woff2",
       style: "normal",
       weight: "100 900",
     },
     {
-      path: interFontSources.italic,
+      path: "../../node_modules/@fontsource-variable/inter/files/inter-latin-wght-italic.woff2",
       style: "italic",
       weight: "100 900",
     },

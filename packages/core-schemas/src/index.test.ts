@@ -22,7 +22,6 @@ describe('core schemas', () => {
     expect(spec.priority).toBe(5);
     expect(() =>
       JobSpecSchema.parse({
-        // @ts-expect-error priority should be number
         type: 'content-generation',
         payload: 'invalid',
       })
@@ -89,7 +88,6 @@ describe('core schemas', () => {
         modelName: 'sd',
         datasetPath: '/dataset',
         outputPath: '/output',
-        // @ts-expect-error invalid batch size
         batchSize: 0,
       })
     ).toThrowError();
