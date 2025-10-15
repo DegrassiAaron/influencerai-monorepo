@@ -10,6 +10,7 @@ import type {
   LoraTrainingProcessorDeps,
   ProgressState,
   TrainingProgress,
+  CommandPreview,
 } from './types';
 
 export const DEFAULT_TIMEOUT_MS = 6 * 60 * 60 * 1000; // 6 hours
@@ -106,6 +107,14 @@ export function buildKohyaCommand(
   };
 
   return { command: baseCommand, args: [...args, ...cliArgs], options };
+}
+
+export function createCommandPreview(command: KohyaCommandConfig): CommandPreview {
+  return {
+    command: command.command,
+    args: [...command.args],
+    cwd: command.options.cwd,
+  };
 }
 
 export function scheduleProgress(

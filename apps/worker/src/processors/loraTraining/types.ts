@@ -13,6 +13,13 @@ export type LoraTrainingResult = {
   outputDir?: string;
   artifacts?: { key: string; url: string; filename: string }[];
   logs?: string[];
+  command?: CommandPreview;
+};
+
+export type CommandPreview = {
+  command: string;
+  args: string[];
+  cwd?: string;
 };
 
 export type PatchJobStatusFn = (
@@ -51,6 +58,7 @@ export type LoraTrainingPayload = {
   timeoutMs?: number;
   s3Prefix?: string;
   trainingName?: string;
+  dryRun?: boolean;
 };
 
 export type LoraTrainingProcessorDeps = {
