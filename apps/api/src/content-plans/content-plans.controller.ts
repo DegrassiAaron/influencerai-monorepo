@@ -1,7 +1,6 @@
 import { BadRequestException, Controller, Get, NotFoundException, Param, Post, Body, Query, BadGatewayException, ServiceUnavailableException, RequestTimeoutException, HttpException } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ContentPlansService } from './content-plans.service';
-import { Public } from '../auth/public.decorator';
 import { CreateContentPlanSchema, ListPlansQuerySchema } from './dto';
 import { HTTPError } from '../lib/http-utils';
 

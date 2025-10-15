@@ -35,8 +35,9 @@ export class HealthService {
     try {
       await fn();
       return { ms: Date.now() - start };
-    } catch (e: any) {
-      return { ms: Date.now() - start, error: e instanceof Error ? e : new Error(String(e)) };
+    } catch (error: unknown) {
+      const wrapped = error instanceof Error ? error : new Error(String(error));
+      return { ms: Date.now() - start, error: wrapped };
     }
   }
 

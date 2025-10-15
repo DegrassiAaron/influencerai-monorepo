@@ -1,7 +1,7 @@
 import type { Job, Processor } from 'bullmq';
 import type { Logger } from 'pino';
 import type { JobResponse } from '@influencerai/sdk';
-import type { CallOpenRouter, OpenRouterMessage, OpenRouterUsage } from '../httpClient';
+import type { CallOpenRouter } from '../httpClient';
 
 export type PatchJobStatus = (
   jobId: string,
@@ -66,16 +66,20 @@ export function createContentGenerationProcessor(deps: ContentGenerationDependen
 
     const jobData = job.data ?? {};
     const jobId = typeof jobData.jobId === 'string' ? jobData.jobId : undefined;
-    const payload = (jobData.payload ?? {}) as Record<string, any>;
+    const payload = (jobData.payload ?? {}) as Record<string, unknown>;
 
     if (jobId) {
       await patchJobStatus(jobId, { status: 'running' });
     }
 
     try {
-      const persona = payload.persona ? JSON.stringify(payload.persona) : payload.personaText || '{}';
-      const context = (payload.context || payload.theme || 'general social post') as string;
-      const durationSec = Number(payload.durationSec || 15);
+      const personaValue = payload.persona;
+      const personaText = payload.personaText;
+      const persona = personaValue ? JSON.stringify(personaValue) : typeof personaText === 'string' ? personaText : '{}';
+      const contextSource = payload.context ?? payload.theme ?? 'general social post';
+      const context = typeof contextSource === 'string' ? contextSource : 'general social post';
+      const durationSource = payload.durationSec;
+      const durationSec = typeof durationSource === 'number' ? durationSource : Number(durationSource ?? 15);
 
       const captionPrompt = prompts.imageCaptionPrompt(`Persona: ${persona}\nContext/Theme: ${context}`);
       const captionResult = await callOpenRouter(
@@ -114,7 +118,7 @@ export function createContentGenerationProcessor(deps: ContentGenerationDependen
             parentJobId: jobId,
             caption,
             script,
-            persona: payload.persona ?? payload.personaText,
+            persona: personaValue ?? personaText,
             context,
             durationSec,
           });

@@ -1,19 +1,19 @@
 import { INestApplication, Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Prisma, PrismaClient } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
+import { getRequestContext } from '../lib/request-context';
+import { AppConfig } from '../config/env.validation';
 
 // Lightweight middleware parameter types compatible with multiple Prisma versions.
 // We keep these intentionally minimal while providing better typings than `any`.
 type PrismaMiddlewareParams = {
   model?: string;
   action?: string;
-  args?: Record<string, any> | undefined;
-  [key: string]: any;
+  args?: Record<string, unknown>;
+  [key: string]: unknown;
 };
 
-type PrismaMiddlewareNext = (params: PrismaMiddlewareParams) => Promise<any>;
-import { getRequestContext } from '../lib/request-context';
-import { AppConfig } from '../config/env.validation';
+type PrismaMiddlewareNext = (params: PrismaMiddlewareParams) => Promise<unknown>;
 
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
@@ -47,33 +47,34 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
           if (!modelsWithTenant[params.model || '']) {
             return next(params);
           }
+          const args = ensureRecord(params.args);
+          params.args = args;
           if (params.action === 'findMany') {
-            params.args = params.args || {};
-            params.args.where = params.args.where || {};
-            params.args.where.tenantId = tenantId;
+            const where = ensureRecord(args.where);
+            where.tenantId = tenantId;
+            args.where = where;
           }
           if (params.action === 'findUnique' || params.action === 'findFirst') {
-            params.args = params.args || {};
-            params.args.where = params.args.where || {};
-            if (!params.args.where.tenantId) {
-              // Strengthen filter to current tenant
-              params.args.where.tenantId = tenantId;
+            const where = ensureRecord(args.where);
+            if (typeof where.tenantId === 'undefined') {
+              where.tenantId = tenantId;
             }
+            args.where = where;
           }
           if (params.action === 'create') {
-            params.args = params.args || {};
-            params.args.data = params.args.data || {};
-            params.args.data.tenantId = tenantId;
+            const data = ensureRecord(args.data);
+            data.tenantId = tenantId;
+            args.data = data;
           }
           if (params.action === 'updateMany' || params.action === 'update') {
-            params.args = params.args || {};
-            params.args.where = params.args.where || {};
-            params.args.where.tenantId = tenantId;
+            const where = ensureRecord(args.where);
+            where.tenantId = tenantId;
+            args.where = where;
           }
           if (params.action === 'deleteMany' || params.action === 'delete') {
-            params.args = params.args || {};
-            params.args.where = params.args.where || {};
-            params.args.where.tenantId = tenantId;
+            const where = ensureRecord(args.where);
+            where.tenantId = tenantId;
+            args.where = where;
           }
           return next(params);
         };
@@ -81,13 +82,22 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
 
       const scopingMiddleware = applyScoping();
 
-      if (typeof (this as any).$extends === 'function') {
+      const clientWithExtensions = this as unknown as {
+        $extends?: (extension: {
+          query: {
+            $allModels: (params: PrismaMiddlewareParams, next: PrismaMiddlewareNext) => Promise<unknown>;
+          };
+        }) => unknown;
+        $use?: (middleware: (params: PrismaMiddlewareParams, next: PrismaMiddlewareNext) => Promise<unknown>) => unknown;
+      };
+
+      if (typeof clientWithExtensions.$extends === 'function') {
         // For Prisma clients or test mocks that provide $extends, register a query extension that
         // delegates to our multi-tenant scoping middleware.
         try {
           // Some Prisma versions expect an extension object; pass a lightweight extension that
           // proxies all queries through the tenant scoping middleware.
-          (this as any).$extends({
+          clientWithExtensions.$extends({
             query: {
               $allModels: (params: PrismaMiddlewareParams, next: PrismaMiddlewareNext) =>
                 scopingMiddleware(params, next),
@@ -96,8 +106,8 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
         } catch {
           // ignore if $extends invocation isn't supported in this runtime
         }
-      } else if (typeof (this as any).$use === 'function') {
-        (this as any).$use(scopingMiddleware);
+      } else if (typeof clientWithExtensions.$use === 'function') {
+        clientWithExtensions.$use(scopingMiddleware);
       }
       await this.$connect();
       this.logger.log(`Connected to database: ${this.maskDatabaseUrl(this.databaseUrl)}`);
@@ -152,45 +162,67 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
 }
 
 // Exported helper used by unit tests to validate tenant scoping behavior without a full Prisma client.
+type TenantScopedOperationArgs = {
+  model: string;
+  operation?: string;
+  args?: Record<string, unknown>;
+  query: (args: Record<string, unknown>) => Promise<unknown>;
+};
+
 export const tenantScopedOperations = {
-  async findMany({ model, args, operation, query }: { model: string; operation?: string; args?: any; query: (a: any) => Promise<any> }) {
+  async findMany({ model, args, query }: TenantScopedOperationArgs) {
     const ctx = getRequestContext();
     const tenantId = ctx.tenantId;
-    args = args || {};
-    args.where = args.where || {};
+    const normalizedArgs = ensureRecord(args);
+    const where = ensureRecord(normalizedArgs.where);
     if (tenantId && ['Influencer', 'Dataset', 'User', 'Job'].includes(model)) {
-      args.where.tenantId = tenantId;
+      where.tenantId = tenantId;
     }
-    return query(args);
+    normalizedArgs.where = where;
+    return query(normalizedArgs);
   },
-  async findUnique({ model, args, operation, query }: { model: string; operation?: string; args?: any; query: (a: any) => Promise<any> }) {
+  async findUnique({ model, args, query }: TenantScopedOperationArgs) {
     const ctx = getRequestContext();
     const tenantId = ctx.tenantId;
-    args = args || {};
-    args.where = args.where || {};
+    const normalizedArgs = ensureRecord(args);
+    const where = ensureRecord(normalizedArgs.where);
     if (tenantId && ['Influencer', 'Dataset', 'User', 'Job'].includes(model)) {
-      args.where.tenantId = args.where.tenantId || tenantId;
+      if (typeof where.tenantId === 'undefined') {
+        where.tenantId = tenantId;
+      }
     }
-    return query(args);
+    normalizedArgs.where = where;
+    return query(normalizedArgs);
   },
-  async create({ model, args, operation, query }: { model: string; operation?: string; args?: any; query: (a: any) => Promise<any> }) {
+  async create({ model, args, query }: TenantScopedOperationArgs) {
     const ctx = getRequestContext();
     const tenantId = ctx.tenantId;
-    args = args || {};
-    args.data = args.data || {};
+    const normalizedArgs = ensureRecord(args);
+    const data = ensureRecord(normalizedArgs.data);
     if (tenantId && ['Influencer', 'Dataset', 'User', 'Job'].includes(model)) {
-      args.data.tenantId = tenantId;
+      data.tenantId = tenantId;
     }
-    return query(args);
+    normalizedArgs.data = data;
+    return query(normalizedArgs);
   },
-  async update({ model, args, operation, query }: { model: string; operation?: string; args?: any; query: (a: any) => Promise<any> }) {
+  async update({ model, args, query }: TenantScopedOperationArgs) {
     const ctx = getRequestContext();
     const tenantId = ctx.tenantId;
-    args = args || {};
-    args.where = args.where || {};
+    const normalizedArgs = ensureRecord(args);
+    const where = ensureRecord(normalizedArgs.where);
     if (tenantId && ['Influencer', 'Dataset', 'User', 'Job'].includes(model)) {
-      args.where.tenantId = args.where.tenantId || tenantId;
+      if (typeof where.tenantId === 'undefined') {
+        where.tenantId = tenantId;
+      }
     }
-    return query(args);
+    normalizedArgs.where = where;
+    return query(normalizedArgs);
   },
 };
+
+function ensureRecord(value: unknown): Record<string, unknown> {
+  if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+    return value as Record<string, unknown>;
+  }
+  return {};
+}

@@ -5,6 +5,9 @@ import { PrismaService } from '../prisma/prisma.service';
 import { JobSeriesQuery, ListJobsQuery, UpdateJobDto } from './dto';
 import { ConfigService } from '@nestjs/config';
 import { AppConfig } from '../config/env.validation';
+type JsonValue = string | number | boolean | null | JsonObject | JsonArray;
+type JsonArray = JsonValue[];
+type JsonObject = { [key: string]: JsonValue };
 
 type JobType = 'content-generation' | 'lora-training' | 'video-generation';
 
@@ -24,12 +27,14 @@ export class JobsService {
       data: {
         type: input.type,
         status: 'pending',
-        payload: input.payload as any,
+        payload: toJsonValue(input.payload),
       },
     });
 
     const queue = this.getQueue(input.type);
-    this.logger?.debug?.({ jobId: job.id, type: input.type } as any, 'Enqueueing job');
+    if (typeof this.logger?.debug === 'function') {
+      this.logger.debug('Enqueueing job', { jobId: job.id, type: input.type });
+    }
     const attempts = this.config.get('WORKER_JOB_ATTEMPTS', { infer: true });
     const backoffDelay = this.config.get('WORKER_JOB_BACKOFF_DELAY_MS', { infer: true });
     await queue.add(
@@ -62,7 +67,7 @@ export class JobsService {
   }
 
   async getJobSeries(params: JobSeriesQuery) {
-    const { amount, unit, unitMs, unitName } = this.parseWindow(params.window);
+    const { amount, unitMs, unitName } = this.parseWindow(params.window);
     const now = new Date();
     const currentBucket = this.truncateToUnit(now, unitName);
     const from = new Date(currentBucket.getTime() - (amount - 1) * unitMs);
@@ -112,7 +117,7 @@ export class JobsService {
   async updateJob(id: string, input: UpdateJobDto) {
     const data: Record<string, unknown> = {};
     if (typeof input.status !== 'undefined') data.status = input.status;
-    if (typeof input.result !== 'undefined') data.result = input.result as any;
+    if (typeof input.result !== 'undefined') data.result = toJsonValue(input.result);
     if (typeof input.costTok !== 'undefined') data.costTok = input.costTok;
 
     // Auto-manage timestamps for common status transitions
@@ -131,9 +136,12 @@ export class JobsService {
 
     try {
       return await this.prisma.job.update({ where: { id }, data });
-    } catch (e) {
+    } catch (error) {
+      if (typeof this.logger?.warn === 'function') {
+        this.logger.warn('Job update failed', error instanceof Error ? error : new Error(String(error)));
+      }
       // Prisma throws if record not found
-      return null as any;
+      return null;
     }
   }
 
@@ -160,17 +168,17 @@ export class JobsService {
       throw new Error('Window amount must be a positive integer.');
     }
 
-    const unit = match[2] as 'm' | 'h' | 'd';
-    const unitConfig: Record<typeof unit, { unitMs: number; unitName: 'minute' | 'hour' | 'day' }>
+    const unitKey = match[2] as 'm' | 'h' | 'd';
+    const unitConfig: Record<'m' | 'h' | 'd', { unitMs: number; unitName: 'minute' | 'hour' | 'day' }>
       = {
         m: { unitMs: 60 * 1000, unitName: 'minute' },
         h: { unitMs: 60 * 60 * 1000, unitName: 'hour' },
         d: { unitMs: 24 * 60 * 60 * 1000, unitName: 'day' },
       };
 
-    const { unitMs, unitName } = unitConfig[unit];
+    const { unitMs, unitName } = unitConfig[unitKey];
 
-    return { amount, unit, unitMs, unitName };
+    return { amount, unit: unitKey, unitMs, unitName };
   }
 
   private truncateToUnit(date: Date, unit: 'minute' | 'hour' | 'day') {
@@ -184,4 +192,32 @@ export class JobsService {
     }
     return copy;
   }
+}
+
+function toJsonValue(value: unknown): JsonValue {
+  if (
+    value === null ||
+    typeof value === 'string' ||
+    typeof value === 'number' ||
+    typeof value === 'boolean'
+  ) {
+    return value;
+  }
+
+  if (value instanceof Date) {
+    return value.toISOString();
+  }
+
+  if (Array.isArray(value)) {
+    return value.map((item) => toJsonValue(item)) as JsonArray;
+  }
+
+  if (typeof value === 'object') {
+    return Object.entries(value as Record<string, unknown>).reduce<JsonObject>((acc, [key, val]) => {
+      acc[key] = toJsonValue(val);
+      return acc;
+    }, {});
+  }
+
+  return null;
 }

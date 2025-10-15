@@ -86,8 +86,8 @@ describe('Jobs Roundtrip with Real Worker (e2e)', () => {
       const port = typeof addr === 'object' ? addr.port : 0;
       baseUrl = `http://127.0.0.1:${port}`;
       await (app.getHttpAdapter().getInstance() as any).ready();
-    } catch (e) {
-      console.warn('Impossibile avviare l\'app; salto suite Real Worker Roundtrip (e2e)');
+    } catch (error) {
+      console.warn('Impossibile avviare l\'app; salto suite Real Worker Roundtrip (e2e)', error);
       skipSuite = true;
       return;
     }
@@ -129,8 +129,8 @@ describe('Jobs Roundtrip with Real Worker (e2e)', () => {
       });
       // Optional: wait a bit for worker to boot
       await new Promise((r) => setTimeout(r, 500));
-    } catch (e) {
-      console.warn('Impossibile avviare il worker reale; salto suite');
+    } catch (error) {
+      console.warn('Impossibile avviare il worker reale; salto suite', error);
       skipSuite = true;
       return;
     }

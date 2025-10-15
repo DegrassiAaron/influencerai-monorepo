@@ -8,7 +8,7 @@ export const CreateDatasetSchema = z.object({
   kind: z.string().min(1),
   filename: z.string().min(1),
   contentType: z.string().optional(),
-  meta: z.record(z.any()).optional(),
+  meta: z.record(z.unknown()).optional(),
 });
 export type CreateDatasetDto = z.infer<typeof CreateDatasetSchema>;
 
@@ -33,7 +33,7 @@ export class DatasetsService {
       data: {
         kind: input.kind,
         path: key,
-        meta: { filename: input.filename, contentType: input.contentType, ...(input.meta || {}) } as any,
+        meta: { filename: input.filename, contentType: input.contentType, ...(input.meta || {}) },
         status: 'pending',
       },
     });
@@ -45,7 +45,7 @@ export class DatasetsService {
     }
 
     const uploadUrl = await this.storage.getPresignedPutUrl({ key: finalKey, contentType: input.contentType });
-    return { id: ds.id, uploadUrl, key: finalKey, bucket: (this as any).storage['bucket'] };
+    return { id: ds.id, uploadUrl, key: finalKey, bucket: this.storage.getBucketName() };
   }
 
   async updateStatus(id: string, input: UpdateDatasetStatusDto) {

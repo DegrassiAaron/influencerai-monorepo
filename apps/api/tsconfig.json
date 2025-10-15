@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
-  "module": "Node16",
-  "moduleResolution": "node16",
+    "module": "Node16",
+    "moduleResolution": "node16",
     "declaration": true,
     "removeComments": true,
     "emitDecoratorMetadata": true,
@@ -19,6 +19,7 @@
     "strictBindCallApply": true,
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": true,
+    "isolatedModules": true,
     "paths": {
       "@influencerai/core-schemas": ["../../packages/core-schemas/src"]
     }
