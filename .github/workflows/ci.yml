@@ -19,6 +19,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
   prepare:
     name: Prepare diff context
@@ -343,6 +346,9 @@ jobs:
     name: Verify backlog issues
     needs: prepare
     if: needs.prepare.outputs.backlog_changed == 'true'
+    permissions:
+      contents: read
+      issues: read
     uses: ./.github/workflows/verify-backlog-issues.yml
     secrets: inherit
 
@@ -351,6 +357,9 @@ jobs:
     needs:
       - verify-backlog
     if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.prepare.outputs.backlog_changed == 'true'
+    permissions:
+      contents: read
+      issues: write
     uses: ./.github/workflows/sync-backlog-issues.yml
     secrets: inherit
 
