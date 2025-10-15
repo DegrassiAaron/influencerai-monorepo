@@ -1,11 +1,11 @@
-﻿import { Test, TestingModule } from '@nestjs/testing';
-import { APP_GUARD } from '@nestjs/core';
+import { Test, TestingModule } from '@nestjs/testing';
 import { FastifyAdapter } from '@nestjs/platform-fastify';
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { JobsService } from '../src/jobs/jobs.service';
 import { PrismaService } from '../src/prisma/prisma.service';
+import { getAuthHeader } from './utils/test-auth';
 
 describe('Jobs (e2e)', () => {
   let app: INestApplication;
@@ -23,8 +23,6 @@ describe('Jobs (e2e)', () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     })
-      .overrideProvider(APP_GUARD)
-      .useValue({ canActivate: () => true })
       .overrideProvider(JobsService)
       .useValue(jobsServiceMock)
       .overrideProvider(PrismaService)
@@ -43,6 +41,7 @@ describe('Jobs (e2e)', () => {
   it('POST /jobs creates a job and enqueues', async () => {
     const res = await request(app.getHttpServer())
       .post('/jobs')
+      .set(getAuthHeader())
       .send({ type: 'content-generation', payload: { foo: 'bar' } })
       .expect(201);
     expect(res.body).toMatchObject({ id: 'job_2', type: 'content-generation', status: 'pending' });
@@ -51,6 +50,7 @@ describe('Jobs (e2e)', () => {
   it('GET /jobs lists jobs', async () => {
     const res = await request(app.getHttpServer())
       .get('/jobs')
+      .set(getAuthHeader())
       .expect(200);
     expect(Array.isArray(res.body)).toBe(true);
     expect(res.body[0]).toMatchObject({ id: 'job_1' });
@@ -59,6 +59,7 @@ describe('Jobs (e2e)', () => {
   it('GET /jobs/:id returns job', async () => {
     const res = await request(app.getHttpServer())
       .get('/jobs/job_42')
+      .set(getAuthHeader())
       .expect(200);
     expect(res.body).toMatchObject({ id: 'job_42' });
   });

@@ -1,5 +1,4 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { APP_GUARD } from '@nestjs/core';
 import { INestApplication } from '@nestjs/common';
 import { FastifyAdapter } from '@nestjs/platform-fastify';
 import request from 'supertest';
@@ -7,6 +6,7 @@ import { AppModule } from '../src/app.module';
 import { getQueueToken } from '@nestjs/bullmq';
 import { ContentPlansService } from '../src/content-plans/content-plans.service';
 import { PrismaService } from '../src/prisma/prisma.service';
+import { getAuthHeader } from './utils/test-auth';
 
 describe('Content Plans (e2e)', () => {
   let app: INestApplication;
@@ -43,8 +43,6 @@ describe('Content Plans (e2e)', () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     })
-      .overrideProvider(APP_GUARD)
-      .useValue({ canActivate: () => true })
       .overrideProvider(getQueueToken('content-generation')).useValue({ add: jest.fn(async () => null) })
       .overrideProvider(getQueueToken('lora-training')).useValue({ add: jest.fn(async () => null) })
       .overrideProvider(getQueueToken('video-generation')).useValue({ add: jest.fn(async () => null) })
@@ -64,6 +62,7 @@ describe('Content Plans (e2e)', () => {
   it('POST /content-plans creates a plan', async () => {
     const res = await request(app.getHttpServer())
       .post('/content-plans')
+      .set(getAuthHeader())
       .send({ influencerId: 'inf_1', theme: 'tech' })
       .expect(201);
     expect(res.body.id).toBe('cp_1');
@@ -71,12 +70,18 @@ describe('Content Plans (e2e)', () => {
   });
 
   it('GET /content-plans lists plans', async () => {
-    const res = await request(app.getHttpServer()).get('/content-plans').expect(200);
+    const res = await request(app.getHttpServer())
+      .get('/content-plans')
+      .set(getAuthHeader())
+      .expect(200);
     expect(Array.isArray(res.body)).toBe(true);
   });
 
   it('GET /content-plans/:id returns a plan', async () => {
-    const res = await request(app.getHttpServer()).get('/content-plans/cp_1').expect(200);
+    const res = await request(app.getHttpServer())
+      .get('/content-plans/cp_1')
+      .set(getAuthHeader())
+      .expect(200);
     expect(res.body.id).toBe('cp_1');
   });
 });

@@ -1,10 +1,11 @@
-﻿import { Test, TestingModule } from '@nestjs/testing';
+import { Test, TestingModule } from '@nestjs/testing';
 import { FastifyAdapter } from '@nestjs/platform-fastify';
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { getQueueToken } from '@nestjs/bullmq';
 import { PrismaService } from '../src/prisma/prisma.service';
+import { getAuthHeader } from './utils/test-auth';
 
 describe('Health (e2e)', () => {
   let app: INestApplication | undefined;
@@ -41,7 +42,7 @@ describe('Health (e2e)', () => {
   });
 
   it('/health (GET)', async () => {
-    const res = await request(app!.getHttpServer()).get('/health');
+    const res = await request(app!.getHttpServer()).get('/health').set(getAuthHeader());
     expect(res.status).toBe(200);
     expect(res.body).toEqual({ status: 'ok', timestamp: expect.any(String) });
   });

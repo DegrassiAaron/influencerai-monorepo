@@ -1,11 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, CanActivate } from '@nestjs/common';
+import { INestApplication } from '@nestjs/common';
 import { FastifyAdapter } from '@nestjs/platform-fastify';
 import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { PrismaService } from '../src/prisma/prisma.service';
 import { StorageService } from '../src/storage/storage.service';
-import { APP_GUARD } from '@nestjs/core';
+import { getAuthHeader } from './utils/test-auth';
 
 describe('Datasets (e2e)', () => {
   let app: INestApplication;
@@ -44,11 +44,9 @@ describe('Datasets (e2e)', () => {
     };
 
     const storageMock: Partial<StorageService> = {
+      getBucketName: jest.fn(() => 'datasets-test'),
       getPresignedPutUrl: jest.fn(async ({ key }: any) => `http://minio.local/presign/${encodeURIComponent(key)}`),
     };
-
-    // Guard that allows all requests (bypass JWT in tests)
-    class AllowAllGuard implements CanActivate { canActivate() { return true; } }
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
@@ -57,8 +55,6 @@ describe('Datasets (e2e)', () => {
       .useValue(prismaMock)
       .overrideProvider(StorageService)
       .useValue(storageMock)
-      .overrideProvider(APP_GUARD)
-      .useClass(AllowAllGuard)
       .compile();
 
     app = moduleFixture.createNestApplication(new FastifyAdapter());
@@ -73,6 +69,7 @@ describe('Datasets (e2e)', () => {
   it('POST /datasets creates a dataset and returns presigned URL', async () => {
     const res = await request(app.getHttpServer())
       .post('/datasets')
+      .set(getAuthHeader())
       .send({ kind: 'training', filename: 'dataset.zip', contentType: 'application/zip' })
       .expect(201);
 
@@ -84,6 +81,7 @@ describe('Datasets (e2e)', () => {
   it('PATCH /datasets/:id/status updates status', async () => {
     const res = await request(app.getHttpServer())
       .patch('/datasets/ds_123/status')
+      .set(getAuthHeader())
       .send({ status: 'ready' })
       .expect(200);
     expect(res.body).toMatchObject({ id: 'ds_123', status: 'ready' });

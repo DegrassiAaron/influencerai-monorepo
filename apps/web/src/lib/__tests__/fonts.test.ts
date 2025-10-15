@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const localFontMock = vi.fn((options: unknown) => ({
   className: "mocked-font",
@@ -10,26 +10,13 @@ vi.mock("next/font/local", () => ({
   default: localFontMock,
 }));
 
-vi.mock("../font-paths", () => ({
-  interFontSources: {
-    normal: "/mocked/path/@fontsource-variable/inter/files/inter-latin-wght-normal.woff2",
-    italic: "/mocked/path/@fontsource-variable/inter/files/inter-latin-wght-italic.woff2",
-  },
-}));
-
 describe("fonts configuration", () => {
-  const expectedNormalPath = "/mocked/path/@fontsource-variable/inter/files/inter-latin-wght-normal.woff2";
-  const expectedItalicPath = "/mocked/path/@fontsource-variable/inter/files/inter-latin-wght-italic.woff2";
+  const expectedNormalPath = "../../node_modules/@fontsource-variable/inter/files/inter-latin-wght-normal.woff2";
+  const expectedItalicPath = "../../node_modules/@fontsource-variable/inter/files/inter-latin-wght-italic.woff2";
 
   beforeEach(() => {
     vi.resetModules();
     localFontMock.mockClear();
-    globalThis.__influenceraiResolveFont__ = (specifier: string) =>
-      `/mocked/path/${specifier}`;
-  });
-
-  afterEach(() => {
-    delete globalThis.__influenceraiResolveFont__;
   });
 
   it("loads the Inter font from the package assets", async () => {

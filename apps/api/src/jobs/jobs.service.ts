@@ -1,4 +1,4 @@
-import { Injectable, LoggerService, Optional } from '@nestjs/common';
+import { Injectable, Optional, type LoggerService } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { PrismaService } from '../prisma/prisma.service';

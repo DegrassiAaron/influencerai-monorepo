@@ -5,6 +5,7 @@ import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { getQueueToken } from '@nestjs/bullmq';
 import { PrismaService } from '../src/prisma/prisma.service';
+import { getAuthHeader } from './utils/test-auth';
 
 describe('Content Plans with OpenRouter (fetch mock) (e2e)', () => {
   let app: INestApplication;
@@ -54,6 +55,7 @@ describe('Content Plans with OpenRouter (fetch mock) (e2e)', () => {
   it('POST /content-plans uses OpenRouter and returns 201', async () => {
     const res = await request(app.getHttpServer())
       .post('/content-plans')
+      .set(getAuthHeader())
       .send({ influencerId: 'inf_1', theme: 'tech' })
       .expect(201);
     expect(res.body.plan.posts[0]).toEqual({ caption: 'nock-post', hashtags: ['h'] });
@@ -120,6 +122,7 @@ describe('Content Plans with OpenRouter retry 429→200 (fetch mock) (e2e)', () 
   it('POST /content-plans eventually succeeds after 429', async () => {
     const res = await request(app.getHttpServer())
       .post('/content-plans')
+      .set(getAuthHeader())
       .send({ influencerId: 'inf_1', theme: 'tech' })
       .expect(201);
     expect(res.body.plan.posts[0]).toEqual({ caption: 'nock-ok', hashtags: ['ok'] });

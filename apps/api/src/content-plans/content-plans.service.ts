@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, LoggerService, Optional } from '@nestjs/common';
+import { Injectable, NotFoundException, Optional, type LoggerService } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateContentPlanDto, ContentPlanResponse, ContentPlanResponseSchema } from './dto';
 import { fetchWithTimeout, HTTPError, parseRetryAfter, shouldRetry, backoffDelay, sleep } from '../lib/http-utils';
