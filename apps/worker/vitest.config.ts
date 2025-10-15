@@ -7,6 +7,7 @@ const rootDir = dirname(fileURLToPath(import.meta.url));
 export default defineConfig({
   resolve: {
     alias: {
+      '@influencerai/core-schemas': resolve(rootDir, '../../packages/core-schemas/src/index.ts'),
       '@influencerai/sdk': resolve(rootDir, '../../packages/sdk/src/index.ts'),
       '@influencerai/prompts': resolve(rootDir, '../../packages/prompts/src/index.ts'),
     },
