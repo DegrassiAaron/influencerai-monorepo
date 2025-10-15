@@ -1,5 +1,5 @@
 import { readFile } from 'node:fs/promises';
-import { parse } from 'yaml';
+import { createYamlParser } from './yaml-parser.js';
 import type { BacklogIssue } from './types.js';
 
 interface RawBacklogIssue {
@@ -101,8 +101,10 @@ export async function loadBacklogIssues(backlogPath: string): Promise<BacklogIss
   return parseBacklog(content);
 }
 
+const parseYaml = createYamlParser();
+
 export function parseBacklog(yamlContent: string): BacklogIssue[] {
-  const document = parse(yamlContent) as RawBacklogFile;
+  const document = parseYaml(yamlContent) as RawBacklogFile;
   const { issues } = document;
 
   if (!Array.isArray(issues)) {
