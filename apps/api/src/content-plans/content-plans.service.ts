@@ -92,13 +92,14 @@ export class ContentPlansService {
         }
         return normalized;
       } catch (err: unknown) {
-        lastError = err;
+        const normalizedError = toHttpError(err, url, this.logger);
+        lastError = normalizedError;
         // Network/timeout errors: retry until attempts exhausted
         if (attempt < maxAttempts) {
           await sleep(backoffDelay(attempt, backoffBaseMs, backoffJitterMs));
           continue;
         }
-        throw err;
+        throw normalizedError;
       }
     }
     // Fallback, should not reach
@@ -208,4 +209,52 @@ async function safeReadBody(res: Response) {
   } catch {
     return null;
   }
+}
+
+function toHttpError(err: unknown, url: string, logger?: LoggerService): HTTPError {
+  if (err instanceof HTTPError) {
+    return err;
+  }
+
+  if (typeof logger?.error === 'function') {
+    logger.error('OpenRouter request network error', err);
+  }
+
+  const body = normalizeErrorBody(err);
+  return new HTTPError('OpenRouter request network error', {
+    status: 503,
+    body,
+    url,
+    method: 'POST',
+  });
+}
+
+function normalizeErrorBody(err: unknown): Record<string, unknown> | undefined {
+  if (err instanceof Error) {
+    const body: Record<string, unknown> = {
+      name: err.name,
+      message: err.message,
+    };
+    if ('code' in err) {
+      const code = (err as any).code;
+      if (typeof code !== 'undefined') {
+        body.code = code;
+      }
+    }
+    return body;
+  }
+
+  if (err && typeof err === 'object') {
+    return err as Record<string, unknown>;
+  }
+
+  if (typeof err === 'string') {
+    return { message: err };
+  }
+
+  if (typeof err === 'number' || typeof err === 'boolean') {
+    return { value: err };
+  }
+
+  return undefined;
 }
