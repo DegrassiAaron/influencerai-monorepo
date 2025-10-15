@@ -242,7 +242,6 @@ jobs:
           --health-interval 15s
           --health-timeout 10s
           --health-retries 10
-        command: server /data --console-address ":9001"
     env:
       CI: 'true'
       CI_BASE_SHA: ${{ needs.prepare.outputs.base_sha }}
