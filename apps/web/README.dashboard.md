@@ -74,4 +74,6 @@ export function Providers({ children }: { children: React.ReactNode }) {
     actions, breadcrumb trail, and responsive mobile navigation.
   - To onboard a new view, place the page under `src/app/(dashboard)/` and render its content directly—the shell handles padding,
     chrome, and breadcrumbs.
-  - Navigation items live in `src/components/layout/nav-config.ts`; update this file to surface new primary or support links.
+- Navigation items live in `src/components/layout/nav-config.ts`; update this file to surface new primary or support links.
+- Breadcrumb labels reuse the titles declared in `nav-config.ts`, keeping sidebar and breadcrumb terminology in sync. Use the
+  overrides map in `app-breadcrumbs.tsx` for single-route tweaks (e.g. `/login`).
