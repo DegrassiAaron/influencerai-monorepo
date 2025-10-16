@@ -141,11 +141,10 @@ vi.mock('./processors/videoGeneration', () => ({
   createVideoGenerationProcessor: createVideoGenerationProcessorMock,
 }));
 
-vi.mock('./monitoring', () => ({
-  createMonitoringServer: createMonitoringServerMock,
 const startMonitoringMock = vi.fn().mockResolvedValue({ close: vi.fn() });
 
 vi.mock('./monitoring', () => ({
+  createMonitoringServer: createMonitoringServerMock,
   startMonitoring: startMonitoringMock,
 }));
 
