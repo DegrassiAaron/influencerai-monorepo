@@ -9,12 +9,21 @@ const coerceOptionalBoolean = (value: BooleanLike): boolean | undefined => {
   if (value === undefined || value === null) {
     return undefined;
   }
+
   if (typeof value === 'boolean') {
     return value;
   }
+
   if (typeof value === 'number') {
-    return value !== 0;
+    if (value === 1) {
+      return true;
+    }
+    if (value === 0) {
+      return false;
+    }
+    throw new Error('Invalid boolean value');
   }
+
   if (typeof value === 'string') {
     const normalized = value.trim().toLowerCase();
     if (truthyStrings.has(normalized)) {
@@ -23,9 +32,10 @@ const coerceOptionalBoolean = (value: BooleanLike): boolean | undefined => {
     if (falsyStrings.has(normalized)) {
       return false;
     }
-    return false;
+    throw new Error('Invalid boolean value');
   }
-  return false;
+
+  throw new Error('Invalid boolean value');
 };
 
 const normalizeNodeEnv = (value: unknown): 'development' | 'production' | 'test' => {

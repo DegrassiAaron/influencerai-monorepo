@@ -36,6 +36,17 @@ describe('validateEnv', () => {
     expect(env.LOG_LEVEL).toBe('info');
   });
 
+  it('rejects invalid boolean-like inputs', () => {
+    expect(() =>
+      validateEnv({
+        DATABASE_URL: 'postgresql://user:pass@localhost:5432/db',
+        NODE_ENV: 'production',
+        SKIP_S3_INIT: 'treu',
+        OPENROUTER_API_KEY: 'sk-test',
+      }),
+    ).toThrow(/boolean/i);
+  });
+
   it('throws when OPENROUTER_API_KEY is missing outside test environments', () => {
     expect(() =>
       validateEnv({
@@ -96,6 +107,15 @@ describe('validateEnv', () => {
           DISABLE_BULL: 'Yes',
         }),
       ).toBe(false);
+    });
+
+    it('throws when DISABLE_BULL is an invalid boolean-like value', () => {
+      expect(() =>
+        computeBullEnabled({
+          NODE_ENV: 'development',
+          DISABLE_BULL: 'nah',
+        }),
+      ).toThrow(/boolean/i);
     });
   });
 });
