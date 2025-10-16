@@ -293,6 +293,9 @@ importers:
       '@bull-board/api':
         specifier: ^6.6.4
         version: 6.13.1(@bull-board/ui@6.13.1)
+      '@bull-board/express':
+        specifier: ^6.6.3
+        version: 6.13.1
       '@bull-board/fastify':
         specifier: ^6.6.4
         version: 6.13.1
@@ -311,6 +314,9 @@ importers:
       bullmq:
         specifier: ^5.38.2
         version: 5.59.0
+      express:
+        specifier: ^4.19.2
+        version: 4.21.2
       fastify:
         specifier: ^5.1.0
         version: 5.6.1
@@ -853,6 +859,9 @@ packages:
     resolution: {integrity: sha512-L9Ukfd/gxg8VIUb+vXRcU31yJsAaLLKG2qU/OMXQJ5EoXm2JhWBat+26YgrH/oKIb9zbZsg8xwHyqxa7sHEkVg==}
     peerDependencies:
       '@bull-board/ui': 6.13.1
+
+  '@bull-board/express@6.13.1':
+    resolution: {integrity: sha512-wipvCsdeMdcgWVc77qrs858OjyGo7IAjJxuuWd4q5dvciFmTU1fmfZddWuZ1jDWpq5P7KdcpGxjzF1vnd2GaUw==}
 
   '@bull-board/fastify@6.13.1':
     resolution: {integrity: sha512-71lFmWX4SG6cOrgQMmow2oX4nflDrHDvZkU6Xt67l30/TZHX6t1rU11y0WtOgmuifM1K4WiRIQqMBwr4oswUyA==}
@@ -8101,6 +8110,15 @@ snapshots:
     dependencies:
       '@bull-board/ui': 6.13.1
       redis-info: 3.1.0
+
+  '@bull-board/express@6.13.1':
+    dependencies:
+      '@bull-board/api': 6.13.1(@bull-board/ui@6.13.1)
+      '@bull-board/ui': 6.13.1
+      ejs: 3.1.10
+      express: 4.21.2
+    transitivePeerDependencies:
+      - supports-color
 
   '@bull-board/fastify@6.13.1':
     dependencies:
