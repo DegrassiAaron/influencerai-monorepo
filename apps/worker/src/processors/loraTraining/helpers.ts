@@ -15,6 +15,8 @@ import type {
 
 export const DEFAULT_TIMEOUT_MS = 6 * 60 * 60 * 1000; // 6 hours
 const PROGRESS_INTERVAL_MS = 1000;
+const PROGRESS_LOG_HISTORY_LIMIT = 50;
+const PROGRESS_PATCH_LOG_LIMIT = 20;
 const SIGNED_URL_EXPIRY_SECONDS = 7 * 24 * 3600; // 7 days
 
 export function coercePayload(payload: Record<string, unknown> | undefined): LoraTrainingPayload {
@@ -124,19 +126,30 @@ export function scheduleProgress(
   state: ProgressState
 ) {
   if (!jobId) return;
-  const now = deps.now ? deps.now() : Date.now();
+  const getNow = () => (deps.now ? deps.now() : Date.now());
+  const appendLog = (message: string | undefined) => {
+    if (!message) return;
+    state.logs.push(message);
+    if (state.logs.length > PROGRESS_LOG_HISTORY_LIMIT) {
+      state.logs.splice(0, state.logs.length - PROGRESS_LOG_HISTORY_LIMIT);
+    }
+  };
+  const collectProgressLogs = () => state.logs.filter(Boolean).slice(-PROGRESS_PATCH_LOG_LIMIT);
   const send = (payload: TrainingProgress) => {
-    state.lastUpdate = now;
+    const sentAt = getNow();
+    state.lastUpdate = sentAt;
+    const logs = collectProgressLogs();
+    const progressPayload = logs.length ? { ...payload, logs } : { ...payload };
     deps
-      .patchJobStatus(jobId, { status: 'running', result: { progress: payload } })
+      .patchJobStatus(jobId, { status: 'running', result: { progress: progressPayload } })
       .catch((err) => deps.logger.warn({ err, jobId }, 'Failed to update LoRA job progress'));
   };
 
-  state.logs.push(progress.message || '');
-  if (state.logs.length > 50) state.logs.splice(0, state.logs.length - 50);
+  appendLog(progress.message);
+  const now = getNow();
 
   if (now - state.lastUpdate >= PROGRESS_INTERVAL_MS) {
-    send({ ...progress, logs: undefined });
+    send(progress);
     state.pending = undefined;
     if (state.timer) {
       clearTimeout(state.timer);
