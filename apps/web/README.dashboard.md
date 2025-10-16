@@ -27,6 +27,38 @@ Notes:
 - Replace polling with websockets when API supports it.
 - Styles rely on the shared design system primitives documented below.
 
+## SDK React hooks
+
+- Import hooks from `@influencerai/sdk/react` to reuse the HTTP client with TanStack Query.
+- Wrap the application once with `<InfluencerAIProvider baseUrl={process.env.NEXT_PUBLIC_API_BASE_URL}>` inside `src/app/providers.tsx` (after the QueryClient provider).
+- Available hooks mirror the API surface:
+  - `useJobs` / `useJob`
+  - `useCreateJob`
+  - `useQueuesSummary`
+  - `useDatasets` / `useCreateDataset`
+  - `useContentPlan` / `useCreateContentPlan`
+- Mutations automatically invalidate list/detail queries and the queues summary.
+- Hooks accept the same options as their TanStack Query counterparts so you can override `refetchInterval`, `staleTime`, etc.
+
+Example wiring:
+
+```tsx
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { InfluencerAIProvider } from '@influencerai/sdk/react';
+
+const queryClient = new QueryClient();
+
+export function Providers({ children }: { children: React.ReactNode }) {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <InfluencerAIProvider baseUrl={process.env.NEXT_PUBLIC_API_BASE_URL}>
+        {children}
+      </InfluencerAIProvider>
+    </QueryClientProvider>
+  );
+}
+```
+
 ## Design system & layout (WEB-06)
 
 - `tailwind.config.ts` enables the shadcn-style preset with our `brand` palette and class-based dark mode. Global tokens live in
