@@ -8,6 +8,7 @@ type WorkerMockInstance = {
   opts: Record<string, unknown>;
   on: (event: string, handler: Listener) => WorkerMockInstance;
   emit: (event: string, ...args: any[]) => void;
+  listeners: Map<string, Listener[]>;
 };
 
 const workerInstances: WorkerMockInstance[] = [];
@@ -34,6 +35,8 @@ const createFfmpegRunnerMock = vi.fn(() => ({
 vi.mock('./ffmpeg', () => ({
   createFfmpegRunner: createFfmpegRunnerMock,
 }));
+
+const queueInstances: any[] = [];
 
 vi.mock('bullmq', () => {
   class WorkerMock {
@@ -67,7 +70,22 @@ vi.mock('bullmq', () => {
     }
   }
 
-  return { Worker: WorkerMock };
+  class QueueMock {
+    name: string;
+    opts: Record<string, unknown>;
+
+    constructor(name: string, opts: Record<string, unknown>) {
+      this.name = name;
+      this.opts = opts;
+      queueInstances.push(this);
+    }
+
+    async getJobCounts() {
+      return { waiting: 0, failed: 0 };
+    }
+  }
+
+  return { Worker: WorkerMock, Queue: QueueMock };
 });
 
 const contentDeps: any[] = [];
@@ -101,12 +119,28 @@ vi.mock('./processors/videoGeneration', () => ({
   createVideoGenerationProcessor: createVideoGenerationProcessorMock,
 }));
 
+const startMonitoringMock = vi.fn().mockResolvedValue({ close: vi.fn() });
+
+vi.mock('./monitoring', () => ({
+  startMonitoring: startMonitoringMock,
+}));
+
+const createFailureAlerterMock = vi.fn(() => ({
+  handleFailure: vi.fn(),
+  resetFailures: vi.fn(),
+}));
+
+vi.mock('./alerts', () => ({
+  createFailureAlerter: createFailureAlerterMock,
+}));
+
 describe('createWorkers', () => {
   beforeEach(async () => {
     workerInstances.length = 0;
     contentDeps.length = 0;
     loraDeps.length = 0;
     videoDeps.length = 0;
+    queueInstances.length = 0;
     vi.clearAllMocks();
     await vi.resetModules();
   });
@@ -118,6 +152,13 @@ describe('createWorkers', () => {
     delete process.env.COMFYUI_POLL_INTERVAL_MS;
     delete process.env.COMFYUI_MAX_POLL_ATTEMPTS;
     delete process.env.COMFYUI_VIDEO_WORKFLOW_JSON;
+    delete process.env.BULL_BOARD_PORT;
+    delete process.env.BULL_BOARD_HOST;
+    delete process.env.BULL_BOARD_USER;
+    delete process.env.BULL_BOARD_PASSWORD;
+    delete process.env.WORKER_METRICS_PREFIX;
+    delete process.env.ALERT_WEBHOOK_URL;
+    delete process.env.ALERT_FAILURE_THRESHOLD;
   });
 
   it('boots BullMQ workers with shared dependencies and wire-up', async () => {
@@ -268,6 +309,25 @@ describe('createWorkers', () => {
       expect(updateJob).toHaveBeenCalledWith('lora-job', expect.objectContaining({ status: 'failed' }));
       expect(updateJob).toHaveBeenCalledWith('video-job', expect.objectContaining({ status: 'failed' }));
     });
+
+    expect(startMonitoringMock).toHaveBeenCalledTimes(1);
+    const monitoringArgs = startMonitoringMock.mock.calls[0][0];
+    expect(monitoringArgs.logger).toBe(logger);
+    expect(monitoringArgs.queues.map((q: any) => q.name).sort()).toEqual([
+      'content-generation',
+      'lora-training',
+      'video-generation',
+    ]);
+    expect(monitoringArgs.metricsPrefix).toBe('influencerai_worker_');
+    expect(monitoringArgs.bullBoard).toEqual({
+      host: '0.0.0.0',
+      port: 3030,
+      basicAuth: null,
+    });
+    expect(monitoringArgs.alerts).toEqual({
+      threshold: 3,
+      webhookUrl: undefined,
+    });
   });
 
   it('retries patchJobStatus once before logging a warning', async () => {
@@ -332,5 +392,77 @@ describe('createWorkers', () => {
       expect.objectContaining({ jobId: 'job-3', data: { status: 'running' }, err: expect.any(Error) }),
       'Failed to PATCH job status after retries'
     );
+  });
+
+  it('configures monitoring with env overrides and wires failure alerts', async () => {
+    process.env.BULL_BOARD_PORT = '4000';
+    process.env.BULL_BOARD_HOST = '127.0.0.1';
+    process.env.BULL_BOARD_USER = 'admin';
+    process.env.BULL_BOARD_PASSWORD = 'secret';
+    process.env.WORKER_METRICS_PREFIX = 'custom_prefix_';
+    process.env.ALERT_WEBHOOK_URL = 'https://hooks.local/webhook';
+    process.env.ALERT_FAILURE_THRESHOLD = '5';
+
+    const logger = { info: vi.fn(), warn: vi.fn(), error: vi.fn() };
+    const updateJob = vi.fn().mockResolvedValue(undefined);
+    const createJob = vi.fn().mockResolvedValue({ id: 'child' });
+    const s3 = {
+      getClient: vi.fn(() => null),
+      putTextObject: vi.fn(),
+      putBinaryObject: vi.fn(),
+      getSignedGetUrl: vi.fn(),
+    };
+
+    const { createWorkers } = await import('./index');
+    createWorkers({
+      logger,
+      api: { updateJob, createJob },
+      connection: {} as any,
+      s3,
+    });
+
+    expect(startMonitoringMock).toHaveBeenCalledTimes(1);
+    expect(startMonitoringMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        metricsPrefix: 'custom_prefix_',
+        bullBoard: {
+          host: '127.0.0.1',
+          port: 4000,
+          basicAuth: {
+            username: 'admin',
+            password: 'secret',
+          },
+        },
+        alerts: {
+          threshold: 5,
+          webhookUrl: 'https://hooks.local/webhook',
+        },
+      })
+    );
+
+    expect(createFailureAlerterMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        logger,
+        threshold: 5,
+        webhookUrl: 'https://hooks.local/webhook',
+      })
+    );
+
+    const failureAlerter = createFailureAlerterMock.mock.results[0].value;
+    const contentWorker = workerInstances.find((instance) => instance.queueName === 'content-generation');
+    expect(contentWorker).toBeDefined();
+
+    const completedHandler = contentWorker!.listeners.get('completed')?.[0];
+    const failedHandler = contentWorker!.listeners.get('failed')?.[0];
+
+    expect(completedHandler).toBeDefined();
+    expect(failedHandler).toBeDefined();
+
+    const job = { id: 'job-123', data: { jobId: 'job-123' } };
+    failedHandler?.(job, new Error('boom'));
+    expect(failureAlerter.handleFailure).toHaveBeenCalledWith('content-generation', job, expect.any(Error));
+
+    completedHandler?.(job);
+    expect(failureAlerter.resetFailures).toHaveBeenCalledWith('content-generation');
   });
 });
