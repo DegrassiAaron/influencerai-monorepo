@@ -18,6 +18,11 @@ Env variables
 - `FFMPEG_ASPECT_RATIO`: desired output aspect ratio (default `9:16`).
 - `FFMPEG_AUDIO_FILTER`: ffmpeg audio filter applied during post-processing (default `loudnorm=I=-16:TP=-1.5:LRA=11`).
 - `FFMPEG_VIDEO_PRESET`: ffmpeg preset for libx264 encoding (default `medium`).
+- `WORKER_BULL_BOARD_USER` / `WORKER_BULL_BOARD_PASSWORD`: credentials required to expose the Bull Board UI.
+- `WORKER_MONITOR_PORT`: port for the monitoring server (default `3031`).
+- `WORKER_MONITOR_HOST`: interface for the monitoring server (default `0.0.0.0`).
+- `WORKER_ALERT_WEBHOOK_URL`: optional HTTP endpoint notified after consecutive job failures.
+- `WORKER_ALERT_FAILURE_THRESHOLD`: failure streak length before triggering the webhook (default `3`).
 - `BULL_BOARD_PORT`: port for the Bull Board dashboard and metrics server (default `3030`).
 - `BULL_BOARD_HOST`: host interface for the monitoring server (default `0.0.0.0`).
 - `BULL_BOARD_USER` / `BULL_BOARD_PASSWORD`: optional basic auth credentials for Bull Board.
@@ -60,3 +65,11 @@ Manual test for LoRA training
 3. Enqueue a `lora-training` job specifying the dataset path and desired output directory. Include a `trainingName` to make the output folder deterministic.
 4. Tail the worker logs: you should see the rendered kohya_ss command preview together with throttled progress updates.
 5. Inspect the job via the API: the result payload includes the command preview, the resolved output directory and the streamed log excerpts, confirming the orchestration is wired correctly.
+
+Monitoring & alerting
+---------------------
+
+- Provide `WORKER_BULL_BOARD_USER` and `WORKER_BULL_BOARD_PASSWORD` to start the embedded monitoring server automatically.
+- The Bull Board UI is available at `http://<WORKER_MONITOR_HOST>:<WORKER_MONITOR_PORT>/bull-board` and requires HTTP basic auth.
+- Prometheus metrics are served at `/metrics`, exposing queue counts (`worker_queue_jobs`) and job duration histograms (`worker_job_duration_seconds`).
+- When `WORKER_ALERT_WEBHOOK_URL` is set, the worker posts a JSON payload to that endpoint after the configured number of consecutive failures (default 3). The streak resets on the next successful completion.

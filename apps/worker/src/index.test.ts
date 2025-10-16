@@ -12,6 +12,12 @@ type WorkerMockInstance = {
 };
 
 const workerInstances: WorkerMockInstance[] = [];
+type QueueMockInstance = {
+  name: string;
+  opts: Record<string, unknown>;
+  getJobCounts: (...args: any[]) => Promise<Record<string, number>>;
+};
+const queueInstances: QueueMockInstance[] = [];
 
 const fetchWithTimeoutMock = vi.fn(async () => 'fetch-result');
 const sleepMock = vi.fn(async () => {});
@@ -77,6 +83,11 @@ vi.mock('bullmq', () => {
     constructor(name: string, opts: Record<string, unknown>) {
       this.name = name;
       this.opts = opts;
+      queueInstances.push(this as unknown as QueueMockInstance);
+    }
+
+    async getJobCounts() {
+      return { waiting: 0, failed: 0, completed: 0 } as Record<string, number>;
       queueInstances.push(this);
     }
 
@@ -107,6 +118,17 @@ const createVideoGenerationProcessorMock = vi.fn((deps) => {
   return vi.fn().mockResolvedValue({ ok: true });
 });
 
+const monitoringInstance = {
+  app: { inject: vi.fn() },
+  start: vi.fn().mockResolvedValue(undefined),
+  stop: vi.fn().mockResolvedValue(undefined),
+  recordFailure: vi.fn().mockResolvedValue(undefined),
+  recordCompletion: vi.fn(),
+  registry: { getSingleMetric: vi.fn() },
+};
+
+const createMonitoringServerMock = vi.fn(() => monitoringInstance);
+
 vi.mock('./processors/contentGeneration', () => ({
   createContentGenerationProcessor: createContentGenerationProcessorMock,
 }));
@@ -119,6 +141,8 @@ vi.mock('./processors/videoGeneration', () => ({
   createVideoGenerationProcessor: createVideoGenerationProcessorMock,
 }));
 
+vi.mock('./monitoring', () => ({
+  createMonitoringServer: createMonitoringServerMock,
 const startMonitoringMock = vi.fn().mockResolvedValue({ close: vi.fn() });
 
 vi.mock('./monitoring', () => ({
@@ -137,6 +161,7 @@ vi.mock('./alerts', () => ({
 describe('createWorkers', () => {
   beforeEach(async () => {
     workerInstances.length = 0;
+    queueInstances.length = 0;
     contentDeps.length = 0;
     loraDeps.length = 0;
     videoDeps.length = 0;
@@ -152,6 +177,12 @@ describe('createWorkers', () => {
     delete process.env.COMFYUI_POLL_INTERVAL_MS;
     delete process.env.COMFYUI_MAX_POLL_ATTEMPTS;
     delete process.env.COMFYUI_VIDEO_WORKFLOW_JSON;
+    delete process.env.WORKER_BULL_BOARD_USER;
+    delete process.env.WORKER_BULL_BOARD_PASSWORD;
+    delete process.env.WORKER_MONITOR_PORT;
+    delete process.env.WORKER_MONITOR_HOST;
+    delete process.env.WORKER_ALERT_WEBHOOK_URL;
+    delete process.env.WORKER_ALERT_FAILURE_THRESHOLD;
     delete process.env.BULL_BOARD_PORT;
     delete process.env.BULL_BOARD_HOST;
     delete process.env.BULL_BOARD_USER;
@@ -180,6 +211,9 @@ describe('createWorkers', () => {
     const fetchDataset = vi.fn();
     const fetchLoraConfig = vi.fn();
 
+    process.env.WORKER_BULL_BOARD_USER = 'bull';
+    process.env.WORKER_BULL_BOARD_PASSWORD = 'board';
+    process.env.WORKER_MONITOR_PORT = '3035';
     const { createWorkers } = await import('./index');
 
     const workers = createWorkers({
@@ -193,6 +227,22 @@ describe('createWorkers', () => {
       fetchDataset,
       fetchLoraConfig,
     });
+
+    expect(createMonitoringServerMock).toHaveBeenCalledTimes(1);
+    expect(createMonitoringServerMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        logger,
+        port: 3035,
+        host: '0.0.0.0',
+        auth: { username: 'bull', password: 'board' },
+        webhook: undefined,
+      })
+    );
+    expect(monitoringInstance.start).toHaveBeenCalledTimes(1);
+    const expectedQueues = ['content-generation', 'lora-training', 'video-generation'];
+    expect(queueInstances.map((queue) => queue.name).sort()).toEqual(expectedQueues);
+    const monitoringArgs = createMonitoringServerMock.mock.calls[0]?.[0];
+    expect(monitoringArgs.queues.map((entry: any) => entry.name).sort()).toEqual(expectedQueues);
 
     expect(workers.contentWorker).toBeDefined();
     expect(workers.loraWorker).toBeDefined();
@@ -283,10 +333,16 @@ describe('createWorkers', () => {
     expect(fetchWithTimeoutMock).toHaveBeenCalledWith('http://localhost:8188/prompt', { method: 'POST' }, 45000);
     expect(comfyFetchResult).toBe('fetch-result');
 
-    const failedWorker = workerInstances.find((instance) => instance.queueName === 'content-generation');
-    expect(failedWorker).toBeDefined();
+    const contentQueueWorker = workerInstances.find((instance) => instance.queueName === 'content-generation');
+    expect(contentQueueWorker).toBeDefined();
 
-    failedWorker!.emit(
+    contentQueueWorker!.emit('completed', { id: 'job-success', processedOn: 0, finishedOn: 10 } as any);
+    expect(monitoringInstance.recordCompletion).toHaveBeenCalledWith(
+      'content-generation',
+      expect.objectContaining({ id: 'job-success', processedOn: 0, finishedOn: 10 })
+    );
+
+    contentQueueWorker!.emit(
       'failed',
       { data: { jobId: 'job-failed' } },
       new Error('Boom')
@@ -296,6 +352,7 @@ describe('createWorkers', () => {
       expect(updateJob).toHaveBeenCalledWith('job-failed', expect.objectContaining({ status: 'failed' }));
     });
     expect(logger.error).toHaveBeenCalledWith(expect.objectContaining({ id: undefined, err: expect.any(Error) }), expect.any(String));
+    expect(monitoringInstance.recordFailure).toHaveBeenCalledWith('content-generation', 'job-failed', expect.any(Error));
 
     const loraFailedWorker = workerInstances.find((instance) => instance.queueName === 'lora-training');
     expect(loraFailedWorker).toBeDefined();
@@ -309,6 +366,8 @@ describe('createWorkers', () => {
       expect(updateJob).toHaveBeenCalledWith('lora-job', expect.objectContaining({ status: 'failed' }));
       expect(updateJob).toHaveBeenCalledWith('video-job', expect.objectContaining({ status: 'failed' }));
     });
+    expect(monitoringInstance.recordFailure).toHaveBeenCalledWith('lora-training', 'lora-job', expect.any(Error));
+    expect(monitoringInstance.recordFailure).toHaveBeenCalledWith('video-generation', 'video-job', expect.any(Error));
 
     expect(startMonitoringMock).toHaveBeenCalledTimes(1);
     const monitoringArgs = startMonitoringMock.mock.calls[0][0];
@@ -353,6 +412,7 @@ describe('createWorkers', () => {
       s3,
     });
 
+    logger.warn.mockClear();
     const deps = contentDeps[0];
     const promise = deps.patchJobStatus('job-2', { status: 'running' });
     await vi.runAllTimersAsync();
@@ -382,6 +442,7 @@ describe('createWorkers', () => {
       s3,
     });
 
+    logger.warn.mockClear();
     const deps = contentDeps[0];
     const promise = deps.patchJobStatus('job-3', { status: 'running' });
     await vi.runAllTimersAsync();

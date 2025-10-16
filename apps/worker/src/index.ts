@@ -1,5 +1,5 @@
-import { Worker, Queue } from 'bullmq';
-import type { Processor } from 'bullmq';
+import { Queue, Worker } from 'bullmq';
+import type { Processor, Job } from 'bullmq';
 import Redis from 'ioredis';
 import { logger as defaultLogger } from './logger';
 import { InfluencerAIClient } from '@influencerai/sdk';
@@ -32,6 +32,7 @@ import {
   type S3Helpers,
 } from './s3Helpers';
 export type { S3Helpers } from './s3Helpers';
+import { createMonitoringServer } from './monitoring';
 
 type LogFn = (...args: any[]) => void;
 
@@ -83,6 +84,8 @@ export function createWorkers(deps: WorkerDependencies) {
     depLogger.warn({ err: lastErr, jobId, data }, 'Failed to PATCH job status after retries');
   }
 
+  const workerOptions = { connection, prefix: process.env.BULL_PREFIX };
+
   const contentWorker = new Worker<ContentGenerationJobData, ContentGenerationResult, 'content-generation'>(
     'content-generation',
     createContentGenerationProcessor({
@@ -117,7 +120,7 @@ export function createWorkers(deps: WorkerDependencies) {
       },
       prompts: { imageCaptionPrompt, videoScriptPrompt },
     }),
-    { connection, prefix: process.env.BULL_PREFIX }
+    workerOptions
   );
 
   const loraProcessor: Processor<LoraTrainingJobData, LoraTrainingResult, 'lora-training'> = createLoraTrainingProcessor({
@@ -131,7 +134,7 @@ export function createWorkers(deps: WorkerDependencies) {
   const loraWorker = new Worker<LoraTrainingJobData, LoraTrainingResult, 'lora-training'>(
     'lora-training',
     loraProcessor,
-    { connection, prefix: process.env.BULL_PREFIX }
+    workerOptions
   );
 
   const comfyBaseUrl = process.env.COMFYUI_API_URL || 'http://127.0.0.1:8188';
@@ -180,15 +183,68 @@ export function createWorkers(deps: WorkerDependencies) {
       },
       ffmpeg: ffmpegRunner,
     }),
-    { connection, prefix: process.env.BULL_PREFIX }
+    workerOptions
   );
 
+  const monitorUsername = process.env.WORKER_BULL_BOARD_USER;
+  const monitorPassword = process.env.WORKER_BULL_BOARD_PASSWORD;
+  const monitorPortValue = Number(process.env.WORKER_MONITOR_PORT ?? '');
+  const monitorHost = process.env.WORKER_MONITOR_HOST || '0.0.0.0';
+  const resolvedMonitorPort = Number.isFinite(monitorPortValue) && monitorPortValue > 0 ? monitorPortValue : 3031;
+  const alertWebhookUrl = process.env.WORKER_ALERT_WEBHOOK_URL;
+  const alertThresholdValue = Number(process.env.WORKER_ALERT_FAILURE_THRESHOLD ?? '');
+  const resolvedAlertThreshold = Number.isFinite(alertThresholdValue) && alertThresholdValue > 0 ? alertThresholdValue : 3;
+
+  let monitoring: ReturnType<typeof createMonitoringServer> | null = null;
+  if (monitorUsername && monitorPassword) {
+    const contentQueue = new Queue('content-generation', workerOptions);
+    const loraQueue = new Queue('lora-training', workerOptions);
+    const videoQueue = new Queue('video-generation', workerOptions);
+
+    monitoring = createMonitoringServer({
+      logger: depLogger,
+      queues: [
+        { name: 'content-generation', queue: contentQueue },
+        { name: 'lora-training', queue: loraQueue },
+        { name: 'video-generation', queue: videoQueue },
+      ],
+      port: resolvedMonitorPort,
+      host: monitorHost,
+      auth: { username: monitorUsername, password: monitorPassword },
+      webhook: alertWebhookUrl
+        ? { url: alertWebhookUrl, consecutiveFailuresThreshold: resolvedAlertThreshold }
+        : undefined,
+    });
+
+    monitoring.start().catch((err) => {
+      depLogger.error({ err }, 'Failed to start monitoring server');
+    });
+  } else {
+    depLogger.warn('Bull Board credentials not provided; monitoring server disabled');
+  }
+
+  const recordMonitoringCompletion = (queueName: string, job: Job | undefined) => {
+    if (monitoring && job) {
+      monitoring.recordCompletion(queueName, job);
+    }
+  };
+
+  const recordMonitoringFailure = (queueName: string, job: Job | undefined, err: unknown) => {
+    if (!monitoring) return;
+    const jobIdentifier = (job?.id as string | undefined) ?? ((job?.data as any)?.jobId as string | undefined);
+    monitoring
+      .recordFailure(queueName, jobIdentifier, err)
+      .catch((recordErr) => depLogger.warn({ err: recordErr, queue: queueName }, 'Unable to record failure metrics'));
+  };
+
   contentWorker.on('completed', (job) => {
+    recordMonitoringCompletion('content-generation', job);
     depLogger.info({ id: job.id }, 'Job completed successfully');
     failureAlerter.resetFailures('content-generation');
   });
 
   contentWorker.on('failed', (job, err) => {
+    recordMonitoringFailure('content-generation', job, err);
     depLogger.error({ id: job?.id, err }, 'Job failed');
     const jobId = (job?.data as any)?.jobId as string | undefined;
     if (jobId) {
@@ -200,11 +256,13 @@ export function createWorkers(deps: WorkerDependencies) {
   });
 
   loraWorker.on('completed', (job) => {
+    recordMonitoringCompletion('lora-training', job);
     depLogger.info({ id: job.id }, 'LoRA training job completed successfully');
     failureAlerter.resetFailures('lora-training');
   });
 
   loraWorker.on('failed', (job, err) => {
+    recordMonitoringFailure('lora-training', job, err);
     depLogger.error({ id: job?.id, err }, 'LoRA training job failed');
     const jobId = (job?.data as any)?.jobId as string | undefined;
     if (jobId) {
@@ -216,11 +274,13 @@ export function createWorkers(deps: WorkerDependencies) {
   });
 
   videoWorker.on('completed', (job) => {
+    recordMonitoringCompletion('video-generation', job);
     depLogger.info({ id: job.id }, 'Video generation job completed successfully');
     failureAlerter.resetFailures('video-generation');
   });
 
   videoWorker.on('failed', (job, err) => {
+    recordMonitoringFailure('video-generation', job, err);
     depLogger.error({ id: job?.id, err }, 'Video generation job failed');
     const jobId = (job?.data as any)?.jobId as string | undefined;
     if (jobId) {
