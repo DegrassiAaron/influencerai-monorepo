@@ -22,6 +22,8 @@ import {
 } from './processors/videoGeneration';
 import { HTTPError, callOpenRouter, fetchWithTimeout, safeReadBody, sleep } from './httpClient';
 import { createFfmpegRunner } from './ffmpeg';
+import { startMonitoring } from './monitoring';
+import { createFailureAlerter } from './alerts';
 import {
   getClient as getS3Client,
   putTextObject as putTextObjectS3,
@@ -152,6 +154,19 @@ export function createWorkers(deps: WorkerDependencies) {
 
   const ffmpegRunner = createFfmpegRunner(depLogger);
 
+  const queueOptions = { connection, prefix: process.env.BULL_PREFIX };
+  const contentQueue = new Queue('content-generation', queueOptions);
+  const loraQueue = new Queue('lora-training', queueOptions);
+  const videoQueue = new Queue('video-generation', queueOptions);
+
+  const failureThreshold = Math.max(1, parseInt(process.env.ALERT_FAILURE_THRESHOLD || '3', 10));
+  const failureAlerter = createFailureAlerter({
+    logger: depLogger,
+    threshold: failureThreshold,
+    webhookUrl: process.env.ALERT_WEBHOOK_URL,
+    fetchImpl: (url, init) => fetchWithTimeout(url, init, 5000),
+  });
+
   const videoWorker = new Worker<VideoGenerationJobData, VideoGenerationResult, 'video-generation'>(
     'video-generation',
     createVideoGenerationProcessor({
@@ -225,6 +240,7 @@ export function createWorkers(deps: WorkerDependencies) {
   contentWorker.on('completed', (job) => {
     recordMonitoringCompletion('content-generation', job);
     depLogger.info({ id: job.id }, 'Job completed successfully');
+    failureAlerter.resetFailures('content-generation');
   });
 
   contentWorker.on('failed', (job, err) => {
@@ -236,11 +252,13 @@ export function createWorkers(deps: WorkerDependencies) {
         () => {}
       );
     }
+    void failureAlerter.handleFailure('content-generation', job, err);
   });
 
   loraWorker.on('completed', (job) => {
     recordMonitoringCompletion('lora-training', job);
     depLogger.info({ id: job.id }, 'LoRA training job completed successfully');
+    failureAlerter.resetFailures('lora-training');
   });
 
   loraWorker.on('failed', (job, err) => {
@@ -252,11 +270,13 @@ export function createWorkers(deps: WorkerDependencies) {
         () => {}
       );
     }
+    void failureAlerter.handleFailure('lora-training', job, err);
   });
 
   videoWorker.on('completed', (job) => {
     recordMonitoringCompletion('video-generation', job);
     depLogger.info({ id: job.id }, 'Video generation job completed successfully');
+    failureAlerter.resetFailures('video-generation');
   });
 
   videoWorker.on('failed', (job, err) => {
@@ -268,6 +288,40 @@ export function createWorkers(deps: WorkerDependencies) {
         () => {}
       );
     }
+    void failureAlerter.handleFailure('video-generation', job, err);
+  });
+
+  const metricsPrefix = process.env.WORKER_METRICS_PREFIX || 'influencerai_worker_';
+  const bullBoardPort = parseInt(process.env.BULL_BOARD_PORT || '3030', 10);
+  const bullBoardHost = process.env.BULL_BOARD_HOST || '0.0.0.0';
+  const bullBoardUser = process.env.BULL_BOARD_USER;
+  const bullBoardPassword = process.env.BULL_BOARD_PASSWORD;
+
+  void startMonitoring({
+    logger: depLogger,
+    queues: [
+      { name: 'content-generation', queue: contentQueue, worker: contentWorker },
+      { name: 'lora-training', queue: loraQueue, worker: loraWorker },
+      { name: 'video-generation', queue: videoQueue, worker: videoWorker },
+    ],
+    metricsPrefix,
+    bullBoard: {
+      host: bullBoardHost,
+      port: bullBoardPort,
+      basicAuth:
+        bullBoardUser && bullBoardPassword
+          ? {
+              username: bullBoardUser,
+              password: bullBoardPassword,
+            }
+          : null,
+    },
+    alerts: {
+      threshold: failureThreshold,
+      webhookUrl: process.env.ALERT_WEBHOOK_URL,
+    },
+  }).catch((err) => {
+    depLogger.error({ err }, 'Unable to start monitoring server');
   });
 
   depLogger.info('Workers started and listening for jobs...');

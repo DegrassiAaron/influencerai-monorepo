@@ -23,6 +23,12 @@ Env variables
 - `WORKER_MONITOR_HOST`: interface for the monitoring server (default `0.0.0.0`).
 - `WORKER_ALERT_WEBHOOK_URL`: optional HTTP endpoint notified after consecutive job failures.
 - `WORKER_ALERT_FAILURE_THRESHOLD`: failure streak length before triggering the webhook (default `3`).
+- `BULL_BOARD_PORT`: port for the Bull Board dashboard and metrics server (default `3030`).
+- `BULL_BOARD_HOST`: host interface for the monitoring server (default `0.0.0.0`).
+- `BULL_BOARD_USER` / `BULL_BOARD_PASSWORD`: optional basic auth credentials for Bull Board.
+- `WORKER_METRICS_PREFIX`: prefix used for Prometheus metrics (default `influencerai_worker_`).
+- `ALERT_WEBHOOK_URL`: optional webhook URL notified after consecutive job failures.
+- `ALERT_FAILURE_THRESHOLD`: number of consecutive failures before triggering the webhook (default `3`).
 
 Behavior
 - On job start: PATCH `/jobs/:id` with `status=running`.
@@ -35,6 +41,14 @@ Run locally
 - Ensure Redis is running.
 - Build SDK if not built: `pnpm --filter @influencerai/sdk build`.
 - Dev: `pnpm --filter @influencerai/worker dev`.
+
+Monitoring & metrics
+--------------------
+
+- The worker exposes Bull Board and a Prometheus `/metrics` endpoint on `http://<BULL_BOARD_HOST>:<BULL_BOARD_PORT>`.
+- Configure basic auth by setting `BULL_BOARD_USER` and `BULL_BOARD_PASSWORD`.
+- Prometheus metrics cover queue depth (`*_queue_jobs_waiting`), failures (`*_queue_jobs_failed`) and job duration histogram (`*_job_duration_seconds`).
+- Set `ALERT_WEBHOOK_URL` (e.g. an n8n or Slack webhook) to receive JSON payloads when `ALERT_FAILURE_THRESHOLD` consecutive failures occur on a queue.
 
 Manual test with ComfyUI
 1. Export the ComfyUI workflow graph you want to use and serialize it as JSON. Set the env var `COMFYUI_VIDEO_WORKFLOW_JSON` with that JSON string (or tailor the processor to inject node inputs downstream).
