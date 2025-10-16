@@ -43,6 +43,12 @@ interface RequestConfig<T> {
   timeoutMs?: number;
 }
 
+export interface UpdateJobInput {
+  status?: string;
+  result?: unknown;
+  costTok?: number;
+}
+
 export class InfluencerAIClient {
   private baseUrl: string;
 
@@ -127,7 +133,7 @@ export class InfluencerAIClient {
     return this.request({ path: '/jobs', query, schema: JobListSchema });
   }
 
-  async updateJob(id: string, update: { status?: string; result?: unknown; costTok?: number }) {
+  async updateJob(id: string, update: UpdateJobInput) {
     return this.request({ path: `/jobs/${id}`, method: 'PATCH', body: update, schema: JobResponseSchema });
   }
 
@@ -170,4 +176,3 @@ export type {
   ContentPlanEnvelope,
 } from './types';
 export { APIError as InfluencerAIAPIError } from './fetch-utils';
-export type { ListJobsParams };
