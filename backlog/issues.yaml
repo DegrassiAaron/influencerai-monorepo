@@ -433,13 +433,13 @@ issues:
 
     ### DoD
 
-    - [ ] Script wrapper che lancia kohya_ss con dataset e config dal DB.
+    - [x] Script wrapper che lancia kohya_ss con dataset e config dal DB.
 
-    - [ ] Streaming dei log e update progressivo del job.
+    - [x] Streaming dei log e update progressivo del job.
 
-    - [ ] Upload degli output .safetensors su MinIO.
+    - [x] Upload degli output .safetensors su MinIO.
 
-    - [ ] Test manuale documentato (dry-run) e logging degli errori.
+    - [x] Test manuale documentato (dry-run) e logging degli errori.
 
 
     ### Dipendenze

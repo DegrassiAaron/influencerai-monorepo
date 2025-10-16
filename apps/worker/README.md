@@ -37,3 +37,12 @@ Manual test with ComfyUI
 3. Run `pnpm --filter @influencerai/worker dev` and enqueue a `video-generation` job via the API (payload requires `caption`, `script`, optional persona/context/duration).
 4. The worker logs the ComfyUI prompt id, polls until completion, then runs FFmpeg with the configured aspect ratio/audio filter.
 5. Verify the processed video is uploaded to MinIO under `video-generation/<jobId>/final.mp4` and that the signed URL appears in the job result.
+
+Manual test for LoRA training
+-----------------------------
+
+1. Prepare a minimal dataset directory with a couple of sample images and note its absolute path.
+2. Configure the worker with `LORA_TRAINING_DRY_RUN=1` (or enqueue a job with `{ dryRun: true }`) to validate the command without executing kohya_ss.
+3. Enqueue a `lora-training` job specifying the dataset path and desired output directory. Include a `trainingName` to make the output folder deterministic.
+4. Tail the worker logs: you should see the rendered kohya_ss command preview together with throttled progress updates.
+5. Inspect the job via the API: the result payload includes the command preview, the resolved output directory and the streamed log excerpts, confirming the orchestration is wired correctly.
