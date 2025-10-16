@@ -11,15 +11,28 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 
-const labelMap: Record<string, string> = {
-  dashboard: "Dashboard",
-  jobs: "Jobs",
-  library: "Library",
-  login: "Login",
-};
+import { mainNav } from "./nav-config";
 
-function titleCase(segment: string) {
-  return segment.charAt(0).toUpperCase() + segment.slice(1);
+const LABEL_OVERRIDES = new Map<string, string>([["/login", "Login"]]);
+
+const NAV_LABELS = mainNav.reduce((registry, item) => {
+  if (!item.href.startsWith("http")) {
+    registry.set(item.href, item.title);
+  }
+  return registry;
+}, new Map<string, string>());
+
+function toTitleCase(segment: string) {
+  const decoded = decodeURIComponent(segment);
+  return decoded
+    .split(/[-_\s]+/)
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}
+
+function resolveLabel(href: string, segment: string) {
+  return NAV_LABELS.get(href) ?? LABEL_OVERRIDES.get(href) ?? toTitleCase(segment);
 }
 
 export function AppBreadcrumbs() {
@@ -28,7 +41,7 @@ export function AppBreadcrumbs() {
 
   const crumbs = segments.map((segment, index) => {
     const href = `/${segments.slice(0, index + 1).join("/")}`;
-    const label = labelMap[segment] ?? titleCase(segment.replace(/-/g, " "));
+    const label = resolveLabel(href, segment);
     const isLast = index === segments.length - 1;
     return {
       href,
