@@ -1,23 +1,60 @@
 import { z } from 'zod';
 
+type BooleanLike = boolean | number | string | undefined | null;
+
+const truthyStrings = new Set(['1', 'true', 'yes', 'on']);
+const falsyStrings = new Set(['0', 'false', 'no', 'off', '']);
+
+const coerceOptionalBoolean = (value: BooleanLike): boolean | undefined => {
+  if (value === undefined || value === null) {
+    return undefined;
+  }
+  if (typeof value === 'boolean') {
+    return value;
+  }
+  if (typeof value === 'number') {
+    return value !== 0;
+  }
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase();
+    if (truthyStrings.has(normalized)) {
+      return true;
+    }
+    if (falsyStrings.has(normalized)) {
+      return false;
+    }
+    return false;
+  }
+  return false;
+};
+
+const normalizeNodeEnv = (value: unknown): 'development' | 'production' | 'test' => {
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase();
+    if (normalized === 'development' || normalized === 'production' || normalized === 'test') {
+      return normalized;
+    }
+  }
+  return 'development';
+};
+
+const preprocessNodeEnv = (value: unknown) => (typeof value === 'string' ? value.trim().toLowerCase() : value);
+
+const nodeEnvSchema = z.preprocess(
+  preprocessNodeEnv,
+  z.enum(['development', 'production', 'test']).default('development'),
+);
+
 const booleanLike = z
   .union([z.boolean(), z.number(), z.string()])
   .optional()
-  .transform((value) => {
-    if (value === undefined || value === null) return undefined;
-    if (typeof value === 'boolean') return value;
-    if (typeof value === 'number') return value !== 0;
-    const normalized = value.trim().toLowerCase();
-    if (['1', 'true', 'yes', 'on'].includes(normalized)) return true;
-    if (['0', 'false', 'no', 'off', ''].includes(normalized)) return false;
-    return false;
-  });
+  .transform((value) => coerceOptionalBoolean(value));
 
 const logLevelEnum = z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']);
 
 export const envSchema = z
   .object({
-    NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
+    NODE_ENV: nodeEnvSchema,
     PORT: z.coerce.number().int().min(0).default(3001),
     DATABASE_URL: z.string().min(1, 'DATABASE_URL is required'),
     REDIS_URL: z.string().min(1).default('redis://localhost:6379'),
@@ -73,16 +110,7 @@ export type AppConfig = z.infer<typeof envSchema>;
 export const validateEnv = (config: Record<string, unknown>): AppConfig => envSchema.parse(config);
 
 export const computeBullEnabled = (env: Record<string, unknown>): boolean => {
-  const nodeEnv = typeof env.NODE_ENV === 'string' ? env.NODE_ENV : 'development';
-  const disableBullRaw = env.DISABLE_BULL;
-  let disableBull = false;
-  if (typeof disableBullRaw === 'boolean') {
-    disableBull = disableBullRaw;
-  } else if (typeof disableBullRaw === 'number') {
-    disableBull = disableBullRaw !== 0;
-  } else if (typeof disableBullRaw === 'string') {
-    const normalized = disableBullRaw.trim().toLowerCase();
-    disableBull = ['1', 'true', 'yes', 'on'].includes(normalized);
-  }
+  const nodeEnv = normalizeNodeEnv(env.NODE_ENV);
+  const disableBull = coerceOptionalBoolean(env.DISABLE_BULL as BooleanLike) ?? false;
   return nodeEnv !== 'test' && !disableBull;
 };

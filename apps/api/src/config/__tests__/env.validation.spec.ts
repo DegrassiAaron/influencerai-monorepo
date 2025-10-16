@@ -1,4 +1,4 @@
-import { validateEnv } from '../env.validation';
+import { computeBullEnabled, validateEnv } from '../env.validation';
 
 describe('validateEnv', () => {
   it('throws when DATABASE_URL is missing', () => {
@@ -63,5 +63,39 @@ describe('validateEnv', () => {
     });
 
     expect(env.OPENROUTER_API_KEY).toBe('sk-test');
+  });
+
+  it('normalizes NODE_ENV casing and surrounding whitespace', () => {
+    const env = validateEnv({
+      DATABASE_URL: 'postgresql://user:pass@localhost:5432/db',
+      NODE_ENV: ' TEST ',
+      OPENROUTER_API_KEY: 'sk-test',
+    });
+
+    expect(env.NODE_ENV).toBe('test');
+  });
+
+  describe('computeBullEnabled', () => {
+    it('enables Bull when running outside of test environments', () => {
+      expect(
+        computeBullEnabled({
+          NODE_ENV: 'production',
+          DISABLE_BULL: undefined,
+        }),
+      ).toBe(true);
+    });
+
+    it('disables Bull when NODE_ENV is test even with surrounding whitespace', () => {
+      expect(computeBullEnabled({ NODE_ENV: ' test ' })).toBe(false);
+    });
+
+    it('disables Bull when explicitly requested via truthy strings', () => {
+      expect(
+        computeBullEnabled({
+          NODE_ENV: 'development',
+          DISABLE_BULL: 'Yes',
+        }),
+      ).toBe(false);
+    });
   });
 });
