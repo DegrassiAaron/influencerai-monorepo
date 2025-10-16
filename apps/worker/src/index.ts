@@ -197,10 +197,6 @@ export function createWorkers(deps: WorkerDependencies) {
 
   let monitoring: ReturnType<typeof createMonitoringServer> | null = null;
   if (monitorUsername && monitorPassword) {
-    const contentQueue = new Queue('content-generation', workerOptions);
-    const loraQueue = new Queue('lora-training', workerOptions);
-    const videoQueue = new Queue('video-generation', workerOptions);
-
     monitoring = createMonitoringServer({
       logger: depLogger,
       queues: [

@@ -42,8 +42,6 @@ vi.mock('./ffmpeg', () => ({
   createFfmpegRunner: createFfmpegRunnerMock,
 }));
 
-const queueInstances: any[] = [];
-
 vi.mock('bullmq', () => {
   class WorkerMock {
     queueName: string;
@@ -88,11 +86,6 @@ vi.mock('bullmq', () => {
 
     async getJobCounts() {
       return { waiting: 0, failed: 0, completed: 0 } as Record<string, number>;
-      queueInstances.push(this);
-    }
-
-    async getJobCounts() {
-      return { waiting: 0, failed: 0 };
     }
   }
 
@@ -369,20 +362,20 @@ describe('createWorkers', () => {
     expect(monitoringInstance.recordFailure).toHaveBeenCalledWith('video-generation', 'video-job', expect.any(Error));
 
     expect(startMonitoringMock).toHaveBeenCalledTimes(1);
-    const monitoringArgs = startMonitoringMock.mock.calls[0][0];
-    expect(monitoringArgs.logger).toBe(logger);
-    expect(monitoringArgs.queues.map((q: any) => q.name).sort()).toEqual([
+    const startMonitoringArgs = startMonitoringMock.mock.calls[0][0];
+    expect(startMonitoringArgs.logger).toBe(logger);
+    expect(startMonitoringArgs.queues.map((q: any) => q.name).sort()).toEqual([
       'content-generation',
       'lora-training',
       'video-generation',
     ]);
-    expect(monitoringArgs.metricsPrefix).toBe('influencerai_worker_');
-    expect(monitoringArgs.bullBoard).toEqual({
+    expect(startMonitoringArgs.metricsPrefix).toBe('influencerai_worker_');
+    expect(startMonitoringArgs.bullBoard).toEqual({
       host: '0.0.0.0',
       port: 3030,
       basicAuth: null,
     });
-    expect(monitoringArgs.alerts).toEqual({
+    expect(startMonitoringArgs.alerts).toEqual({
       threshold: 3,
       webhookUrl: undefined,
     });
