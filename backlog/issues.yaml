@@ -734,13 +734,18 @@ issues:
   - API-04
   code: SDK-01
 - title: 'SDK-02: Hooks React con TanStack Query'
-  body: "### Contesto\nIl frontend usa TanStack Query ma manca un set di hook typed\
-    \ che incapsulano il client. Servono per riuso e cache coerente.\n\n### DoD\n\
-    - [ ] Implementati hook (useJobs, useJob, useCreateJob, useDatasets, ...).\n-\
-    \ [ ] Provider che espone InfluencerAIClient e configura il baseUrl.\n- [ ] Test\
-    \ dei hook con React Testing Library + msw.\n- [ ] Documentazione veloce in README\
-    \ web su come usarli.\n\n### Dipendenze\n- [SDK-01] Estendere client con job,\
-    \ dataset e content plan\n"
+  body: |
+    ### Contesto
+    Il frontend usa TanStack Query ma manca un set di hook typed che incapsulano il client. Servono per riuso e cache coerente.
+
+    ### DoD
+    - [x] Implementati hook (useJobs, useJob, useCreateJob, useDatasets, ...).
+    - [x] Provider che espone InfluencerAIClient e configura il baseUrl.
+    - [x] Test dei hook con React Testing Library + msw.
+    - [x] Documentazione veloce in README web su come usarli.
+
+    ### Dipendenze
+    - [SDK-01] Estendere client con job, dataset e content plan
   labels:
   - area:sdk
   - type:feat

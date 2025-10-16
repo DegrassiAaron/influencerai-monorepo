@@ -7,7 +7,16 @@ import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest
 
 import { influencerAIQueryKeys } from '../src/react/query-keys';
 import { InfluencerAIProvider } from '../src/react/provider';
-import { useCreateJob, useDatasets, useJobs, useQueuesSummary } from '../src/react/hooks';
+import {
+  useContentPlan,
+  useCreateDataset,
+  useCreateJob,
+  useDatasets,
+  useJob,
+  useJobs,
+  useQueuesSummary,
+  useUpdateJob,
+} from '../src/react/hooks';
 
 const API_BASE_URL = 'https://sdk.test';
 
@@ -23,6 +32,15 @@ const server = setupServer(
       },
     ]),
   ),
+  http.get(`${API_BASE_URL}/jobs/:jobId`, ({ params }) =>
+    HttpResponse.json({
+      id: params.jobId,
+      status: 'running',
+      type: 'content-generation',
+      payload: { foo: 'bar' },
+      createdAt: new Date().toISOString(),
+    }),
+  ),
   http.post(`${API_BASE_URL}/jobs`, async ({ request }) => {
     const body = (await request.json()) as Record<string, unknown>;
     return HttpResponse.json({
@@ -31,6 +49,19 @@ const server = setupServer(
       type: 'content-generation',
       payload: body,
       createdAt: new Date().toISOString(),
+    });
+  }),
+  http.patch(`${API_BASE_URL}/jobs/:jobId`, async ({ params, request }) => {
+    const body = (await request.json()) as Record<string, unknown>;
+    return HttpResponse.json({
+      id: params.jobId,
+      status: body.status ?? 'running',
+      type: 'content-generation',
+      payload: { foo: 'bar' },
+      result: body.result,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      costTok: body.costTok,
     });
   }),
   http.get(`${API_BASE_URL}/queues/summary`, () =>
@@ -47,6 +78,32 @@ const server = setupServer(
         updatedAt: new Date().toISOString(),
       },
     ]),
+  ),
+  http.post(`${API_BASE_URL}/datasets`, async ({ request }) => {
+    const body = (await request.json()) as Record<string, unknown>;
+    return HttpResponse.json({
+      id: 'dataset-created',
+      uploadUrl: 'https://upload.test/url',
+      key: `${body.filename}`,
+      bucket: 'datasets',
+    });
+  }),
+  http.get(`${API_BASE_URL}/content-plans/:planId`, ({ params }) =>
+    HttpResponse.json({
+      id: params.planId,
+      plan: {
+        influencerId: 'influencer-1',
+        theme: 'Awareness boost',
+        targetPlatforms: ['instagram', 'tiktok'],
+        posts: [
+          {
+            caption: 'Launch teaser',
+            hashtags: ['#launch'],
+          },
+        ],
+        createdAt: new Date().toISOString(),
+      },
+    }),
   ),
 );
 
@@ -83,6 +140,17 @@ describe('React Query hooks', () => {
     queryClient.clear();
   });
 
+  it('retrieves a job detail by id', async () => {
+    const queryClient = createTestQueryClient();
+    const wrapper = createWrapper(queryClient);
+    const { result } = renderHook(() => useJob('job-1'), { wrapper });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(result.current.data?.id).toBe('job-1');
+
+    queryClient.clear();
+  });
+
   it('invalidates jobs and queues after creating a job', async () => {
     const queryClient = createTestQueryClient();
     const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
@@ -111,6 +179,42 @@ describe('React Query hooks', () => {
     queryClient.clear();
   });
 
+  it('updates a job and invalidates caches', async () => {
+    const queryClient = createTestQueryClient();
+    const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
+    const onSuccess = vi.fn();
+    const wrapper = createWrapper(queryClient);
+
+    const mutation = renderHook(() => useUpdateJob({ onSuccess }), { wrapper });
+
+    await act(async () => {
+      await mutation.result.current.mutateAsync({
+        id: 'job-1',
+        update: { status: 'succeeded', result: { outcome: 'ok' }, costTok: 123 },
+      });
+    });
+
+    await waitFor(() =>
+      expect(invalidateSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ queryKey: influencerAIQueryKeys.jobs.root }),
+      ),
+    );
+    expect(invalidateSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ queryKey: influencerAIQueryKeys.jobs.detail('job-1') }),
+    );
+
+    expect(onSuccess).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'job-1', status: 'succeeded', costTok: 123 }),
+      { id: 'job-1', update: { status: 'succeeded', result: { outcome: 'ok' }, costTok: 123 } },
+      undefined,
+      expect.objectContaining({ meta: undefined }),
+    );
+
+    expect(mutation.result.current.data?.status).toBe('succeeded');
+
+    queryClient.clear();
+  });
+
   it('loads datasets and queue summary data', async () => {
     const queryClient = createTestQueryClient();
     const wrapper = createWrapper(queryClient);
@@ -123,6 +227,41 @@ describe('React Query hooks', () => {
 
     expect(datasets.result.current.data?.[0]?.id).toBe('dataset-1');
     expect(queues.result.current.data).toMatchObject({ active: 2, waiting: 5, failed: 1 });
+
+    queryClient.clear();
+  });
+
+  it('creates a dataset and revalidates the list', async () => {
+    const queryClient = createTestQueryClient();
+    const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
+    const wrapper = createWrapper(queryClient);
+
+    const mutation = renderHook(() => useCreateDataset(), { wrapper });
+
+    await act(async () => {
+      await mutation.result.current.mutateAsync({
+        kind: 'lora-training',
+        filename: 'dataset.csv',
+      } as any);
+    });
+
+    await waitFor(() =>
+      expect(invalidateSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ queryKey: influencerAIQueryKeys.datasets.root }),
+      ),
+    );
+    expect(mutation.result.current.data?.id).toBe('dataset-created');
+
+    queryClient.clear();
+  });
+
+  it('retrieves a content plan by id', async () => {
+    const queryClient = createTestQueryClient();
+    const wrapper = createWrapper(queryClient);
+    const { result } = renderHook(() => useContentPlan('plan-1'), { wrapper });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(result.current.data?.id).toBe('plan-1');
 
     queryClient.clear();
   });

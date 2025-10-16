@@ -33,10 +33,11 @@ Notes:
 - Wrap the application once with `<InfluencerAIProvider baseUrl={process.env.NEXT_PUBLIC_API_BASE_URL}>` inside `src/app/providers.tsx` (after the QueryClient provider).
 - Available hooks mirror the API surface:
   - `useJobs` / `useJob`
-  - `useCreateJob`
+  - `useCreateJob` / `useUpdateJob`
   - `useQueuesSummary`
   - `useDatasets` / `useCreateDataset`
   - `useContentPlan` / `useCreateContentPlan`
+- Hooks expose the underlying `InfluencerAIClient` via `useInfluencerAIClient()` should you need ad-hoc calls.
 - Mutations automatically invalidate list/detail queries and the queues summary.
 - Hooks accept the same options as their TanStack Query counterparts so you can override `refetchInterval`, `staleTime`, etc.
 
@@ -55,6 +56,32 @@ export function Providers({ children }: { children: React.ReactNode }) {
         {children}
       </InfluencerAIProvider>
     </QueryClientProvider>
+  );
+}
+```
+
+Fetching and mutating data:
+
+```tsx
+import { useJob, useUpdateJob } from '@influencerai/sdk/react';
+
+export function JobDetail({ id }: { id: string }) {
+  const { data: job, isPending } = useJob(id);
+  const updateJob = useUpdateJob();
+
+  if (isPending) return <p>Loading…</p>;
+
+  return (
+    <div>
+      <h2>{job?.id}</h2>
+      <button
+        onClick={() =>
+          updateJob.mutate({ id, update: { status: 'succeeded', result: { note: 'Manual override' } } })
+        }
+      >
+        Force success
+      </button>
+    </div>
   );
 }
 ```

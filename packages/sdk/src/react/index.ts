@@ -9,6 +9,7 @@ export {
   useQueuesSummary,
   useContentPlan,
   useCreateJob,
+  useUpdateJob,
   useCreateDataset,
   useCreateContentPlan,
 } from './hooks';
@@ -19,6 +20,8 @@ export type {
   UseQueuesSummaryOptions,
   UseContentPlanOptions,
   UseCreateJobOptions,
+  UseUpdateJobOptions,
+  UpdateJobVariables,
   UseCreateDatasetOptions,
   UseCreateContentPlanOptions,
 } from './hooks';
