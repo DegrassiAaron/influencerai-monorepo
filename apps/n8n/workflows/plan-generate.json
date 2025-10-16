@@ -1,0 +1,361 @@
+{
+  "name": "Content Plan Generator",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "manual-trigger-plan",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 9 * * 1"
+            }
+          ]
+        }
+      },
+      "id": "cron-trigger-plan",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [250, 500],
+      "notes": "Runs every Monday at 9 AM"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "influencer-id",
+              "name": "influencerId",
+              "value": "={{ $env.DEFAULT_INFLUENCER_ID || 'influencer-001' }}",
+              "type": "string"
+            },
+            {
+              "id": "theme",
+              "name": "theme",
+              "value": "{{ $json.theme || 'Weekly tech trends and AI tools for content creators' }}",
+              "type": "string"
+            },
+            {
+              "id": "platforms",
+              "name": "targetPlatforms",
+              "value": "={{ $json.targetPlatforms || ['instagram', 'tiktok', 'youtube'] }}",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-plan-payload",
+      "name": "Set Plan Payload",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [500, 400]
+    },
+    {
+      "parameters": {
+        "authentication": "none",
+        "url": "={{ $env.API_BASE_URL || 'http://api:3001' }}/content-plans",
+        "options": {
+          "redirect": {
+            "redirect": {
+              "followRedirects": true,
+              "maxRedirects": 3
+            }
+          },
+          "timeout": 60000,
+          "retry": {
+            "retry": {
+              "maxRetries": 3,
+              "retryOnStatusCodes": "429,500,502,503,504",
+              "waitBetweenRetries": 2000
+            }
+          }
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ 'Bearer ' + ($env.API_TOKEN || 'dev-token') }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "method": "POST",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "influencerId",
+              "value": "={{ $json.influencerId }}"
+            },
+            {
+              "name": "theme",
+              "value": "={{ $json.theme }}"
+            },
+            {
+              "name": "targetPlatforms",
+              "value": "={{ $json.targetPlatforms }}"
+            }
+          ]
+        }
+      },
+      "id": "create-plan-request",
+      "name": "Create Content Plan",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [750, 400],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "success-check",
+              "leftValue": "={{ $json.code }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "isEmpty"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "check-success",
+      "name": "Check Success",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.1,
+      "position": [1000, 400]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "log-message",
+              "name": "message",
+              "value": "Content plan created successfully",
+              "type": "string"
+            },
+            {
+              "id": "log-level",
+              "name": "level",
+              "value": "info",
+              "type": "string"
+            },
+            {
+              "id": "plan-id",
+              "name": "planId",
+              "value": "={{ $json.id }}",
+              "type": "string"
+            },
+            {
+              "id": "post-count",
+              "name": "postCount",
+              "value": "={{ $json.posts ? $json.posts.length : 0 }}",
+              "type": "number"
+            },
+            {
+              "id": "timestamp",
+              "name": "timestamp",
+              "value": "={{ $now.toISO() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "log-success",
+      "name": "Log Success",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1250, 300]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "error-message",
+              "name": "message",
+              "value": "Failed to create content plan",
+              "type": "string"
+            },
+            {
+              "id": "error-level",
+              "name": "level",
+              "value": "error",
+              "type": "string"
+            },
+            {
+              "id": "error-code",
+              "name": "errorCode",
+              "value": "={{ $json.code || 'UNKNOWN' }}",
+              "type": "string"
+            },
+            {
+              "id": "error-detail",
+              "name": "errorDetail",
+              "value": "={{ $json.message || JSON.stringify($json) }}",
+              "type": "string"
+            },
+            {
+              "id": "error-timestamp",
+              "name": "timestamp",
+              "value": "={{ $now.toISO() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "log-error",
+      "name": "Log Error",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1250, 500]
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll",
+        "options": {}
+      },
+      "id": "merge-logs",
+      "name": "Merge Results",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [1500, 400]
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Set Plan Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Set Plan Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Plan Payload": {
+      "main": [
+        [
+          {
+            "node": "Create Content Plan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Content Plan": {
+      "main": [
+        [
+          {
+            "node": "Check Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Success": {
+      "main": [
+        [
+          {
+            "node": "Log Success",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Success": {
+      "main": [
+        [
+          {
+            "node": "Merge Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Error": {
+      "main": [
+        [
+          {
+            "node": "Merge Results",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": ""
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "id": "1",
+      "name": "influencerai"
+    },
+    {
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "id": "2",
+      "name": "content-plan"
+    }
+  ],
+  "pinData": {},
+  "versionId": "1"
+}

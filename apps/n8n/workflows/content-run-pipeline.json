@@ -1,0 +1,660 @@
+{
+  "name": "Content Generation Pipeline",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "manual-trigger-pipeline",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [250, 400]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 10 * * 2,4"
+            }
+          ]
+        }
+      },
+      "id": "cron-trigger-pipeline",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [250, 600],
+      "notes": "Runs Tuesday and Thursday at 10 AM"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "influencer-id-pipeline",
+              "name": "influencerId",
+              "value": "={{ $json.influencerId || $env.DEFAULT_INFLUENCER_ID || 'influencer-001' }}",
+              "type": "string"
+            },
+            {
+              "id": "theme-pipeline",
+              "name": "theme",
+              "value": "={{ $json.theme || 'Daily tech news and creator tips' }}",
+              "type": "string"
+            },
+            {
+              "id": "platforms-pipeline",
+              "name": "targetPlatforms",
+              "value": "={{ $json.targetPlatforms || ['instagram', 'tiktok'] }}",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-pipeline-config",
+      "name": "Set Pipeline Config",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [500, 500]
+    },
+    {
+      "parameters": {
+        "authentication": "none",
+        "url": "={{ $env.API_BASE_URL || 'http://api:3001' }}/content-plans",
+        "options": {
+          "timeout": 60000,
+          "retry": {
+            "retry": {
+              "maxRetries": 3,
+              "retryOnStatusCodes": "429,500,502,503,504",
+              "waitBetweenRetries": 3000
+            }
+          }
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ 'Bearer ' + ($env.API_TOKEN || 'dev-token') }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "method": "POST",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "influencerId",
+              "value": "={{ $json.influencerId }}"
+            },
+            {
+              "name": "theme",
+              "value": "={{ $json.theme }}"
+            },
+            {
+              "name": "targetPlatforms",
+              "value": "={{ $json.targetPlatforms }}"
+            }
+          ]
+        }
+      },
+      "id": "step1-create-plan",
+      "name": "Step 1: Create Content Plan",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [750, 500],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "plan-created",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists"
+              }
+            },
+            {
+              "id": "has-posts",
+              "leftValue": "={{ $json.posts ? $json.posts.length : 0 }}",
+              "rightValue": "0",
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "check-plan-success",
+      "name": "Check Plan Success",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.1,
+      "position": [1000, 500]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "plan-id-save",
+              "name": "planId",
+              "value": "={{ $json.id }}",
+              "type": "string"
+            },
+            {
+              "id": "posts-save",
+              "name": "posts",
+              "value": "={{ $json.posts }}",
+              "type": "array"
+            },
+            {
+              "id": "influencer-id-carry",
+              "name": "influencerId",
+              "value": "={{ $json.influencerId }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "save-plan-data",
+      "name": "Save Plan Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1250, 400]
+    },
+    {
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      },
+      "id": "split-posts",
+      "name": "Split Posts",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [1500, 400],
+      "notes": "Process one post at a time"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "current-post",
+              "name": "currentPost",
+              "value": "={{ $json.posts[$index] }}",
+              "type": "object"
+            },
+            {
+              "id": "post-index",
+              "name": "postIndex",
+              "value": "={{ $index }}",
+              "type": "number"
+            },
+            {
+              "id": "job-type-content",
+              "name": "type",
+              "value": "content-generation",
+              "type": "string"
+            },
+            {
+              "id": "job-payload-content",
+              "name": "payload",
+              "value": "={{ {\n  planId: $json.planId,\n  postIndex: $index,\n  caption: $json.posts[$index].caption,\n  hashtags: $json.posts[$index].hashtags,\n  influencerId: $json.influencerId\n} }}",
+              "type": "object"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "prepare-content-job",
+      "name": "Prepare Content Job",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1750, 400]
+    },
+    {
+      "parameters": {
+        "authentication": "none",
+        "url": "={{ $env.API_BASE_URL || 'http://api:3001' }}/jobs",
+        "options": {
+          "timeout": 30000,
+          "retry": {
+            "retry": {
+              "maxRetries": 3,
+              "retryOnStatusCodes": "429,500,502,503,504",
+              "waitBetweenRetries": 2000
+            }
+          }
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ 'Bearer ' + ($env.API_TOKEN || 'dev-token') }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "method": "POST",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "type",
+              "value": "={{ $json.type }}"
+            },
+            {
+              "name": "payload",
+              "value": "={{ $json.payload }}"
+            },
+            {
+              "name": "priority",
+              "value": 7
+            }
+          ]
+        }
+      },
+      "id": "step2-create-content-job",
+      "name": "Step 2: Create Content Job",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2000, 400],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "content-job-id",
+              "name": "contentJobId",
+              "value": "={{ $json.id }}",
+              "type": "string"
+            },
+            {
+              "id": "post-idx-carry",
+              "name": "postIndex",
+              "value": "={{ $('Prepare Content Job').item.json.postIndex }}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "save-content-job-id",
+      "name": "Save Content Job ID",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [2250, 400]
+    },
+    {
+      "parameters": {
+        "unit": "seconds",
+        "amount": 60
+      },
+      "id": "wait-for-content",
+      "name": "Wait for Content Generation",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [2500, 400],
+      "webhookId": "",
+      "notes": "Wait 1 minute before checking job status"
+    },
+    {
+      "parameters": {
+        "authentication": "none",
+        "url": "={{ $env.API_BASE_URL || 'http://api:3001' }}/jobs/{{ $json.contentJobId }}",
+        "options": {
+          "timeout": 10000,
+          "retry": {
+            "retry": {
+              "maxRetries": 2,
+              "waitBetweenRetries": 1000
+            }
+          }
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ 'Bearer ' + ($env.API_TOKEN || 'dev-token') }}"
+            }
+          ]
+        },
+        "method": "GET"
+      },
+      "id": "poll-content-job",
+      "name": "Poll Content Job",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2750, 400],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "content-done",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "succeeded,completed",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "check-content-complete",
+      "name": "Check Content Complete",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.1,
+      "position": [3000, 400]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "asset-id",
+              "name": "assetId",
+              "value": "={{ $json.result?.assetId }}",
+              "type": "string"
+            },
+            {
+              "id": "asset-url",
+              "name": "assetUrl",
+              "value": "={{ $json.result?.url }}",
+              "type": "string"
+            },
+            {
+              "id": "log-content-success",
+              "name": "message",
+              "value": "Content generated successfully for post {{ $('Save Content Job ID').item.json.postIndex }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "log-content-success",
+      "name": "Log Content Success",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [3250, 300]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "error-pipeline",
+              "name": "message",
+              "value": "Pipeline failed",
+              "type": "string"
+            },
+            {
+              "id": "error-stage",
+              "name": "failedStage",
+              "value": "={{ $json.error ? 'plan-creation' : 'unknown' }}",
+              "type": "string"
+            },
+            {
+              "id": "error-detail-pipeline",
+              "name": "error",
+              "value": "={{ JSON.stringify($json) }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "log-pipeline-error",
+      "name": "Log Pipeline Error",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1250, 600]
+    },
+    {
+      "parameters": {
+        "options": {
+          "maxIterations": 30
+        }
+      },
+      "id": "loop-content-poll",
+      "name": "Loop Content Polling",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [3000, 500],
+      "notes": "Max 30 min with 1 min intervals"
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Set Pipeline Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Set Pipeline Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Pipeline Config": {
+      "main": [
+        [
+          {
+            "node": "Step 1: Create Content Plan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Step 1: Create Content Plan": {
+      "main": [
+        [
+          {
+            "node": "Check Plan Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Plan Success": {
+      "main": [
+        [
+          {
+            "node": "Save Plan Data",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log Pipeline Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Plan Data": {
+      "main": [
+        [
+          {
+            "node": "Split Posts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Posts": {
+      "main": [
+        [
+          {
+            "node": "Prepare Content Job",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Content Job": {
+      "main": [
+        [
+          {
+            "node": "Step 2: Create Content Job",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Step 2: Create Content Job": {
+      "main": [
+        [
+          {
+            "node": "Save Content Job ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Content Job ID": {
+      "main": [
+        [
+          {
+            "node": "Wait for Content Generation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait for Content Generation": {
+      "main": [
+        [
+          {
+            "node": "Poll Content Job",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Poll Content Job": {
+      "main": [
+        [
+          {
+            "node": "Check Content Complete",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Content Complete": {
+      "main": [
+        [
+          {
+            "node": "Log Content Success",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Loop Content Polling",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Content Polling": {
+      "main": [
+        [
+          {
+            "node": "Wait for Content Generation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "executionTimeout": 10800,
+    "timezone": "UTC"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "id": "1",
+      "name": "influencerai"
+    },
+    {
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "id": "4",
+      "name": "pipeline"
+    }
+  ],
+  "pinData": {},
+  "versionId": "1"
+}

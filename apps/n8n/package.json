@@ -1,0 +1,19 @@
+{
+  "name": "@influencerai/n8n",
+  "version": "1.0.0",
+  "private": true,
+  "description": "n8n workflows and automation scripts for InfluencerAI",
+  "scripts": {
+    "import": "node scripts/import-workflows.js",
+    "import:all": "node scripts/import-workflows.js",
+    "export": "node scripts/export-workflows.js --all",
+    "export:all": "node scripts/export-workflows.js --all"
+  },
+  "keywords": [
+    "n8n",
+    "workflows",
+    "automation"
+  ],
+  "author": "InfluencerAI Team",
+  "license": "UNLICENSED"
+}

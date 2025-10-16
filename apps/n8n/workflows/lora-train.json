@@ -1,0 +1,465 @@
+{
+  "name": "LoRA Training Job",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "manual-trigger-lora",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "job-type",
+              "name": "type",
+              "value": "lora-training",
+              "type": "string"
+            },
+            {
+              "id": "priority",
+              "name": "priority",
+              "value": "={{ $json.priority || 5 }}",
+              "type": "number"
+            },
+            {
+              "id": "payload-obj",
+              "name": "payload",
+              "value": "={{ {\n  datasetId: $json.datasetId || $env.DEFAULT_DATASET_ID || 'ds_example',\n  epochs: $json.epochs || 10,\n  learningRate: $json.learningRate || 0.0001,\n  batchSize: $json.batchSize || 1,\n  resolution: $json.resolution || 512,\n  networkDim: $json.networkDim || 32,\n  networkAlpha: $json.networkAlpha || 16,\n  modelName: $json.modelName || 'sd15'\n} }}",
+              "type": "object"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-lora-payload",
+      "name": "Set LoRA Job Payload",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [500, 300]
+    },
+    {
+      "parameters": {
+        "authentication": "none",
+        "url": "={{ $env.API_BASE_URL || 'http://api:3001' }}/jobs",
+        "options": {
+          "redirect": {
+            "redirect": {
+              "followRedirects": true,
+              "maxRedirects": 3
+            }
+          },
+          "timeout": 30000,
+          "retry": {
+            "retry": {
+              "maxRetries": 3,
+              "retryOnStatusCodes": "429,500,502,503,504",
+              "waitBetweenRetries": 2000
+            }
+          }
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ 'Bearer ' + ($env.API_TOKEN || 'dev-token') }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "method": "POST",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "type",
+              "value": "={{ $json.type }}"
+            },
+            {
+              "name": "priority",
+              "value": "={{ $json.priority }}"
+            },
+            {
+              "name": "payload",
+              "value": "={{ $json.payload }}"
+            }
+          ]
+        }
+      },
+      "id": "create-lora-job",
+      "name": "Create LoRA Training Job",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [750, 300],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "has-job-id",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "check-job-created",
+      "name": "Check Job Created",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.1,
+      "position": [1000, 300]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "job-id-save",
+              "name": "jobId",
+              "value": "={{ $json.id }}",
+              "type": "string"
+            },
+            {
+              "id": "job-status-save",
+              "name": "status",
+              "value": "={{ $json.status || 'pending' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "save-job-id",
+      "name": "Save Job ID",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1250, 200]
+    },
+    {
+      "parameters": {
+        "unit": "seconds",
+        "amount": 30
+      },
+      "id": "wait-before-poll",
+      "name": "Wait Before Polling",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [1500, 200],
+      "webhookId": ""
+    },
+    {
+      "parameters": {
+        "authentication": "none",
+        "url": "={{ $env.API_BASE_URL || 'http://api:3001' }}/jobs/{{ $json.jobId }}",
+        "options": {
+          "redirect": {
+            "redirect": {
+              "followRedirects": true
+            }
+          },
+          "timeout": 10000,
+          "retry": {
+            "retry": {
+              "maxRetries": 2,
+              "waitBetweenRetries": 1000
+            }
+          }
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ 'Bearer ' + ($env.API_TOKEN || 'dev-token') }}"
+            }
+          ]
+        },
+        "method": "GET"
+      },
+      "id": "poll-job-status",
+      "name": "Poll Job Status",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1750, 200],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "job-completed",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "succeeded,failed,completed",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "check-job-finished",
+      "name": "Check Job Finished",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.1,
+      "position": [2000, 200]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "final-status",
+              "name": "finalStatus",
+              "value": "={{ $json.status }}",
+              "type": "string"
+            },
+            {
+              "id": "result",
+              "name": "result",
+              "value": "={{ $json.result }}",
+              "type": "object"
+            },
+            {
+              "id": "cost-tokens",
+              "name": "costTok",
+              "value": "={{ $json.costTok || 0 }}",
+              "type": "number"
+            },
+            {
+              "id": "log-msg",
+              "name": "message",
+              "value": "LoRA training job completed",
+              "type": "string"
+            },
+            {
+              "id": "log-level-final",
+              "name": "level",
+              "value": "info",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "log-job-complete",
+      "name": "Log Job Complete",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [2250, 100]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "error-msg",
+              "name": "message",
+              "value": "Failed to create LoRA training job",
+              "type": "string"
+            },
+            {
+              "id": "error-lvl",
+              "name": "level",
+              "value": "error",
+              "type": "string"
+            },
+            {
+              "id": "error-details",
+              "name": "error",
+              "value": "={{ JSON.stringify($json) }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "log-job-error",
+      "name": "Log Job Error",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1250, 400]
+    },
+    {
+      "parameters": {
+        "options": {
+          "maxIterations": 120
+        }
+      },
+      "id": "loop-until-complete",
+      "name": "Loop Until Complete",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [2000, 300],
+      "notes": "Max 120 iterations = 1 hour with 30s intervals"
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Set LoRA Job Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set LoRA Job Payload": {
+      "main": [
+        [
+          {
+            "node": "Create LoRA Training Job",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create LoRA Training Job": {
+      "main": [
+        [
+          {
+            "node": "Check Job Created",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Job Created": {
+      "main": [
+        [
+          {
+            "node": "Save Job ID",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log Job Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Job ID": {
+      "main": [
+        [
+          {
+            "node": "Wait Before Polling",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait Before Polling": {
+      "main": [
+        [
+          {
+            "node": "Poll Job Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Poll Job Status": {
+      "main": [
+        [
+          {
+            "node": "Check Job Finished",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Job Finished": {
+      "main": [
+        [
+          {
+            "node": "Log Job Complete",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Loop Until Complete",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Until Complete": {
+      "main": [
+        [
+          {
+            "node": "Wait Before Polling",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "executionTimeout": 7200,
+    "timezone": "UTC"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "id": "1",
+      "name": "influencerai"
+    },
+    {
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "id": "3",
+      "name": "lora-training"
+    }
+  ],
+  "pinData": {},
+  "versionId": "1"
+}

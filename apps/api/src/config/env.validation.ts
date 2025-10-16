@@ -62,6 +62,41 @@ const booleanLike = z
 
 const logLevelEnum = z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']);
 
+/**
+ * Environment variables validation schema with Zod.
+ *
+ * **Mandatory variables** (no fallback):
+ * - `DATABASE_URL`: PostgreSQL connection string (must be provided)
+ *
+ * **Mandatory with runtime check** (fails fast outside test env):
+ * - `OPENROUTER_API_KEY`: Required in development/production, optional in test
+ *
+ * **Optional with sensible defaults**:
+ * - `NODE_ENV`: defaults to 'development'
+ * - `PORT`: defaults to 3001 (standard API port)
+ * - `REDIS_URL`: defaults to 'redis://localhost:6379' (local Redis)
+ * - `BULL_PREFIX`: defaults to 'bull' (queue namespace)
+ * - `LOG_LEVEL`: derived from NODE_ENV ('debug' in dev, 'info' in prod)
+ * - `LOGGER_PRETTY`: derived from NODE_ENV (true in dev, false in prod)
+ * - `OPENROUTER_MAX_RETRIES`: defaults to 3 (resilient API calls)
+ * - `OPENROUTER_TIMEOUT_MS`: defaults to 60000 (1 minute)
+ * - `OPENROUTER_BACKOFF_BASE_MS`: defaults to 250ms (exponential backoff)
+ * - `OPENROUTER_BACKOFF_JITTER_MS`: defaults to 100ms (jitter to avoid thundering herd)
+ * - `WORKER_JOB_ATTEMPTS`: defaults to 3 (retry failed jobs)
+ * - `WORKER_JOB_BACKOFF_DELAY_MS`: defaults to 5000 (5 seconds between retries)
+ * - `S3_ENDPOINT`: defaults to 'http://localhost:9000' (local MinIO)
+ * - `S3_KEY`: defaults to 'minio' (local MinIO credentials)
+ * - `S3_SECRET`: defaults to 'minio12345' (local MinIO credentials)
+ * - `S3_BUCKET`: defaults to 'assets' (default bucket name)
+ * - `AWS_REGION`: defaults to 'us-east-1' (MinIO compatible region)
+ * - `JWT_SECRET`: defaults to 'dev_jwt_secret_change_me' (INSECURE for dev only)
+ *
+ * **Boolean-like flags** (optional, default to undefined/false):
+ * - `DISABLE_BULL`: disables job queue (useful for debugging)
+ * - `SKIP_S3_INIT`: skips MinIO bucket initialization (useful for tests)
+ *
+ * @see {@link validateEnv} for usage
+ */
 export const envSchema = z
   .object({
     NODE_ENV: nodeEnvSchema,
@@ -117,6 +152,27 @@ export const envSchema = z
 
 export type AppConfig = z.infer<typeof envSchema>;
 
+/**
+ * Validates environment variables using the Zod schema.
+ *
+ * **Failing fast behavior:**
+ * - Throws immediately if `DATABASE_URL` is missing (mandatory)
+ * - Throws if `OPENROUTER_API_KEY` is missing outside test environment
+ * - Throws if boolean-like values are invalid (e.g., 'nah', 'treu')
+ * - Throws if numeric values are out of range (e.g., negative ports)
+ *
+ * **Usage in NestJS:**
+ * ```ts
+ * ConfigModule.forRoot({
+ *   isGlobal: true,
+ *   validate: validateEnv,
+ * })
+ * ```
+ *
+ * @param config - Raw environment variables from `process.env`
+ * @returns Validated and typed configuration with defaults applied
+ * @throws {ZodError} When validation fails (fails fast on startup)
+ */
 export const validateEnv = (config: Record<string, unknown>): AppConfig => envSchema.parse(config);
 
 export const computeBullEnabled = (env: Record<string, unknown>): boolean => {

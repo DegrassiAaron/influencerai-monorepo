@@ -1,0 +1,376 @@
+{
+  "name": "ComfyUI Webhook Receiver",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "comfyui-callback",
+        "options": {
+          "responseData": "{ \"status\": \"received\" }"
+        }
+      },
+      "id": "webhook-trigger-comfyui",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [250, 400],
+      "webhookId": "comfyui-webhook",
+      "notes": "Receives callbacks from ComfyUI when rendering completes"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "raw-body",
+              "name": "rawBody",
+              "value": "={{ JSON.stringify($json.body) }}",
+              "type": "string"
+            },
+            {
+              "id": "job-id-webhook",
+              "name": "jobId",
+              "value": "={{ $json.body?.jobId || $json.body?.data?.jobId }}",
+              "type": "string"
+            },
+            {
+              "id": "render-status",
+              "name": "renderStatus",
+              "value": "={{ $json.body?.status || 'unknown' }}",
+              "type": "string"
+            },
+            {
+              "id": "output-path",
+              "name": "outputPath",
+              "value": "={{ $json.body?.outputPath || $json.body?.data?.outputPath }}",
+              "type": "string"
+            },
+            {
+              "id": "error-msg",
+              "name": "error",
+              "value": "={{ $json.body?.error }}",
+              "type": "string"
+            },
+            {
+              "id": "timestamp-webhook",
+              "name": "receivedAt",
+              "value": "={{ $now.toISO() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "parse-webhook-data",
+      "name": "Parse Webhook Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [500, 400]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "has-job-id",
+              "leftValue": "={{ $json.jobId }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "isNotEmpty"
+              }
+            },
+            {
+              "id": "valid-status",
+              "leftValue": "={{ $json.renderStatus }}",
+              "rightValue": "success,failed,completed",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "validate-webhook",
+      "name": "Validate Webhook",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.1,
+      "position": [750, 400]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "job-status-map",
+              "name": "jobStatus",
+              "value": "={{ $json.renderStatus === 'success' ? 'succeeded' : ($json.renderStatus === 'failed' ? 'failed' : 'completed') }}",
+              "type": "string"
+            },
+            {
+              "id": "result-data",
+              "name": "resultData",
+              "value": "={{ {\n  outputPath: $json.outputPath,\n  renderStatus: $json.renderStatus,\n  receivedAt: $json.receivedAt\n} }}",
+              "type": "object"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "map-to-job-update",
+      "name": "Map to Job Update",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1000, 300]
+    },
+    {
+      "parameters": {
+        "authentication": "none",
+        "url": "={{ $env.API_BASE_URL || 'http://api:3001' }}/jobs/{{ $('Parse Webhook Data').item.json.jobId }}",
+        "options": {
+          "timeout": 15000,
+          "retry": {
+            "retry": {
+              "maxRetries": 3,
+              "retryOnStatusCodes": "429,500,502,503,504",
+              "waitBetweenRetries": 2000
+            }
+          }
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ 'Bearer ' + ($env.API_TOKEN || 'dev-token') }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "method": "PATCH",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "status",
+              "value": "={{ $json.jobStatus }}"
+            },
+            {
+              "name": "result",
+              "value": "={{ $json.resultData }}"
+            }
+          ]
+        }
+      },
+      "id": "update-job-status",
+      "name": "Update Job Status",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1250, 300],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "webhook-success",
+              "name": "message",
+              "value": "ComfyUI webhook processed successfully",
+              "type": "string"
+            },
+            {
+              "id": "webhook-job-id",
+              "name": "jobId",
+              "value": "={{ $('Parse Webhook Data').item.json.jobId }}",
+              "type": "string"
+            },
+            {
+              "id": "webhook-status",
+              "name": "status",
+              "value": "={{ $json.status || 'updated' }}",
+              "type": "string"
+            },
+            {
+              "id": "log-level-webhook",
+              "name": "level",
+              "value": "info",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "log-webhook-success",
+      "name": "Log Webhook Success",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1500, 300]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "webhook-invalid",
+              "name": "message",
+              "value": "Invalid ComfyUI webhook payload",
+              "type": "string"
+            },
+            {
+              "id": "webhook-error-level",
+              "name": "level",
+              "value": "warning",
+              "type": "string"
+            },
+            {
+              "id": "webhook-error-data",
+              "name": "payload",
+              "value": "={{ $('Parse Webhook Data').item.json.rawBody }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "log-webhook-invalid",
+      "name": "Log Webhook Invalid",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1000, 500]
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll",
+        "options": {}
+      },
+      "id": "merge-webhook-results",
+      "name": "Merge Webhook Results",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [1750, 400]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Parse Webhook Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Webhook Data": {
+      "main": [
+        [
+          {
+            "node": "Validate Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Webhook": {
+      "main": [
+        [
+          {
+            "node": "Map to Job Update",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log Webhook Invalid",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Map to Job Update": {
+      "main": [
+        [
+          {
+            "node": "Update Job Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Job Status": {
+      "main": [
+        [
+          {
+            "node": "Log Webhook Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Webhook Success": {
+      "main": [
+        [
+          {
+            "node": "Merge Webhook Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Webhook Invalid": {
+      "main": [
+        [
+          {
+            "node": "Merge Webhook Results",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "any",
+    "timezone": "UTC"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "id": "1",
+      "name": "influencerai"
+    },
+    {
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "id": "6",
+      "name": "webhook"
+    }
+  ],
+  "pinData": {},
+  "versionId": "1"
+}

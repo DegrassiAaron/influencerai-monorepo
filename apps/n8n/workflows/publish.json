@@ -1,0 +1,545 @@
+{
+  "name": "Social Media Publisher",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "manual-trigger-publish",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [250, 400]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "asset-id-pub",
+              "name": "assetId",
+              "value": "={{ $json.assetId || 'asset_example' }}",
+              "type": "string"
+            },
+            {
+              "id": "channel-pub",
+              "name": "channel",
+              "value": "={{ $json.channel || 'instagram' }}",
+              "type": "string"
+            },
+            {
+              "id": "caption-pub",
+              "name": "caption",
+              "value": "={{ $json.caption || 'Check out my latest content!' }}",
+              "type": "string"
+            },
+            {
+              "id": "hashtags-pub",
+              "name": "hashtags",
+              "value": "={{ $json.hashtags || ['#content', '#creator'] }}",
+              "type": "array"
+            },
+            {
+              "id": "schedule-time",
+              "name": "scheduledAt",
+              "value": "={{ $json.scheduledAt || $now.toISO() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-publish-payload",
+      "name": "Set Publish Payload",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [500, 400]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "is-instagram",
+              "leftValue": "={{ $json.channel }}",
+              "rightValue": "instagram",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "route-by-channel",
+      "name": "Route by Channel",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.1,
+      "position": [750, 400],
+      "parameters": {
+        "rules": {
+          "rules": [
+            {
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.channel }}",
+                    "rightValue": "instagram",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "instagram"
+            },
+            {
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.channel }}",
+                    "rightValue": "tiktok",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "tiktok"
+            },
+            {
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.channel }}",
+                    "rightValue": "youtube",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "youtube"
+            }
+          ]
+        },
+        "fallbackOutput": "extra"
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "ig-access-token",
+              "name": "accessToken",
+              "value": "={{ $env.INSTAGRAM_ACCESS_TOKEN || 'fake-token' }}",
+              "type": "string"
+            },
+            {
+              "id": "ig-account-id",
+              "name": "instagramAccountId",
+              "value": "={{ $env.INSTAGRAM_ACCOUNT_ID || 'fake-account' }}",
+              "type": "string"
+            },
+            {
+              "id": "ig-caption",
+              "name": "caption",
+              "value": "={{ $json.caption + '\\n\\n' + $json.hashtags.join(' ') }}",
+              "type": "string"
+            },
+            {
+              "id": "ig-asset-id",
+              "name": "assetId",
+              "value": "={{ $json.assetId }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "prepare-instagram",
+      "name": "Prepare Instagram Post",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1000, 200],
+      "notes": "Format for Instagram Graph API"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "tt-access-token",
+              "name": "accessToken",
+              "value": "={{ $env.TIKTOK_ACCESS_TOKEN || 'fake-token' }}",
+              "type": "string"
+            },
+            {
+              "id": "tt-caption",
+              "name": "description",
+              "value": "={{ $json.caption + ' ' + $json.hashtags.map(h => '#' + h.replace('#', '')).join(' ') }}",
+              "type": "string"
+            },
+            {
+              "id": "tt-asset-id",
+              "name": "assetId",
+              "value": "={{ $json.assetId }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "prepare-tiktok",
+      "name": "Prepare TikTok Post",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1000, 400],
+      "notes": "Format for TikTok API"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "yt-access-token",
+              "name": "accessToken",
+              "value": "={{ $env.YOUTUBE_ACCESS_TOKEN || 'fake-token' }}",
+              "type": "string"
+            },
+            {
+              "id": "yt-title",
+              "name": "title",
+              "value": "={{ $json.caption.substring(0, 100) }}",
+              "type": "string"
+            },
+            {
+              "id": "yt-description",
+              "name": "description",
+              "value": "={{ $json.caption + '\\n\\n' + $json.hashtags.join(' ') }}",
+              "type": "string"
+            },
+            {
+              "id": "yt-asset-id",
+              "name": "assetId",
+              "value": "={{ $json.assetId }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "prepare-youtube",
+      "name": "Prepare YouTube Short",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1000, 600],
+      "notes": "Format for YouTube Data API"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "publish-status",
+              "name": "publishStatus",
+              "value": "mock_success",
+              "type": "string"
+            },
+            {
+              "id": "publish-message",
+              "name": "message",
+              "value": "Instagram publish would execute here (Graph API integration required)",
+              "type": "string"
+            },
+            {
+              "id": "publish-asset",
+              "name": "assetId",
+              "value": "={{ $json.assetId }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "mock-instagram-publish",
+      "name": "Mock Instagram Publish",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1250, 200],
+      "notes": "Replace with actual Instagram Graph API call"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "publish-status-tt",
+              "name": "publishStatus",
+              "value": "mock_success",
+              "type": "string"
+            },
+            {
+              "id": "publish-message-tt",
+              "name": "message",
+              "value": "TikTok publish would execute here (Content Posting API integration required)",
+              "type": "string"
+            },
+            {
+              "id": "publish-asset-tt",
+              "name": "assetId",
+              "value": "={{ $json.assetId }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "mock-tiktok-publish",
+      "name": "Mock TikTok Publish",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1250, 400],
+      "notes": "Replace with actual TikTok API call"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "publish-status-yt",
+              "name": "publishStatus",
+              "value": "mock_success",
+              "type": "string"
+            },
+            {
+              "id": "publish-message-yt",
+              "name": "message",
+              "value": "YouTube publish would execute here (YouTube Data API v3 integration required)",
+              "type": "string"
+            },
+            {
+              "id": "publish-asset-yt",
+              "name": "assetId",
+              "value": "={{ $json.assetId }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "mock-youtube-publish",
+      "name": "Mock YouTube Publish",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1250, 600],
+      "notes": "Replace with actual YouTube API call"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll",
+        "options": {}
+      },
+      "id": "merge-publish-results",
+      "name": "Merge Publish Results",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [1500, 400]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "final-status",
+              "name": "status",
+              "value": "={{ $json.publishStatus || 'completed' }}",
+              "type": "string"
+            },
+            {
+              "id": "final-message",
+              "name": "message",
+              "value": "Publish workflow completed",
+              "type": "string"
+            },
+            {
+              "id": "final-timestamp",
+              "name": "timestamp",
+              "value": "={{ $now.toISO() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "log-publish-complete",
+      "name": "Log Publish Complete",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1750, 400]
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Set Publish Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Publish Payload": {
+      "main": [
+        [
+          {
+            "node": "Route by Channel",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route by Channel": {
+      "main": [
+        [
+          {
+            "node": "Prepare Instagram Post",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Prepare TikTok Post",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Prepare YouTube Short",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Instagram Post": {
+      "main": [
+        [
+          {
+            "node": "Mock Instagram Publish",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare TikTok Post": {
+      "main": [
+        [
+          {
+            "node": "Mock TikTok Publish",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare YouTube Short": {
+      "main": [
+        [
+          {
+            "node": "Mock YouTube Publish",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mock Instagram Publish": {
+      "main": [
+        [
+          {
+            "node": "Merge Publish Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mock TikTok Publish": {
+      "main": [
+        [
+          {
+            "node": "Merge Publish Results",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Mock YouTube Publish": {
+      "main": [
+        [
+          {
+            "node": "Merge Publish Results",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Merge Publish Results": {
+      "main": [
+        [
+          {
+            "node": "Log Publish Complete",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "timezone": "UTC"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "id": "1",
+      "name": "influencerai"
+    },
+    {
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "id": "5",
+      "name": "social-media"
+    }
+  ],
+  "pinData": {},
+  "versionId": "1"
+}
