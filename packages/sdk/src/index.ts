@@ -26,6 +26,13 @@ import {
 
 type QueryValue = string | number | boolean | undefined;
 
+export interface ListJobsParams {
+  status?: string;
+  type?: string;
+  take?: number;
+  skip?: number;
+}
+
 interface RequestConfig<T> {
   path: string;
   method?: string;
@@ -110,7 +117,7 @@ export class InfluencerAIClient {
     return this.request({ path: `/jobs/${id}`, schema: JobResponseSchema });
   }
 
-  async listJobs(params: { status?: string; type?: string; take?: number; skip?: number } = {}) {
+  async listJobs(params: ListJobsParams = {}) {
     const query: Record<string, QueryValue> = {
       status: params.status,
       type: params.type,
@@ -163,3 +170,4 @@ export type {
   ContentPlanEnvelope,
 } from './types';
 export { APIError as InfluencerAIAPIError } from './fetch-utils';
+export type { ListJobsParams };
