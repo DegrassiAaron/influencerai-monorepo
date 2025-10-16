@@ -10,4 +10,3 @@ import { StorageModule } from '../storage/storage.module';
   controllers: [HealthController],
 })
 export class HealthModule {}
-

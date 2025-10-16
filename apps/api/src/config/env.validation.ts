@@ -48,11 +48,12 @@ const normalizeNodeEnv = (value: unknown): 'development' | 'production' | 'test'
   return 'development';
 };
 
-const preprocessNodeEnv = (value: unknown) => (typeof value === 'string' ? value.trim().toLowerCase() : value);
+const preprocessNodeEnv = (value: unknown) =>
+  typeof value === 'string' ? value.trim().toLowerCase() : value;
 
 const nodeEnvSchema = z.preprocess(
   preprocessNodeEnv,
-  z.enum(['development', 'production', 'test']).default('development'),
+  z.enum(['development', 'production', 'test']).default('development')
 );
 
 const booleanLike = z
@@ -133,7 +134,7 @@ export const envSchema = z
     }
   })
   .transform((config) => {
-    const loggerPretty = (config.LOGGER_PRETTY ?? (config.NODE_ENV !== 'production')) as boolean;
+    const loggerPretty = (config.LOGGER_PRETTY ?? config.NODE_ENV !== 'production') as boolean;
     const logLevel = config.LOG_LEVEL ?? (config.NODE_ENV === 'production' ? 'info' : 'debug');
     const disableBull = (config.DISABLE_BULL ?? false) as boolean;
     const skipS3Init = (config.SKIP_S3_INIT ?? false) as boolean;

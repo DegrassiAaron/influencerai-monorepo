@@ -47,7 +47,8 @@ export async function resolveConfig(
   dataset: LoraDatasetInfo,
   deps: Pick<LoraTrainingProcessorDeps, 'fetchLoraConfig'>
 ): Promise<LoraConfigInfo> {
-  if (payload.config) return { ...payload.config, datasetPath: payload.config.datasetPath ?? dataset.path };
+  if (payload.config)
+    return { ...payload.config, datasetPath: payload.config.datasetPath ?? dataset.path };
   if (payload.configId && deps.fetchLoraConfig) {
     const cfg = await deps.fetchLoraConfig(payload.configId);
     if (cfg) return { ...cfg, datasetPath: cfg.datasetPath ?? dataset.path };
@@ -169,7 +170,9 @@ export function scheduleProgress(
   }
 }
 
-export function parseProgressFromLine(line: string): Pick<TrainingProgress, 'step' | 'totalSteps' | 'percent'> {
+export function parseProgressFromLine(
+  line: string
+): Pick<TrainingProgress, 'step' | 'totalSteps' | 'percent'> {
   const stepMatch = line.match(/step\s*(\d+)\s*(?:\/|of)\s*(\d+)/i);
   if (stepMatch) {
     const current = Number(stepMatch[1]);
@@ -221,8 +224,18 @@ export async function uploadSafetensors(
   for (const filename of safetensors) {
     const absolute = path.resolve(outputDir, filename);
     const key = `${keyPrefix}${filename}`;
-    await s3Deps.putBinaryObject(clientInfo.client, clientInfo.bucket, key, createReadStream(absolute));
-    const url = await s3Deps.getSignedGetUrl(clientInfo.client, clientInfo.bucket, key, SIGNED_URL_EXPIRY_SECONDS);
+    await s3Deps.putBinaryObject(
+      clientInfo.client,
+      clientInfo.bucket,
+      key,
+      createReadStream(absolute)
+    );
+    const url = await s3Deps.getSignedGetUrl(
+      clientInfo.client,
+      clientInfo.bucket,
+      key,
+      SIGNED_URL_EXPIRY_SECONDS
+    );
     uploads.push({ key, url, filename });
   }
 

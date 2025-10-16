@@ -55,12 +55,15 @@ export type WorkerDependencies = {
   api: WorkerApi;
   connection: Redis;
   s3: S3Helpers;
-  fetchDataset?: (datasetId: string) => Promise<{ id?: string; path: string; meta?: Record<string, unknown> | null } | null>;
+  fetchDataset?: (
+    datasetId: string
+  ) => Promise<{ id?: string; path: string; meta?: Record<string, unknown> | null } | null>;
   fetchLoraConfig?: (
     configId: string
-  ) => Promise<Partial<Record<string, unknown>> & { modelName?: string; outputPath?: string } | null>;
+  ) => Promise<
+    (Partial<Record<string, unknown>> & { modelName?: string; outputPath?: string }) | null
+  >;
 };
-
 
 export function createWorkers(deps: WorkerDependencies) {
   const { logger: depLogger, api, connection, s3, fetchDataset, fetchLoraConfig } = deps;
@@ -86,7 +89,11 @@ export function createWorkers(deps: WorkerDependencies) {
 
   const workerOptions = { connection, prefix: process.env.BULL_PREFIX };
 
-  const contentWorker = new Worker<ContentGenerationJobData, ContentGenerationResult, 'content-generation'>(
+  const contentWorker = new Worker<
+    ContentGenerationJobData,
+    ContentGenerationResult,
+    'content-generation'
+  >(
     'content-generation',
     createContentGenerationProcessor({
       logger: depLogger,
@@ -123,13 +130,14 @@ export function createWorkers(deps: WorkerDependencies) {
     workerOptions
   );
 
-  const loraProcessor: Processor<LoraTrainingJobData, LoraTrainingResult, 'lora-training'> = createLoraTrainingProcessor({
-    logger: depLogger,
-    patchJobStatus,
-    s3,
-    fetchDataset,
-    fetchLoraConfig,
-  });
+  const loraProcessor: Processor<LoraTrainingJobData, LoraTrainingResult, 'lora-training'> =
+    createLoraTrainingProcessor({
+      logger: depLogger,
+      patchJobStatus,
+      s3,
+      fetchDataset,
+      fetchLoraConfig,
+    });
 
   const loraWorker = new Worker<LoraTrainingJobData, LoraTrainingResult, 'lora-training'>(
     'lora-training',
@@ -190,10 +198,12 @@ export function createWorkers(deps: WorkerDependencies) {
   const monitorPassword = process.env.WORKER_BULL_BOARD_PASSWORD;
   const monitorPortValue = Number(process.env.WORKER_MONITOR_PORT ?? '');
   const monitorHost = process.env.WORKER_MONITOR_HOST || '0.0.0.0';
-  const resolvedMonitorPort = Number.isFinite(monitorPortValue) && monitorPortValue > 0 ? monitorPortValue : 3031;
+  const resolvedMonitorPort =
+    Number.isFinite(monitorPortValue) && monitorPortValue > 0 ? monitorPortValue : 3031;
   const alertWebhookUrl = process.env.WORKER_ALERT_WEBHOOK_URL;
   const alertThresholdValue = Number(process.env.WORKER_ALERT_FAILURE_THRESHOLD ?? '');
-  const resolvedAlertThreshold = Number.isFinite(alertThresholdValue) && alertThresholdValue > 0 ? alertThresholdValue : 3;
+  const resolvedAlertThreshold =
+    Number.isFinite(alertThresholdValue) && alertThresholdValue > 0 ? alertThresholdValue : 3;
 
   let monitoring: ReturnType<typeof createMonitoringServer> | null = null;
   if (monitorUsername && monitorPassword) {
@@ -227,10 +237,13 @@ export function createWorkers(deps: WorkerDependencies) {
 
   const recordMonitoringFailure = (queueName: string, job: Job | undefined, err: unknown) => {
     if (!monitoring) return;
-    const jobIdentifier = (job?.id as string | undefined) ?? ((job?.data as any)?.jobId as string | undefined);
+    const jobIdentifier =
+      (job?.id as string | undefined) ?? ((job?.data as any)?.jobId as string | undefined);
     monitoring
       .recordFailure(queueName, jobIdentifier, err)
-      .catch((recordErr) => depLogger.warn({ err: recordErr, queue: queueName }, 'Unable to record failure metrics'));
+      .catch((recordErr) =>
+        depLogger.warn({ err: recordErr, queue: queueName }, 'Unable to record failure metrics')
+      );
   };
 
   contentWorker.on('completed', (job) => {
@@ -244,9 +257,10 @@ export function createWorkers(deps: WorkerDependencies) {
     depLogger.error({ id: job?.id, err }, 'Job failed');
     const jobId = (job?.data as any)?.jobId as string | undefined;
     if (jobId) {
-      patchJobStatus(jobId, { status: 'failed', result: { message: (err as any)?.message, stack: (err as any)?.stack } }).catch(
-        () => {}
-      );
+      patchJobStatus(jobId, {
+        status: 'failed',
+        result: { message: (err as any)?.message, stack: (err as any)?.stack },
+      }).catch(() => {});
     }
     void failureAlerter.handleFailure('content-generation', job, err);
   });
@@ -262,9 +276,10 @@ export function createWorkers(deps: WorkerDependencies) {
     depLogger.error({ id: job?.id, err }, 'LoRA training job failed');
     const jobId = (job?.data as any)?.jobId as string | undefined;
     if (jobId) {
-      patchJobStatus(jobId, { status: 'failed', result: { message: (err as any)?.message, stack: (err as any)?.stack } }).catch(
-        () => {}
-      );
+      patchJobStatus(jobId, {
+        status: 'failed',
+        result: { message: (err as any)?.message, stack: (err as any)?.stack },
+      }).catch(() => {});
     }
     void failureAlerter.handleFailure('lora-training', job, err);
   });
@@ -280,9 +295,10 @@ export function createWorkers(deps: WorkerDependencies) {
     depLogger.error({ id: job?.id, err }, 'Video generation job failed');
     const jobId = (job?.data as any)?.jobId as string | undefined;
     if (jobId) {
-      patchJobStatus(jobId, { status: 'failed', result: { message: (err as any)?.message, stack: (err as any)?.stack } }).catch(
-        () => {}
-      );
+      patchJobStatus(jobId, {
+        status: 'failed',
+        result: { message: (err as any)?.message, stack: (err as any)?.stack },
+      }).catch(() => {});
     }
     void failureAlerter.handleFailure('video-generation', job, err);
   });
@@ -332,7 +348,8 @@ if (process.env.NODE_ENV !== 'test') {
     maxRetriesPerRequest: null,
   });
 
-  const apiBaseUrl = process.env.API_BASE_URL || process.env.WORKER_API_URL || 'http://localhost:3001';
+  const apiBaseUrl =
+    process.env.API_BASE_URL || process.env.WORKER_API_URL || 'http://localhost:3001';
   const api = new InfluencerAIClient(apiBaseUrl);
   const logger = defaultLogger;
 

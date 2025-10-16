@@ -22,4 +22,3 @@ export class AuthController {
     return this.auth.loginWithPassword(email, password);
   }
 }
-

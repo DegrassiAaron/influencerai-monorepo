@@ -1,4 +1,10 @@
-import { INestApplication, Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import {
+  INestApplication,
+  Injectable,
+  Logger,
+  OnModuleDestroy,
+  OnModuleInit,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaClient } from '@prisma/client';
 import { getRequestContext } from '../lib/request-context';
@@ -43,7 +49,12 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
           if (!tenantId) {
             return next(params);
           }
-          const modelsWithTenant: Record<string, true> = { Influencer: true, Dataset: true, User: true, Job: true };
+          const modelsWithTenant: Record<string, true> = {
+            Influencer: true,
+            Dataset: true,
+            User: true,
+            Job: true,
+          };
           if (!modelsWithTenant[params.model || '']) {
             return next(params);
           }
@@ -85,10 +96,18 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
       const clientWithExtensions = this as unknown as {
         $extends?: (extension: {
           query: {
-            $allModels: (params: PrismaMiddlewareParams, next: PrismaMiddlewareNext) => Promise<unknown>;
+            $allModels: (
+              params: PrismaMiddlewareParams,
+              next: PrismaMiddlewareNext
+            ) => Promise<unknown>;
           };
         }) => unknown;
-        $use?: (middleware: (params: PrismaMiddlewareParams, next: PrismaMiddlewareNext) => Promise<unknown>) => unknown;
+        $use?: (
+          middleware: (
+            params: PrismaMiddlewareParams,
+            next: PrismaMiddlewareNext
+          ) => Promise<unknown>
+        ) => unknown;
       };
 
       if (typeof clientWithExtensions.$extends === 'function') {

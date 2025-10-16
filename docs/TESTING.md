@@ -47,4 +47,3 @@ pnpm build
 - Assicurati che `DATABASE_URL` sia valorizzata in `.env` o `apps/api/.env` per i test d’integrazione.
 - Se i servizi non sono disponibili, avviali con `scripts/start-all.{sh,ps1}`.
 - In caso di errori di permessi su Windows, esegui PowerShell con `-ExecutionPolicy Bypass`.
-

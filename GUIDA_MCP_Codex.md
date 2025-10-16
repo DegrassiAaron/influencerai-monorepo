@@ -3,7 +3,9 @@
 > Scopo: riutilizzare la stessa configurazione dei server MCP in `meepleai-monorepo` e `influencerai-monorepo`, mantenendo **token e processi locali per macchina**, con setup **as‑code**.
 
 ## Prompt rapido per Codex
+
 Copia il blocco qui sotto in Codex per eseguire i passi chiave (puoi lanciarli in sequenza o a step).
+
 ```text
 Obiettivo: attiva MCP GitHub via wrapper STDIO (docker run -i), con segreti locali, in questo workspace.
 
@@ -19,6 +21,7 @@ Nota: i wrapper eseguono container efimeri in STDIO; nessuna porta esposta; stes
 ---
 
 ## Struttura consigliata del repo
+
 ```text
 <repo>/
 ├─ .codex/
@@ -36,12 +39,16 @@ Nota: i wrapper eseguono container efimeri in STDIO; nessuna porta esposta; stes
 ---
 
 ## Step 1 — Segreti locali (per macchina)
+
 Crea `tools/mcp-kit/.env.local` partendo da questo esempio:
+
 ```env
 # Copia come tools/mcp-kit/.env.local (NON committare)
 GITHUB_PAT=ghp_xxxxxxx
 ```
+
 Aggiungi a `.gitignore` (se serve):
+
 ```text
 tools/mcp-kit/.env.local
 ```
@@ -49,7 +56,9 @@ tools/mcp-kit/.env.local
 ---
 
 ## Step 2 — Wrapper MCP (STDIO, nessuna porta)
+
 Crea `tools/mcp-kit/wrappers/github-mcp.ps1`:
+
 ```powershell
 param(
   [string]$Token = $env:GITHUB_PAT
@@ -70,7 +79,9 @@ Facoltativo: crea altri wrapper per ulteriori MCP (es. `linear-mcp.ps1`) con le 
 ---
 
 ## Step 3 — Configurazione Codex per repo
+
 File: `.codex/mcp.toml`
+
 ```toml
 # Codex MCP config — usa i wrapper STDIO del repo
 
@@ -90,7 +101,9 @@ args = [
 ---
 
 ## Step 4 — Task VSCode (smoke‑test e check token)
+
 File: `.vscode/tasks.json`
+
 ```json
 {
   "version": "2.0.0",
@@ -114,37 +127,42 @@ File: `.vscode/tasks.json`
 ---
 
 ## Step 5 — Workflow tipico
-1. Popola/aggiorna `tools/mcp-kit/.env.local` con il tuo PAT.  
-2. Esegui in VSCode: **MCP: env-check** → deve stampare `OK`.  
-3. Avvia Codex → digita `/mcp` → verifica che `github` sia attivo.  
+
+1. Popola/aggiorna `tools/mcp-kit/.env.local` con il tuo PAT.
+2. Esegui in VSCode: **MCP: env-check** → deve stampare `OK`.
+3. Avvia Codex → digita `/mcp` → verifica che `github` sia attivo.
 4. Esegui **MCP: smoke-test (GitHub)** → controlla output strumenti.
 
 ---
 
 ## DoD — Definition of Done
-- [ ] `tools/mcp-kit/.env.local` presente e **git‑ignored**.  
-- [ ] I wrapper in `tools/mcp-kit/wrappers/*.ps1` avviano correttamente i container MCP.  
-- [ ] `.codex/mcp.toml` punta ai wrapper del repo (niente path assoluti).  
-- [ ] `codex mcp list` mostra `github`.  
+
+- [ ] `tools/mcp-kit/.env.local` presente e **git‑ignored**.
+- [ ] I wrapper in `tools/mcp-kit/wrappers/*.ps1` avviano correttamente i container MCP.
+- [ ] `.codex/mcp.toml` punta ai wrapper del repo (niente path assoluti).
+- [ ] `codex mcp list` mostra `github`.
 - [ ] Nessun segreto è committato.
 
 ---
 
 ## Alternative e trade‑off (brevi)
-- **HTTP/compose**: esporre porte con `docker-compose` e usare `transport=http` in `mcp.toml`. Pro: server persistenti; Contro: gestione porte e auth.  
-- **Profili globali**: usare profili TOML in `~/.codex/` e uno script di switch. Pro: centralizzazione; Contro: meno “as‑code” per repo.  
+
+- **HTTP/compose**: esporre porte con `docker-compose` e usare `transport=http` in `mcp.toml`. Pro: server persistenti; Contro: gestione porte e auth.
+- **Profili globali**: usare profili TOML in `~/.codex/` e uno script di switch. Pro: centralizzazione; Contro: meno “as‑code” per repo.
 - **Copia senza submodule**: duplicare `tools/mcp-kit` in ogni repo. Pro: semplice; Contro: aggiornamenti doppi.
 
 ---
 
 ## Troubleshooting
-- **`GITHUB_PAT mancante`**: popola `.env.local` o esporta la variabile nel terminale di VSCode.  
-- **`codex mcp list` non vede il server**: controlla `mcp.toml` (path wrapper), prova ad aprire Codex nel workspace corretto.  
+
+- **`GITHUB_PAT mancante`**: popola `.env.local` o esporta la variabile nel terminale di VSCode.
+- **`codex mcp list` non vede il server**: controlla `mcp.toml` (path wrapper), prova ad aprire Codex nel workspace corretto.
 - **Molti MCP in parallelo consumano RAM/CPU**: spegni le sessioni non usate o passa a compose persistente.
 
 ---
 
 ## Perché questo approccio
-- Stessa UX in tutti i monorepo, con **segregazione dei segreti per macchina**.  
-- Nessuna porta aperta di default (meno superficie d’attacco).  
+
+- Stessa UX in tutti i monorepo, con **segregazione dei segreti per macchina**.
+- Nessuna porta aperta di default (meno superficie d’attacco).
 - Configurazione **as‑code** e ripetibile.

@@ -9,7 +9,7 @@ const ISSUE: BacklogIssue = {
   labels: ['priority:P1', 'area:web'],
   assignees: [],
   milestone: undefined,
-  dodComplete: true
+  dodComplete: true,
 };
 
 describe('syncBacklog', () => {
@@ -22,9 +22,9 @@ describe('syncBacklog', () => {
         state: 'closed',
         body: 'line1\n- [ ] todo',
         labels: ['priority:P1'],
-        htmlUrl: 'https://example.com/42'
+        htmlUrl: 'https://example.com/42',
       }),
-      updateIssue: vi.fn().mockResolvedValue(undefined)
+      updateIssue: vi.fn().mockResolvedValue(undefined),
     };
 
     const result = await syncBacklog({ issues: [ISSUE], github });
@@ -33,7 +33,7 @@ describe('syncBacklog', () => {
       42,
       expect.objectContaining({
         labels: ISSUE.labels,
-        body: ISSUE.body
+        body: ISSUE.body,
       })
     );
     expect(result.updated).toBe(1);
@@ -45,7 +45,7 @@ describe('syncBacklog', () => {
     const github: GithubGateway = {
       ensureLabels: vi.fn().mockResolvedValue(undefined),
       findIssueByCode: vi.fn().mockResolvedValue(null),
-      updateIssue: vi.fn().mockResolvedValue(undefined)
+      updateIssue: vi.fn().mockResolvedValue(undefined),
     };
 
     const result = await syncBacklog({ issues: [ISSUE], github });
@@ -63,9 +63,9 @@ describe('syncBacklog', () => {
         state: 'closed',
         body: ISSUE.body,
         labels: ISSUE.labels,
-        htmlUrl: 'https://example.com/7'
+        htmlUrl: 'https://example.com/7',
       }),
-      updateIssue: vi.fn().mockResolvedValue(undefined)
+      updateIssue: vi.fn().mockResolvedValue(undefined),
     };
 
     const result = await syncBacklog({ issues: [ISSUE], github });

@@ -8,10 +8,7 @@ import { Logger } from 'nestjs-pino';
 import { AppConfig } from './config/env.validation';
 
 async function bootstrap() {
-  const app = await NestFactory.create<NestFastifyApplication>(
-    AppModule,
-    new FastifyAdapter(),
-  );
+  const app = await NestFactory.create<NestFastifyApplication>(AppModule, new FastifyAdapter());
 
   const configService = app.get(ConfigService<AppConfig, true>);
   const prismaService = app.get(PrismaService);

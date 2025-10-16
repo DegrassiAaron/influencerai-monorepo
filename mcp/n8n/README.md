@@ -74,17 +74,28 @@ Aggiungi al file di configurazione (`claude_desktop_config.json`):
     "n8n": {
       "command": "docker",
       "args": [
-        "run", "-i", "--rm",
+        "run",
+        "-i",
+        "--rm",
         "--read-only",
-        "--tmpfs", "/tmp:rw,size=64m",
-        "--cap-drop", "ALL",
-        "--security-opt", "no-new-privileges",
-        "--pids-limit", "128",
-        "--memory", "512m",
-        "--user", "1000:1000",
-        "--network", "mcp-network",
-        "-e", "N8N_API_URL",
-        "-e", "N8N_API_KEY",
+        "--tmpfs",
+        "/tmp:rw,size=64m",
+        "--cap-drop",
+        "ALL",
+        "--security-opt",
+        "no-new-privileges",
+        "--pids-limit",
+        "128",
+        "--memory",
+        "512m",
+        "--user",
+        "1000:1000",
+        "--network",
+        "mcp-network",
+        "-e",
+        "N8N_API_URL",
+        "-e",
+        "N8N_API_KEY",
         "meepleai/mcp-n8n:latest"
       ],
       "env": {
@@ -99,43 +110,51 @@ Aggiungi al file di configurazione (`claude_desktop_config.json`):
 ## Tools Disponibili
 
 ### `n8n_list_workflows`
+
 Elenca tutti i workflows disponibili.
 
 **Parametri:**
+
 ```json
 {
-  "active": true,    // Solo workflows attivi (optional)
-  "tags": ["prod"],  // Filtra per tags (optional)
-  "limit": 50        // Numero massimo risultati (optional)
+  "active": true, // Solo workflows attivi (optional)
+  "tags": ["prod"], // Filtra per tags (optional)
+  "limit": 50 // Numero massimo risultati (optional)
 }
 ```
 
 **Esempio d'uso:**
+
 ```
 Mostrami tutti i workflows attivi in produzione
 → n8n_list_workflows con active=true, tags=["prod"]
 ```
 
 ### `n8n_get_workflow`
+
 Recupera i dettagli di un workflow specifico.
 
 **Parametri:**
+
 ```json
 {
-  "workflow_id": "123"  // ID del workflow
+  "workflow_id": "123" // ID del workflow
 }
 ```
 
 **Esempio d'uso:**
+
 ```
 Mostrami i dettagli del workflow "Daily Report Generator"
 → n8n_get_workflow
 ```
 
 ### `n8n_create_workflow`
+
 Crea un nuovo workflow.
 
 **Parametri:**
+
 ```json
 {
   "name": "New Workflow",
@@ -147,15 +166,18 @@ Crea un nuovo workflow.
 ```
 
 **Esempio d'uso:**
+
 ```
 Crea un workflow che invia email ogni giorno alle 9:00
 → n8n_create_workflow con nodi Schedule Trigger e Send Email
 ```
 
 ### `n8n_update_workflow`
+
 Modifica un workflow esistente.
 
 **Parametri:**
+
 ```json
 {
   "workflow_id": "123",
@@ -166,36 +188,43 @@ Modifica un workflow esistente.
 ```
 
 **Esempio d'uso:**
+
 ```
 Attiva il workflow "Daily Report Generator"
 → n8n_update_workflow con workflow_id, active=true
 ```
 
 ### `n8n_delete_workflow`
+
 Elimina un workflow.
 
 **Parametri:**
+
 ```json
 {
   "workflow_id": "123",
-  "confirm": true  // Conferma eliminazione
+  "confirm": true // Conferma eliminazione
 }
 ```
 
 **Esempio d'uso:**
+
 ```
 Elimina il workflow di test
 → n8n_delete_workflow
 ```
 
 ### `n8n_execute_workflow`
+
 Esegue un workflow manualmente.
 
 **Parametri:**
+
 ```json
 {
   "workflow_id": "123",
-  "data": {               // Dati input (optional)
+  "data": {
+    // Dati input (optional)
     "customer_id": "456",
     "action": "send_report"
   }
@@ -203,33 +232,39 @@ Esegue un workflow manualmente.
 ```
 
 **Esempio d'uso:**
+
 ```
 Esegui il workflow "Generate Invoice" per il cliente 456
 → n8n_execute_workflow con data
 ```
 
 ### `n8n_list_executions`
+
 Elenca le esecuzioni di un workflow.
 
 **Parametri:**
+
 ```json
 {
-  "workflow_id": "123",  // ID workflow (optional, altrimenti tutte)
-  "status": "success",   // "success", "error", "running" (optional)
-  "limit": 20            // Numero risultati (optional)
+  "workflow_id": "123", // ID workflow (optional, altrimenti tutte)
+  "status": "success", // "success", "error", "running" (optional)
+  "limit": 20 // Numero risultati (optional)
 }
 ```
 
 **Esempio d'uso:**
+
 ```
 Mostrami le ultime esecuzioni fallite
 → n8n_list_executions con status="error"
 ```
 
 ### `n8n_get_execution`
+
 Recupera i dettagli di una esecuzione specifica.
 
 **Parametri:**
+
 ```json
 {
   "execution_id": "exec_123"
@@ -237,44 +272,52 @@ Recupera i dettagli di una esecuzione specifica.
 ```
 
 **Esempio d'uso:**
+
 ```
 Mostrami perché l'esecuzione exec_123 è fallita
 → n8n_get_execution con execution_id
 ```
 
 ### `n8n_create_webhook`
+
 Crea un nuovo webhook.
 
 **Parametri:**
+
 ```json
 {
   "workflow_id": "123",
-  "path": "customer-signup",  // Percorso webhook
-  "method": "POST",           // HTTP method
-  "auth": "header"            // Tipo autenticazione (optional)
+  "path": "customer-signup", // Percorso webhook
+  "method": "POST", // HTTP method
+  "auth": "header" // Tipo autenticazione (optional)
 }
 ```
 
 **Esempio d'uso:**
+
 ```
 Crea un webhook per ricevere notifiche di signup
 → n8n_create_webhook
 ```
 
 ### `n8n_list_credentials`
+
 Elenca le credenziali configurate.
 
 **Parametri:**
+
 ```json
 {
-  "type": "slackApi"  // Filtra per tipo (optional)
+  "type": "slackApi" // Filtra per tipo (optional)
 }
 ```
 
 ### `n8n_test_workflow`
+
 Testa un workflow senza salvarlo.
 
 **Parametri:**
+
 ```json
 {
   "nodes": [...],
@@ -284,26 +327,31 @@ Testa un workflow senza salvarlo.
 ```
 
 **Esempio d'uso:**
+
 ```
 Testa questo workflow prima di salvarlo
 → n8n_test_workflow
 ```
 
 ### `n8n_export_workflow`
+
 Esporta un workflow in formato JSON.
 
 **Parametri:**
+
 ```json
 {
   "workflow_id": "123",
-  "include_credentials": false  // Includi credenziali (ATTENZIONE)
+  "include_credentials": false // Includi credenziali (ATTENZIONE)
 }
 ```
 
 ### `n8n_import_workflow`
+
 Importa un workflow da JSON.
 
 **Parametri:**
+
 ```json
 {
   "workflow_json": {...},     // Workflow in formato JSON
@@ -545,6 +593,7 @@ done
 ### Formati Dati
 
 #### Workflow Node Structure
+
 ```json
 {
   "name": "HTTP Request",
@@ -558,6 +607,7 @@ done
 ```
 
 #### Workflow Connection Structure
+
 ```json
 {
   "Trigger": {

@@ -1,6 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { S3Client, HeadBucketCommand, CreateBucketCommand, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
+import {
+  S3Client,
+  HeadBucketCommand,
+  CreateBucketCommand,
+  PutObjectCommand,
+  GetObjectCommand,
+} from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { Readable } from 'node:stream';
 import { AppConfig } from '../config/env.validation';
@@ -44,12 +50,14 @@ export class StorageService {
     try {
       await this.client.send(new HeadBucketCommand({ Bucket: this.bucket }));
     } catch (error: unknown) {
-      const err = typeof error === 'object' && error !== null ? (error as Record<string, unknown>) : {};
+      const err =
+        typeof error === 'object' && error !== null ? (error as Record<string, unknown>) : {};
       // Create if missing
       const metadata = err.$metadata;
-      const status = typeof metadata === 'object' && metadata !== null
-        ? Number((metadata as { httpStatusCode?: number }).httpStatusCode)
-        : undefined;
+      const status =
+        typeof metadata === 'object' && metadata !== null
+          ? Number((metadata as { httpStatusCode?: number }).httpStatusCode)
+          : undefined;
       const name = typeof err.name === 'string' ? (err.name as string) : undefined;
       const code = typeof err.Code === 'string' ? (err.Code as string) : undefined;
       if (status === 404 || name === 'NotFound' || code === 'NoSuchBucket') {
@@ -68,7 +76,12 @@ export class StorageService {
 
   async putTextObject(key: string, content: string) {
     await this.client.send(
-      new PutObjectCommand({ Bucket: this.bucket, Key: key, Body: Buffer.from(content, 'utf8'), ContentType: 'text/plain' }),
+      new PutObjectCommand({
+        Bucket: this.bucket,
+        Key: key,
+        Body: Buffer.from(content, 'utf8'),
+        ContentType: 'text/plain',
+      })
     );
   }
 
@@ -78,7 +91,11 @@ export class StorageService {
     return streamToString(res.Body as Readable);
   }
 
-  async getPresignedPutUrl(params: { key: string; contentType?: string; expiresInSeconds?: number }): Promise<string> {
+  async getPresignedPutUrl(params: {
+    key: string;
+    contentType?: string;
+    expiresInSeconds?: number;
+  }): Promise<string> {
     const { key, contentType, expiresInSeconds } = params;
     const cmd = new PutObjectCommand({ Bucket: this.bucket, Key: key, ContentType: contentType });
     const url = await getSignedUrl(this.client, cmd, { expiresIn: expiresInSeconds ?? 900 });

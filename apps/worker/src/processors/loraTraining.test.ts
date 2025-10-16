@@ -7,12 +7,13 @@ import path from 'node:path';
 import type { ChildProcessWithoutNullStreams } from 'node:child_process';
 import { createLoraTrainingProcessor, type LoraTrainingJobData } from './loraTraining';
 
-type FakeChildProcess = ChildProcessWithoutNullStreams & EventEmitter & {
-  stdin: PassThrough;
-  stdout: PassThrough;
-  stderr: PassThrough;
-  kill: ReturnType<typeof vi.fn>;
-};
+type FakeChildProcess = ChildProcessWithoutNullStreams &
+  EventEmitter & {
+    stdin: PassThrough;
+    stdout: PassThrough;
+    stderr: PassThrough;
+    kill: ReturnType<typeof vi.fn>;
+  };
 
 function createFakeChild(): FakeChildProcess {
   const emitter = new EventEmitter() as FakeChildProcess;
@@ -72,7 +73,12 @@ describe('createLoraTrainingProcessor', () => {
       data: {
         jobId: 'job-1',
         payload: {
-          config: { outputPath: outputDir, modelName: 'base.safetensors', epochs: 2, learningRate: 0.0001 },
+          config: {
+            outputPath: outputDir,
+            modelName: 'base.safetensors',
+            epochs: 2,
+            learningRate: 0.0001,
+          },
           s3Prefix: 'lora-training/job-1/',
           datasetId: 'ds-1',
         },
@@ -104,10 +110,14 @@ describe('createLoraTrainingProcessor', () => {
     expect(putBinaryObject).toHaveBeenCalledTimes(1);
     expect(getSignedGetUrl).toHaveBeenCalledTimes(1);
 
-    const progressCalls = patchJobStatus.mock.calls.filter(([, payload]) => payload?.status === 'running');
+    const progressCalls = patchJobStatus.mock.calls.filter(
+      ([, payload]) => payload?.status === 'running'
+    );
     expect(progressCalls.length).toBeGreaterThan(0);
 
-    const finalCall = patchJobStatus.mock.calls.find(([, payload]) => payload?.status === 'succeeded');
+    const finalCall = patchJobStatus.mock.calls.find(
+      ([, payload]) => payload?.status === 'succeeded'
+    );
     expect(finalCall).toBeTruthy();
     expect(finalCall?.[1]?.result?.artifacts).toHaveLength(1);
   });
@@ -147,7 +157,9 @@ describe('createLoraTrainingProcessor', () => {
     fakeChild.emit('close', 1);
     await expect(promise).rejects.toThrow(/kohya_ss exited with code 1/);
 
-    const failedCall = patchJobStatus.mock.calls.find(([, payload]) => payload?.status === 'failed');
+    const failedCall = patchJobStatus.mock.calls.find(
+      ([, payload]) => payload?.status === 'failed'
+    );
     expect(failedCall).toBeTruthy();
     expect(failedCall?.[1]?.result?.message).toMatch(/kohya_ss exited with code 1/);
   });
@@ -196,7 +208,9 @@ describe('createLoraTrainingProcessor', () => {
     expect(result.command?.cwd).toBe('/opt/kohya');
     expect(spawn).not.toHaveBeenCalled();
 
-    const finalCall = patchJobStatus.mock.calls.find(([, payload]) => payload?.status === 'succeeded');
+    const finalCall = patchJobStatus.mock.calls.find(
+      ([, payload]) => payload?.status === 'succeeded'
+    );
     expect(finalCall?.[1]?.result?.command?.command).toBe('accelerate');
     expect(finalCall?.[1]?.result?.progress?.stage).toBe('completed');
   });

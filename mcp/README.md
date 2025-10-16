@@ -5,11 +5,13 @@ Questa directory contiene i server MCP (Model Context Protocol) configurati per 
 ## Server Installati
 
 ### ✅ Operativi (Healthy)
+
 1. **[Github Project Manager](./github-project-manager/)** - Gestione progetti GitHub (mcp-github) ✓
 2. **[n8n Workflow Manager](./n8n/)** - Gestione e automazione workflows n8n (mcp-n8n) ✓
 3. **[Memory Bank](./memory-bank/)** - Sistema di memoria persistente (mcp-memory) ✓
 
 ### ✅ Operativi (Running)
+
 4. **[Sequential Thinking](./sequential/)** - Pensiero sequenziale e ragionamento (mcp-sequential) ✓
 5. **[Playwright](./playwright/)** - Automazione browser e testing (mcp-playwright) ✓
 6. **[Magic](./magic/)** - Funzionalità avanzate e utility (mcp-magic) ✓
@@ -69,15 +71,24 @@ Aggiungi i server MCP al file di configurazione di Claude Desktop:
     "github": {
       "command": "docker",
       "args": [
-        "run", "-i", "--rm",
+        "run",
+        "-i",
+        "--rm",
         "--read-only",
-        "--tmpfs", "/tmp:rw,size=64m",
-        "--cap-drop", "ALL",
-        "--security-opt", "no-new-privileges",
-        "--pids-limit", "128",
-        "--memory", "512m",
-        "--user", "1000:1000",
-        "-e", "GITHUB_TOKEN",
+        "--tmpfs",
+        "/tmp:rw,size=64m",
+        "--cap-drop",
+        "ALL",
+        "--security-opt",
+        "no-new-privileges",
+        "--pids-limit",
+        "128",
+        "--memory",
+        "512m",
+        "--user",
+        "1000:1000",
+        "-e",
+        "GITHUB_TOKEN",
         "meepleai/mcp-github:latest"
       ],
       "env": {
@@ -87,15 +98,24 @@ Aggiungi i server MCP al file di configurazione di Claude Desktop:
     "memory": {
       "command": "docker",
       "args": [
-        "run", "-i", "--rm",
+        "run",
+        "-i",
+        "--rm",
         "--read-only",
-        "--tmpfs", "/tmp:rw,size=64m",
-        "--cap-drop", "ALL",
-        "--security-opt", "no-new-privileges",
-        "--pids-limit", "128",
-        "--memory", "512m",
-        "--user", "1000:1000",
-        "-v", "mcp-memory:/data:rw",
+        "--tmpfs",
+        "/tmp:rw,size=64m",
+        "--cap-drop",
+        "ALL",
+        "--security-opt",
+        "no-new-privileges",
+        "--pids-limit",
+        "128",
+        "--memory",
+        "512m",
+        "--user",
+        "1000:1000",
+        "-v",
+        "mcp-memory:/data:rw",
         "meepleai/mcp-memory:latest"
       ]
     }
@@ -158,45 +178,53 @@ docker run --rm -v mcp-memory:/data -v $(pwd):/backup alpine tar xzf /backup/mem
 Ogni server ha funzionalità specifiche accessibili tramite tools MCP:
 
 ### Github Project Manager
+
 - `github_create_issue`: Crea issue
 - `github_list_issues`: Lista issue
 - `github_create_pr`: Crea pull request
 - `github_review_code`: Review codice
 
 ### Memory Bank
+
 - `memory_store`: Memorizza informazioni
 - `memory_recall`: Recupera ricordi
 - `memory_search`: Cerca nella memoria
 - `memory_forget`: Elimina ricordi
 
 ### Sequential Thinking
+
 - `sequential_start`: Inizia ragionamento
 - `sequential_step`: Passo di ragionamento
 - `sequential_conclude`: Concludi ragionamento
 
 ### Playwright
+
 - `browser_navigate`: Naviga URL
 - `browser_click`: Clicca elemento
 - `browser_screenshot`: Cattura screenshot
 - `browser_extract`: Estrai dati
 
 ### Magic
+
 - `magic_execute`: Esegue comandi avanzati
 - `magic_transform`: Trasforma dati
 - `magic_analyze`: Analizza pattern
 
 ### Claude Context
+
 - `context_save`: Salva contesto
 - `context_load`: Carica contesto
 - `context_merge`: Unisci contesti
 
 ### Knowledge Graph
+
 - `kg_add_entity`: Aggiungi entità
 - `kg_add_relation`: Aggiungi relazione
 - `kg_query`: Query il grafo
 - `kg_visualize`: Visualizza grafo
 
 ### n8n Workflow Manager
+
 - `n8n_list_workflows`: Lista workflows
 - `n8n_create_workflow`: Crea workflow
 - `n8n_execute_workflow`: Esegui workflow
@@ -288,10 +316,10 @@ Modifica i limiti in `docker-compose.yml` basandoti sull'uso:
 ```yaml
 services:
   github:
-    mem_limit: 512m      # Aumenta se necessario
-    memswap_limit: 512m  # Disabilita swap
-    cpus: '0.5'          # Limita CPU
-    pids_limit: 128      # Limita processi
+    mem_limit: 512m # Aumenta se necessario
+    memswap_limit: 512m # Disabilita swap
+    cpus: '0.5' # Limita CPU
+    pids_limit: 128 # Limita processi
 ```
 
 ### Monitoring

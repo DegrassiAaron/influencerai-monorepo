@@ -36,20 +36,38 @@ export function createLoraTrainingProcessor(
     const payload = coercePayload(jobData.payload as Record<string, unknown> | undefined);
 
     if (jobId) {
-      await deps.patchJobStatus(jobId, { status: 'running', result: { progress: { stage: 'initializing' } } });
+      await deps.patchJobStatus(jobId, {
+        status: 'running',
+        result: { progress: { stage: 'initializing' } },
+      });
     }
 
-    const progressState: ProgressState = { lastUpdate: deps.now ? deps.now() : Date.now(), logs: [] };
+    const progressState: ProgressState = {
+      lastUpdate: deps.now ? deps.now() : Date.now(),
+      logs: [],
+    };
 
     try {
-      scheduleProgress({ stage: 'fetching-dataset', message: 'Resolving dataset path' }, jobId, deps, progressState);
+      scheduleProgress(
+        { stage: 'fetching-dataset', message: 'Resolving dataset path' },
+        jobId,
+        deps,
+        progressState
+      );
       const dataset = await resolveDataset(payload, deps);
 
-      scheduleProgress({ stage: 'fetching-dataset', message: `Dataset resolved at ${dataset.path}` }, jobId, deps, progressState);
+      scheduleProgress(
+        { stage: 'fetching-dataset', message: `Dataset resolved at ${dataset.path}` },
+        jobId,
+        deps,
+        progressState
+      );
       const config = await resolveConfig(payload, dataset, deps);
 
       const resolvedOutputDir = path.resolve(
-        config.outputPath || payload.outputDir || `data/loras/${payload.trainingName || jobId || Date.now()}`
+        config.outputPath ||
+          payload.outputDir ||
+          `data/loras/${payload.trainingName || jobId || Date.now()}`
       );
       if (!existsSync(resolvedOutputDir)) {
         await fs.mkdir(resolvedOutputDir, { recursive: true });
@@ -68,8 +86,16 @@ export function createLoraTrainingProcessor(
       );
 
       if (payload.dryRun) {
-        deps.logger.info({ jobId, command: command.command }, 'Dry run enabled, skipping kohya_ss execution');
-        scheduleProgress({ stage: 'running', message: 'Dry run: kohya_ss command prepared' }, jobId, deps, progressState);
+        deps.logger.info(
+          { jobId, command: command.command },
+          'Dry run enabled, skipping kohya_ss execution'
+        );
+        scheduleProgress(
+          { stage: 'running', message: 'Dry run: kohya_ss command prepared' },
+          jobId,
+          deps,
+          progressState
+        );
         if (jobId) {
           await deps.patchJobStatus(jobId, {
             status: 'succeeded',
@@ -126,14 +152,24 @@ export function createLoraTrainingProcessor(
         deps.logger.warn({ jobId }, 'LoRA training timed out, attempting graceful shutdown');
         child.kill('SIGTERM');
         setTimeout(() => child.kill('SIGKILL'), 5000);
-        scheduleProgress({ stage: 'failed', message: 'LoRA training timed out' }, jobId, deps, progressState);
+        scheduleProgress(
+          { stage: 'failed', message: 'LoRA training timed out' },
+          jobId,
+          deps,
+          progressState
+        );
       });
 
       if (exitCode !== 0) {
         throw new Error(`kohya_ss exited with code ${exitCode}`);
       }
 
-      scheduleProgress({ stage: 'uploading', message: 'Uploading artifacts to storage' }, jobId, deps, progressState);
+      scheduleProgress(
+        { stage: 'uploading', message: 'Uploading artifacts to storage' },
+        jobId,
+        deps,
+        progressState
+      );
       const s3Prefix = payload.s3Prefix || `lora-training/${jobId || Date.now()}/`;
       const artifacts = await uploadSafetensors(resolvedOutputDir, deps.s3, s3Prefix);
 
@@ -142,7 +178,12 @@ export function createLoraTrainingProcessor(
           status: 'succeeded',
           result: {
             command: commandPreview,
-            progress: { stage: 'completed', percent: 100, message: 'Training completed', logs: collectLogs(buffers) },
+            progress: {
+              stage: 'completed',
+              percent: 100,
+              message: 'Training completed',
+              logs: collectLogs(buffers),
+            },
             outputDir: resolvedOutputDir,
             artifacts,
           },

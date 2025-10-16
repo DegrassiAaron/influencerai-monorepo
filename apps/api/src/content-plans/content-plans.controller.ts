@@ -1,4 +1,17 @@
-import { BadRequestException, Controller, Get, NotFoundException, Param, Post, Body, Query, BadGatewayException, ServiceUnavailableException, RequestTimeoutException, HttpException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Controller,
+  Get,
+  NotFoundException,
+  Param,
+  Post,
+  Body,
+  Query,
+  BadGatewayException,
+  ServiceUnavailableException,
+  RequestTimeoutException,
+  HttpException,
+} from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ContentPlansService } from './content-plans.service';
 import { CreateContentPlanSchema, ListPlansQuerySchema } from './dto';
@@ -37,7 +50,7 @@ export class ContentPlansController {
   list(
     @Query('influencerId') influencerId?: string,
     @Query('take') take?: string,
-    @Query('skip') skip?: string,
+    @Query('skip') skip?: string
   ) {
     const parsed = ListPlansQuerySchema.safeParse({ influencerId, take, skip });
     if (!parsed.success) {
@@ -49,13 +62,20 @@ export class ContentPlansController {
 
 function mapUpstreamError(e: unknown): HttpException {
   if (e instanceof HTTPError) {
-    if (e.status === 429) return new HttpException({ message: 'Rate limited by upstream', detail: e.body }, 429);
-    if (e.status >= 500 && e.status <= 599) return new BadGatewayException({ message: 'Upstream error', status: e.status });
+    if (e.status === 429)
+      return new HttpException({ message: 'Rate limited by upstream', detail: e.body }, 429);
+    if (e.status >= 500 && e.status <= 599)
+      return new BadGatewayException({ message: 'Upstream error', status: e.status });
     // For other statuses, bubble up as a generic HttpException with original status if possible
     return new HttpException({ message: 'Upstream request failed' }, e.status || 502);
   }
   // Timeout/Abort
-  if (typeof e === 'object' && e !== null && 'name' in e && (e as { name?: string }).name === 'AbortError') {
+  if (
+    typeof e === 'object' &&
+    e !== null &&
+    'name' in e &&
+    (e as { name?: string }).name === 'AbortError'
+  ) {
     return new RequestTimeoutException({ message: 'Upstream timeout' });
   }
   // Network or unknown error

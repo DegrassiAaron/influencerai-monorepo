@@ -6,7 +6,10 @@ import { requestContext } from '../lib/request-context';
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
-  constructor(private readonly jwt: JwtService, private readonly reflector: Reflector) {}
+  constructor(
+    private readonly jwt: JwtService,
+    private readonly reflector: Reflector
+  ) {}
 
   canActivate(context: ExecutionContext): boolean | Promise<boolean> {
     const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
@@ -22,7 +25,12 @@ export class JwtAuthGuard implements CanActivate {
     try {
       const payload = this.jwt.verify(token);
       // Bind context for this request
-      requestContext.enterWith({ userId: payload?.sub, tenantId: payload?.tenantId, email: payload?.email, role: payload?.role });
+      requestContext.enterWith({
+        userId: payload?.sub,
+        tenantId: payload?.tenantId,
+        email: payload?.email,
+        role: payload?.role,
+      });
       req.user = payload;
       return true;
     } catch {
@@ -30,4 +38,3 @@ export class JwtAuthGuard implements CanActivate {
     }
   }
 }
-

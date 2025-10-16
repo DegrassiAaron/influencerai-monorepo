@@ -18,4 +18,3 @@ export function parseRedisUrl(url?: string): RedisConnectionOptions {
     return { host: 'localhost', port: 6379 };
   }
 }
-

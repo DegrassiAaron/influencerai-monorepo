@@ -33,7 +33,11 @@ describe('createFailureAlerter', () => {
     await alerter.handleFailure('video-generation', { id: 'job-1' } as any, new Error('oops'));
     expect(fetchImpl).not.toHaveBeenCalled();
 
-    await alerter.handleFailure('video-generation', { id: 'job-2' } as any, new Error('oops again'));
+    await alerter.handleFailure(
+      'video-generation',
+      { id: 'job-2' } as any,
+      new Error('oops again')
+    );
     expect(fetchImpl).toHaveBeenCalledTimes(1);
     expect(fetchImpl).toHaveBeenCalledWith(
       'https://hooks.local/webhook',
@@ -58,7 +62,11 @@ describe('createFailureAlerter', () => {
 
     await alerter.handleFailure('content-generation', { id: 'job-1' } as any, new Error('fail'));
     alerter.resetFailures('content-generation');
-    await alerter.handleFailure('content-generation', { id: 'job-2' } as any, new Error('fail again'));
+    await alerter.handleFailure(
+      'content-generation',
+      { id: 'job-2' } as any,
+      new Error('fail again')
+    );
 
     expect(fetchImpl).not.toHaveBeenCalled();
   });

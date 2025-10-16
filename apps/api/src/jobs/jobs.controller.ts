@@ -1,4 +1,14 @@
-import { Controller, Get, Param, Post, Body, Query, BadRequestException, NotFoundException, Patch } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Param,
+  Post,
+  Body,
+  Query,
+  BadRequestException,
+  NotFoundException,
+  Patch,
+} from '@nestjs/common';
 import { JobsService } from './jobs.service';
 import { CreateJobSchema, JobSeriesQuerySchema, ListJobsQuerySchema, UpdateJobSchema } from './dto';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
@@ -27,7 +37,7 @@ export class JobsController {
     @Query('status') status?: string,
     @Query('type') type?: string,
     @Query('take') take?: string,
-    @Query('skip') skip?: string,
+    @Query('skip') skip?: string
   ) {
     const parsed = ListJobsQuerySchema.safeParse({ status, type, take, skip });
     if (!parsed.success) {

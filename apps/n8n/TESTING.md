@@ -15,6 +15,7 @@ docker compose ps
 ```
 
 Expected output:
+
 ```
 NAME                 STATUS
 postgres             Up (healthy)
@@ -36,6 +37,7 @@ npm run import:all
 ```
 
 Verify import success:
+
 ```
 ✓ Created workflow "Content Plan Generator" (ID: 1)
 ✓ Created workflow "LoRA Training Job" (ID: 2)
@@ -53,6 +55,7 @@ docker exec -it <n8n-container-name> env | grep -E 'API_BASE_URL|API_TOKEN'
 ```
 
 Expected output:
+
 ```
 API_BASE_URL=http://api:3001
 API_TOKEN=dev-token
@@ -75,8 +78,9 @@ docker exec -it <n8n-container-name> curl http://api:3001/health
 ```
 
 Expected output:
+
 ```json
-{"status":"ok"}
+{ "status": "ok" }
 ```
 
 ## Test Cases
@@ -100,6 +104,7 @@ Expected output:
 
 ✓ Workflow completes successfully (green checkmarks on all nodes)
 ✓ "Create Content Plan" node returns:
+
 ```json
 {
   "id": "clxxxxx...",
@@ -115,7 +120,9 @@ Expected output:
   "createdAt": "2025-01-15T10:00:00.000Z"
 }
 ```
+
 ✓ "Log Success" node shows:
+
 ```json
 {
   "message": "Content plan created successfully",
@@ -184,6 +191,7 @@ curl http://localhost:3001/content-plans/<plan-id>
 ✓ "Create Content Plan" node fails after 3 retries
 ✓ Error flows to "Log Error" node
 ✓ Error log contains:
+
 ```json
 {
   "message": "Failed to create content plan",
@@ -192,6 +200,7 @@ curl http://localhost:3001/content-plans/<plan-id>
   "errorDetail": "connect ECONNREFUSED ..."
 }
 ```
+
 ✓ Workflow completes (doesn't hang)
 
 ---
@@ -238,6 +247,7 @@ curl http://localhost:3001/content-plans/<plan-id>
 **Expected Results**:
 
 ✓ "Create LoRA Training Job" returns:
+
 ```json
 {
   "id": "job_xxx",
@@ -251,6 +261,7 @@ curl http://localhost:3001/content-plans/<plan-id>
   }
 }
 ```
+
 ✓ "Save Job ID" node extracts job ID
 ✓ Polling loop starts
 ✓ "Poll Job Status" queries API every 30 seconds
@@ -323,6 +334,7 @@ Check payload matches custom parameters.
 ✓ Last status is logged
 
 **Speed up for testing**:
+
 - Edit "Wait Before Polling" to 5 seconds
 - Edit "Loop Until Complete" maxIterations to 5
 - Job should timeout after 25 seconds (5 iterations × 5 seconds)
@@ -453,12 +465,15 @@ Check payload matches custom parameters.
 
 ✓ "Route by Channel" outputs to Instagram branch
 ✓ "Prepare Instagram Post" formats caption:
+
 ```
 My awesome AI-generated content!
 
 #ai #art #tech
 ```
+
 ✓ "Mock Instagram Publish" shows:
+
 ```json
 {
   "publishStatus": "mock_success",
@@ -522,6 +537,7 @@ My awesome AI-generated content!
 **Note**: For actual publishing, replace mock nodes with real API calls:
 
 **Instagram**:
+
 ```javascript
 // In HTTP Request node
 POST https://graph.facebook.com/v18.0/{{$env.INSTAGRAM_ACCOUNT_ID}}/media
@@ -575,12 +591,14 @@ Body: {
 
 ✓ Webhook receives POST request
 ✓ "Parse Webhook Data" extracts:
-  - `jobId`: `<job-id>`
-  - `renderStatus`: `success`
-  - `outputPath`: `/data/outputs/test-render.mp4`
-✓ "Validate Webhook" passes (has job ID and valid status)
-✓ "Map to Job Update" converts `success` → `succeeded`
-✓ "Update Job Status" PATCHes job with:
+
+- `jobId`: `<job-id>`
+- `renderStatus`: `success`
+- `outputPath`: `/data/outputs/test-render.mp4`
+  ✓ "Validate Webhook" passes (has job ID and valid status)
+  ✓ "Map to Job Update" converts `success` → `succeeded`
+  ✓ "Update Job Status" PATCHes job with:
+
 ```json
 {
   "status": "succeeded",
@@ -591,6 +609,7 @@ Body: {
   }
 }
 ```
+
 ✓ "Log Webhook Success" logs completion
 
 **Verification**:
@@ -669,10 +688,7 @@ Add signature verification:
 const signature = $('Webhook Trigger').item.json.headers['x-signature'];
 const secret = $env.WEBHOOK_SECRET;
 const payload = JSON.stringify($json.body);
-const expectedSignature = crypto
-  .createHmac('sha256', secret)
-  .update(payload)
-  .digest('hex');
+const expectedSignature = crypto.createHmac('sha256', secret).update(payload).digest('hex');
 
 if (signature !== expectedSignature) {
   throw new Error('Invalid webhook signature');
@@ -722,6 +738,7 @@ if (signature !== expectedSignature) {
 **Steps**:
 
 1. Verify worker is running:
+
    ```bash
    docker logs -f <worker-container-name>
    ```
@@ -729,6 +746,7 @@ if (signature !== expectedSignature) {
 2. Execute "LoRA Training Job" or "Content Generation Pipeline"
 
 3. Monitor worker logs for job processing:
+
    ```
    [Worker] Processing job: job_xxx (type: lora-training)
    [Worker] Job job_xxx completed successfully
@@ -822,6 +840,7 @@ Register in `app.module.ts` and use `/stubs/jobs` endpoint in workflows for inst
    - LoRA training × 1
 
 3. Monitor system resources:
+
    ```bash
    docker stats
    ```
@@ -883,6 +902,7 @@ Before releasing workflow changes:
 **Cause**: Wrong API endpoint or API not running.
 
 **Solution**:
+
 1. Verify API is running: `docker ps`
 2. Check endpoint in HTTP Request node matches API routes
 3. Test endpoint directly: `curl http://localhost:3001/<endpoint>`
@@ -894,6 +914,7 @@ Before releasing workflow changes:
 **Cause**: Job status never changes to terminal state.
 
 **Solution**:
+
 1. Check worker is processing jobs: `docker logs <worker>`
 2. Manually update job status via API
 3. Verify polling condition checks correct status values

@@ -12,12 +12,25 @@ describe('Jobs (e2e)', () => {
 
   beforeAll(async () => {
     process.env.NODE_ENV = 'test';
-    process.env.DATABASE_URL = process.env.DATABASE_URL || 'postgresql://user:pass@localhost:5432/db?schema=public';
+    process.env.DATABASE_URL =
+      process.env.DATABASE_URL || 'postgresql://user:pass@localhost:5432/db?schema=public';
 
     const jobsServiceMock: Partial<JobsService> = {
-      createJob: jest.fn(async ({ type, payload }) => ({ id: 'job_2', type, status: 'pending', payload } as any)),
-      listJobs: jest.fn(async () => [{ id: 'job_1', type: 'content-generation', status: 'pending', payload: { foo: 'bar' } } as any]),
-      getJob: jest.fn(async (id: string) => ({ id, type: 'content-generation', status: 'pending', payload: {} } as any)),
+      createJob: jest.fn(
+        async ({ type, payload }) => ({ id: 'job_2', type, status: 'pending', payload }) as any
+      ),
+      listJobs: jest.fn(async () => [
+        {
+          id: 'job_1',
+          type: 'content-generation',
+          status: 'pending',
+          payload: { foo: 'bar' },
+        } as any,
+      ]),
+      getJob: jest.fn(
+        async (id: string) =>
+          ({ id, type: 'content-generation', status: 'pending', payload: {} }) as any
+      ),
     };
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -26,7 +39,11 @@ describe('Jobs (e2e)', () => {
       .overrideProvider(JobsService)
       .useValue(jobsServiceMock)
       .overrideProvider(PrismaService)
-      .useValue({ onModuleInit: jest.fn(), onModuleDestroy: jest.fn(), enableShutdownHooks: jest.fn() })
+      .useValue({
+        onModuleInit: jest.fn(),
+        onModuleDestroy: jest.fn(),
+        enableShutdownHooks: jest.fn(),
+      })
       .compile();
 
     app = moduleFixture.createNestApplication(new FastifyAdapter());
@@ -48,10 +65,7 @@ describe('Jobs (e2e)', () => {
   });
 
   it('GET /jobs lists jobs', async () => {
-    const res = await request(app.getHttpServer())
-      .get('/jobs')
-      .set(getAuthHeader())
-      .expect(200);
+    const res = await request(app.getHttpServer()).get('/jobs').set(getAuthHeader()).expect(200);
     expect(Array.isArray(res.body)).toBe(true);
     expect(res.body[0]).toMatchObject({ id: 'job_1' });
   });

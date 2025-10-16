@@ -26,11 +26,10 @@ export class HealthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly storage: StorageService,
-    private readonly config: ConfigService<AppConfig, true>,
+    private readonly config: ConfigService<AppConfig, true>
   ) {}
 
-  private async time<T>(fn: () => Promise<T>): Promise<{ ms: number; error?: Error }>
-  {
+  private async time<T>(fn: () => Promise<T>): Promise<{ ms: number; error?: Error }> {
     const start = Date.now();
     try {
       await fn();
@@ -46,13 +45,19 @@ export class HealthService {
       // lightweight ping
       await this.prisma.$queryRaw`SELECT 1`;
     });
-    return error ? { status: 'error', latency_ms: ms, error: error.message } : { status: 'ok', latency_ms: ms };
+    return error
+      ? { status: 'error', latency_ms: ms, error: error.message }
+      : { status: 'ok', latency_ms: ms };
   }
 
   async checkRedis(): Promise<CheckResult> {
     const url = this.config.get('REDIS_URL', { infer: true });
     const { ms, error } = await this.time(async () => {
-      const client = new Redis(url, { lazyConnect: true, maxRetriesPerRequest: 1, connectTimeout: 2000 });
+      const client = new Redis(url, {
+        lazyConnect: true,
+        maxRetriesPerRequest: 1,
+        connectTimeout: 2000,
+      });
       try {
         await client.connect();
         await client.ping();
@@ -60,20 +65,29 @@ export class HealthService {
         client.disconnect();
       }
     });
-    return error ? { status: 'error', latency_ms: ms, error: error.message } : { status: 'ok', latency_ms: ms };
+    return error
+      ? { status: 'error', latency_ms: ms, error: error.message }
+      : { status: 'ok', latency_ms: ms };
   }
 
   async checkMinio(): Promise<CheckResult> {
     const { ms, error } = await this.time(async () => {
       await this.storage.ensureBucket();
     });
-    return error ? { status: 'error', latency_ms: ms, error: error.message } : { status: 'ok', latency_ms: ms };
+    return error
+      ? { status: 'error', latency_ms: ms, error: error.message }
+      : { status: 'ok', latency_ms: ms };
   }
 
   async health(): Promise<HealthReport> {
-    const [db, redis, minio] = await Promise.all([this.checkDb(), this.checkRedis(), this.checkMinio()]);
-    const status: 'ok' | 'error' = [db, redis, minio].some((c) => c.status === 'error') ? 'error' : 'ok';
+    const [db, redis, minio] = await Promise.all([
+      this.checkDb(),
+      this.checkRedis(),
+      this.checkMinio(),
+    ]);
+    const status: 'ok' | 'error' = [db, redis, minio].some((c) => c.status === 'error')
+      ? 'error'
+      : 'ok';
     return { status, timestamp: new Date().toISOString(), checks: { db, redis, minio } };
   }
 }
-

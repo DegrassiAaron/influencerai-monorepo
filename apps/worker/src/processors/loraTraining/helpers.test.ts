@@ -4,7 +4,11 @@ import type { LoraTrainingProcessorDeps, ProgressState } from './types';
 
 describe('scheduleProgress', () => {
   let patchJobStatus: ReturnType<typeof vi.fn>;
-  let logger: { info: ReturnType<typeof vi.fn>; warn: ReturnType<typeof vi.fn>; error: ReturnType<typeof vi.fn> };
+  let logger: {
+    info: ReturnType<typeof vi.fn>;
+    warn: ReturnType<typeof vi.fn>;
+    error: ReturnType<typeof vi.fn>;
+  };
   let deps: LoraTrainingProcessorDeps;
   let state: ProgressState;
   let nowValue: number;

@@ -4,9 +4,11 @@ import { createYamlParser } from '../yaml-parser.js';
 
 describe('createYamlParser', () => {
   it('prefers the yaml package when available', () => {
-    const parse = createYamlParser(new StubResolver({
-      yaml: { parse: (content: string) => ({ parsed: content }) }
-    }));
+    const parse = createYamlParser(
+      new StubResolver({
+        yaml: { parse: (content: string) => ({ parsed: content }) },
+      })
+    );
 
     expect(parse('content')).toEqual({ parsed: 'content' });
   });

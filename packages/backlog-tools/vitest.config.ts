@@ -7,12 +7,12 @@ export default defineConfig({
     deps: {
       optimizer: {
         ssr: {
-          exclude: ['yaml']
-        }
-      }
+          exclude: ['yaml'],
+        },
+      },
     },
     coverage: {
-      enabled: false
-    }
-  }
+      enabled: false,
+    },
+  },
 });

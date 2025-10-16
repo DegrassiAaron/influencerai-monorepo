@@ -1,10 +1,10 @@
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight } from 'lucide-react';
 
-import { HealthCard } from "@/components/HealthCard";
-import { JobsChart } from "@/components/JobsChart";
-import { QueuesWidget } from "@/components/QueuesWidget";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { HealthCard } from '@/components/HealthCard';
+import { JobsChart } from '@/components/JobsChart';
+import { QueuesWidget } from '@/components/QueuesWidget';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 
 export default function DashboardPage() {
   return (
@@ -16,8 +16,8 @@ export default function DashboardPage() {
           </Badge>
           <h1 className="text-3xl font-semibold text-foreground">Operational Dashboard</h1>
           <p className="max-w-2xl text-sm text-muted-foreground">
-            Stato delle code, servizi e job recenti per coordinare il team di contenuti virtuali e anticipare i colli di
-            bottiglia.
+            Stato delle code, servizi e job recenti per coordinare il team di contenuti virtuali e
+            anticipare i colli di bottiglia.
           </p>
         </div>
         <Button variant="secondary" className="gap-2">

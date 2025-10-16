@@ -1,4 +1,5 @@
 # GitFlow (ridotto)
+
 - main (produzione), develop (integrazione)
 - feature da develop: feat/<issue>-<slug>
 - bugfix: fix/<issue>-<slug> (da develop); hotfix/<ticket|version> (da main)

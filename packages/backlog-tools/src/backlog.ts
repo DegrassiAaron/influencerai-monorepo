@@ -69,7 +69,9 @@ function normaliseLabels(value: unknown): string[] {
     throw new Error('Backlog issue labels must be an array');
   }
 
-  return value.filter((item): item is string => typeof item === 'string' && item.trim() !== '').map((item) => item.trim());
+  return value
+    .filter((item): item is string => typeof item === 'string' && item.trim() !== '')
+    .map((item) => item.trim());
 }
 
 function normaliseAssignees(value: unknown): string[] {
@@ -81,7 +83,9 @@ function normaliseAssignees(value: unknown): string[] {
     throw new Error('Backlog issue assignees must be an array');
   }
 
-  return value.filter((item): item is string => typeof item === 'string' && item.trim() !== '').map((item) => item.trim());
+  return value
+    .filter((item): item is string => typeof item === 'string' && item.trim() !== '')
+    .map((item) => item.trim());
 }
 
 function normaliseMilestone(value: unknown): string | undefined {
@@ -129,7 +133,7 @@ function normaliseIssue(rawIssue: unknown, index: number): BacklogIssue {
     labels: normaliseLabels(candidate.labels),
     assignees: normaliseAssignees(candidate.assignees),
     milestone: normaliseMilestone(candidate.milestone),
-    dodComplete: isDodComplete(body)
+    dodComplete: isDodComplete(body),
   };
 
   return issue;

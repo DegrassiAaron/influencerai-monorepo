@@ -26,14 +26,11 @@ Questa guida descrive come integrare un server [Model Context Protocol (MCP)](ht
       "url": "wss://mcp.example.com/ws",
       "auth": {
         "type": "bearer",
-        "token": "${MCP_TOKEN}"
+        "token": "${MCP_TOKEN}",
       },
-      "tools": [
-        "metrics.query",
-        "metrics.listDashboards"
-      ]
-    }
-  ]
+      "tools": ["metrics.query", "metrics.listDashboards"],
+    },
+  ],
 }
 ```
 
@@ -88,14 +85,13 @@ export class QueryMetricsTool implements CodexTool {
 
 ## Risoluzione dei problemi
 
-| Sintomo | Possibile causa | Azione suggerita |
-| --- | --- | --- |
-| `Handshake failed` | URL errato o certificato TLS non valido | Verificare la reachability e il certificato del server MCP |
-| `Unauthorized` | Token scaduto o permessi insufficienti | Rigenerare la chiave e aggiornare le variabili d'ambiente |
-| `Tool not found` | Tool non registrato in `mcp.config.json` | Aggiungere il tool o correggere il nome |
+| Sintomo            | Possibile causa                          | Azione suggerita                                           |
+| ------------------ | ---------------------------------------- | ---------------------------------------------------------- |
+| `Handshake failed` | URL errato o certificato TLS non valido  | Verificare la reachability e il certificato del server MCP |
+| `Unauthorized`     | Token scaduto o permessi insufficienti   | Rigenerare la chiave e aggiornare le variabili d'ambiente  |
+| `Tool not found`   | Tool non registrato in `mcp.config.json` | Aggiungere il tool o correggere il nome                    |
 
 ## Risorse aggiuntive
 
 - Documentazione MCP: <https://modelcontextprotocol.io>
 - SDK Codex: consultare il README dell'SDK in uso per conoscere metodi e middleware disponibili.
-

@@ -1,7 +1,7 @@
 import { Prisma } from '@prisma/client';
 import { toInputJson, toInputJsonObject } from './json';
 
-type IsAny<T> = 0 extends (1 & T) ? true : false;
+type IsAny<T> = 0 extends 1 & T ? true : false;
 
 describe('toInputJson helpers', () => {
   it('converts supported primitives without modification', () => {

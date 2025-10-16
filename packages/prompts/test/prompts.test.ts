@@ -1,9 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  contentPlanPrompt,
-  imageCaptionPrompt,
-  videoScriptPrompt,
-} from '../src';
+import { contentPlanPrompt, imageCaptionPrompt, videoScriptPrompt } from '../src';
 
 describe('prompts factories', () => {
   it('contentPlanPrompt interpolates persona and theme and requests JSON array format', () => {

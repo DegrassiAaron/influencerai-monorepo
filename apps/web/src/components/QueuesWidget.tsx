@@ -1,50 +1,44 @@
-"use client";
+'use client';
 
-import { useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
-import type { QueueSummary } from "@influencerai/core-schemas";
+import { useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import type { QueueSummary } from '@influencerai/core-schemas';
 
-import { Badge, type BadgeProps } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { cn } from "@/lib/utils";
+import { Badge, type BadgeProps } from '@/components/ui/badge';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
 
-import { ApiError, apiGet } from "../lib/api";
+import { ApiError, apiGet } from '../lib/api';
 
 type StatDefinition = {
   key: keyof QueueSummary;
   label: string;
   description: string;
-  badgeVariant: NonNullable<BadgeProps["variant"]>;
+  badgeVariant: NonNullable<BadgeProps['variant']>;
 };
 
 const STAT_DEFINITION: StatDefinition[] = [
   {
-    key: "active",
-    label: "Attivi",
-    description: "Job in elaborazione",
-    badgeVariant: "brand",
+    key: 'active',
+    label: 'Attivi',
+    description: 'Job in elaborazione',
+    badgeVariant: 'brand',
   },
   {
-    key: "waiting",
-    label: "In coda",
-    description: "Job in attesa",
-    badgeVariant: "secondary",
+    key: 'waiting',
+    label: 'In coda',
+    description: 'Job in attesa',
+    badgeVariant: 'secondary',
   },
   {
-    key: "failed",
-    label: "Falliti",
-    description: "Richiedono attenzione",
-    badgeVariant: "destructive",
+    key: 'failed',
+    label: 'Falliti',
+    description: 'Richiedono attenzione',
+    badgeVariant: 'destructive',
   },
 ];
 
-const numberFormatter = new Intl.NumberFormat("it-IT");
+const numberFormatter = new Intl.NumberFormat('it-IT');
 
 function StatSkeleton() {
   return (
@@ -61,8 +55,8 @@ function StatSkeleton() {
 
 export function QueuesWidget() {
   const { data, error, isLoading } = useQuery<QueueSummary, Error>({
-    queryKey: ["queues"],
-    queryFn: () => apiGet<QueueSummary>("/queues/summary"),
+    queryKey: ['queues'],
+    queryFn: () => apiGet<QueueSummary>('/queues/summary'),
     refetchInterval: 4000,
   });
 
@@ -84,7 +78,7 @@ export function QueuesWidget() {
         {isLoading && <StatSkeleton />}
         {error && (
           <p className="rounded-md border border-destructive/30 bg-destructive/10 p-3 text-destructive">
-            {error instanceof ApiError ? error.message : "Impossibile recuperare le code"}
+            {error instanceof ApiError ? error.message : 'Impossibile recuperare le code'}
           </p>
         )}
         {stats && (
@@ -93,9 +87,7 @@ export function QueuesWidget() {
               <div key={key} className="rounded-lg border border-border/60 bg-background/60 p-4">
                 <dt className="text-sm font-medium text-muted-foreground">{label}</dt>
                 <dd className="mt-3 text-3xl font-semibold text-foreground">
-                  <Badge
-                    variant={badgeVariant}
-                    className={cn("px-3 py-1 text-base leading-tight")}>
+                  <Badge variant={badgeVariant} className={cn('px-3 py-1 text-base leading-tight')}>
                     {numberFormatter.format(value)}
                   </Badge>
                 </dd>

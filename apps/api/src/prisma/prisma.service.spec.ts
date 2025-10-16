@@ -53,7 +53,7 @@ jest.mock('@prisma/client', () => {
       model: string,
       action: string,
       args: any,
-      handler: (finalArgs: any) => any,
+      handler: (finalArgs: any) => any
     ) {
       const params = { model, action, args };
       const next = async (nextParams: any) => handler(nextParams.args ?? args);
@@ -67,7 +67,7 @@ jest.mock('@prisma/client', () => {
       return this.executeQuery(model, 'findMany', args, (finalArgs: any) => {
         const where = finalArgs?.where ?? {};
         return db[model].filter((item) =>
-          Object.entries(where).every(([key, value]) => item[key] === value),
+          Object.entries(where).every(([key, value]) => item[key] === value)
         );
       });
     }
@@ -76,7 +76,7 @@ jest.mock('@prisma/client', () => {
       return this.executeQuery(model, 'findUnique', args, (finalArgs: any) => {
         const where = finalArgs?.where ?? {};
         return db[model].find((item) =>
-          Object.entries(where).every(([key, value]) => item[key] === value),
+          Object.entries(where).every(([key, value]) => item[key] === value)
         );
       });
     }
@@ -128,15 +128,15 @@ describe('PrismaService', () => {
   });
 
   it('throws if DATABASE_URL is not configured', () => {
-    expect(() => new PrismaService(createConfigService(undefined))).toThrow(
-      /DATABASE_URL/,
-    );
+    expect(() => new PrismaService(createConfigService(undefined))).toThrow(/DATABASE_URL/);
   });
 
   it('connects on module init', async () => {
     const service = new PrismaService(createConfigService(databaseUrl));
     const extendsSpy = jest.spyOn<any, any>(service as any, '$extends').mockReturnValue(service);
-    const connectSpy = jest.spyOn<any, any>(service as any, '$connect').mockResolvedValue(undefined);
+    const connectSpy = jest
+      .spyOn<any, any>(service as any, '$connect')
+      .mockResolvedValue(undefined);
 
     await service.onModuleInit();
 
@@ -170,12 +170,10 @@ describe('PrismaService', () => {
     const app = { close } as unknown as INestApplication;
 
     const callbacks: Record<string, (...args: any[]) => Promise<void> | void> = {};
-    const procOnSpy = jest
-      .spyOn(process, 'on')
-      .mockImplementation(((event: any, cb: any) => {
-        callbacks[event] = cb;
-        return process as any;
-      }) as any);
+    const procOnSpy = jest.spyOn(process, 'on').mockImplementation(((event: any, cb: any) => {
+      callbacks[event] = cb;
+      return process as any;
+    }) as any);
 
     await service.enableShutdownHooks(app);
 
@@ -203,7 +201,7 @@ describe('PrismaService', () => {
           operation: 'findMany',
           args: { where: { status: 'active' }, orderBy: { createdAt: 'desc' } },
           query,
-        }),
+        })
       );
 
       expect(query).toHaveBeenCalledWith({
@@ -221,7 +219,7 @@ describe('PrismaService', () => {
           operation: 'findMany',
           args: { where: { status: 'pending' } },
           query,
-        }),
+        })
       );
 
       expect(query).toHaveBeenCalledWith({ where: { status: 'pending', tenantId: 'tenant_a' } });
@@ -236,7 +234,7 @@ describe('PrismaService', () => {
           operation: 'findUnique',
           args: { where: { id: 'inf_1', tenantId: 'tenant_b' } },
           query,
-        }),
+        })
       );
 
       expect(query).toHaveBeenCalledWith({ where: { id: 'inf_1', tenantId: 'tenant_b' } });
@@ -251,7 +249,7 @@ describe('PrismaService', () => {
           operation: 'create',
           args: { data: { name: 'Jane Doe' } },
           query,
-        }),
+        })
       );
 
       expect(query).toHaveBeenCalledWith({ data: { name: 'Jane Doe', tenantId: 'tenant_a' } });
@@ -266,7 +264,7 @@ describe('PrismaService', () => {
           operation: 'create',
           args: { data: { type: 'content-generation', payload: { foo: 'bar' } } },
           query,
-        }),
+        })
       );
 
       expect(query).toHaveBeenCalledWith({
@@ -313,7 +311,7 @@ describe('PrismaService', () => {
           operation: 'findMany',
           args: { where: { status: 'active' } },
           query,
-        }),
+        })
       );
 
       expect(query).toHaveBeenCalledWith({ where: { status: 'active' } });
@@ -341,7 +339,7 @@ describe('PrismaService', () => {
       await service.onModuleInit();
 
       const results = await runWithContext({ tenantId: 'tenant_a' }, () =>
-        (service as any).influencer.findMany({}),
+        (service as any).influencer.findMany({})
       );
 
       expect(results).toEqual([{ id: 'inf_a1', tenantId: 'tenant_a' }]);
@@ -357,7 +355,7 @@ describe('PrismaService', () => {
       await service.onModuleInit();
 
       const result = await runWithContext({ tenantId: 'tenant_a' }, () =>
-        (service as any).influencer.findUnique({ where: { id: 'inf_b1' } }),
+        (service as any).influencer.findUnique({ where: { id: 'inf_b1' } })
       );
 
       expect(result).toBeUndefined();

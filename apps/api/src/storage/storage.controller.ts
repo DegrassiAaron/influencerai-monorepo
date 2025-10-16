@@ -23,4 +23,3 @@ export class StorageController {
     return { ok: true, key, roundtrip: readBack };
   }
 }
-

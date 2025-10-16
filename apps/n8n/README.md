@@ -5,6 +5,7 @@ This directory contains production-ready n8n workflows for orchestrating the Inf
 ## Overview
 
 The workflows automate:
+
 - **Content Planning**: Generate content plans using OpenRouter API
 - **LoRA Training**: Enqueue and monitor LoRA model training jobs
 - **Content Pipeline**: End-to-end content generation (plan → image → video → autopost)
@@ -140,15 +141,18 @@ See [TESTING.md](./TESTING.md) for detailed testing instructions.
 **Purpose**: Generate content plans using OpenRouter API via NestJS backend.
 
 **Triggers**:
+
 - Manual trigger (for testing)
 - Schedule trigger (Monday at 9 AM)
 
 **Features**:
+
 - Automatic retry on API errors (3 retries with exponential backoff)
 - Error handling with detailed logging
 - Configurable theme and target platforms
 
 **Input Parameters** (set via manual trigger or schedule):
+
 ```json
 {
   "influencerId": "influencer-001",
@@ -158,11 +162,13 @@ See [TESTING.md](./TESTING.md) for detailed testing instructions.
 ```
 
 **Output**:
+
 - Content plan ID
 - Generated posts with captions and hashtags
 - Execution logs
 
 **Environment Variables Used**:
+
 - `API_BASE_URL` - NestJS API endpoint
 - `API_TOKEN` - Bearer token for authentication
 - `DEFAULT_INFLUENCER_ID` - Fallback influencer ID
@@ -174,15 +180,18 @@ See [TESTING.md](./TESTING.md) for detailed testing instructions.
 **Purpose**: Enqueue LoRA training jobs and poll for completion.
 
 **Triggers**:
+
 - Manual trigger
 
 **Features**:
+
 - Job creation via `/jobs` endpoint
 - Polling loop with 30-second intervals
 - Maximum 1 hour execution (120 iterations)
 - Automatic retry on job creation failures
 
 **Input Parameters**:
+
 ```json
 {
   "datasetId": "ds_123",
@@ -198,12 +207,14 @@ See [TESTING.md](./TESTING.md) for detailed testing instructions.
 ```
 
 **Output**:
+
 - Job ID
 - Final status (succeeded/failed/completed)
 - Training result data
 - Cost tracking (tokens used)
 
 **Flow**:
+
 1. Create job via `POST /jobs`
 2. Wait 30 seconds
 3. Poll job status via `GET /jobs/{id}`
@@ -217,10 +228,12 @@ See [TESTING.md](./TESTING.md) for detailed testing instructions.
 **Purpose**: Complete end-to-end content generation workflow.
 
 **Triggers**:
+
 - Manual trigger (for testing)
 - Schedule trigger (Tuesday and Thursday at 10 AM)
 
 **Features**:
+
 - Multi-step pipeline with error handling
 - Post-by-post processing (sequential)
 - Job polling with 1-minute intervals
@@ -243,6 +256,7 @@ See [TESTING.md](./TESTING.md) for detailed testing instructions.
    - Failure: Error stage and details
 
 **Input Parameters**:
+
 ```json
 {
   "influencerId": "influencer-001",
@@ -252,6 +266,7 @@ See [TESTING.md](./TESTING.md) for detailed testing instructions.
 ```
 
 **Output**:
+
 - Plan ID
 - Asset IDs for each generated content
 - Asset URLs (MinIO S3 links)
@@ -264,15 +279,18 @@ See [TESTING.md](./TESTING.md) for detailed testing instructions.
 **Purpose**: Publish content to social media platforms.
 
 **Triggers**:
+
 - Manual trigger
 - Can be called by other workflows
 
 **Features**:
+
 - Channel routing (Instagram, TikTok, YouTube)
 - Platform-specific formatting
 - Mock implementation (requires API integration)
 
 **Input Parameters**:
+
 ```json
 {
   "assetId": "asset_123",
@@ -306,15 +324,18 @@ See [TESTING.md](./TESTING.md) for detailed testing instructions.
 **Purpose**: Receive rendering completion callbacks from ComfyUI.
 
 **Triggers**:
+
 - Webhook: `POST /webhook/comfyui-callback`
 
 **Features**:
+
 - Webhook payload validation
 - Job status update via PATCH `/jobs/{id}`
 - Error handling for invalid payloads
 - Automatic retry on API failures
 
 **Expected Webhook Payload**:
+
 ```json
 {
   "jobId": "job_123",
@@ -325,6 +346,7 @@ See [TESTING.md](./TESTING.md) for detailed testing instructions.
 ```
 
 **Flow**:
+
 1. Receive webhook POST
 2. Parse and validate payload
 3. Map render status to job status
@@ -332,6 +354,7 @@ See [TESTING.md](./TESTING.md) for detailed testing instructions.
 5. Log result
 
 **Webhook URL** (with cloudflared tunnel):
+
 ```
 https://your-tunnel.trycloudflare.com/webhook/comfyui-callback
 ```
@@ -366,6 +389,7 @@ npm run import workflows/plan-generate.json
 ```
 
 **Features**:
+
 - Detects existing workflows by name
 - Updates existing workflows instead of duplicating
 - Validates workflow structure before import
@@ -373,6 +397,7 @@ npm run import workflows/plan-generate.json
 - Detailed error reporting
 
 **Environment Variables**:
+
 - `N8N_BASE_URL` - n8n server URL (default: `http://localhost:5678`)
 - `N8N_API_KEY` - API key for authentication (optional)
 - `N8N_USER` - Username for basic auth (optional)
@@ -402,12 +427,14 @@ npm run export:all
 ```
 
 **Features**:
+
 - Cleans server-generated fields (id, createdAt, updatedAt)
 - Generates safe filenames from workflow names
 - Creates `workflows/` directory if missing
 - Overwrites existing files (version control friendly)
 
 **Output Format**:
+
 - Files saved to `workflows/` directory
 - Filename format: `workflow-name.json` (kebab-case)
 - Pretty-printed JSON (2-space indentation)
@@ -421,6 +448,7 @@ All workflows include production-ready error handling:
 ### Retry Logic
 
 **HTTP Request Nodes**:
+
 - Max retries: 3
 - Retry on status codes: `429, 500, 502, 503, 504`
 - Wait between retries: 2-3 seconds (exponential backoff)
@@ -429,6 +457,7 @@ All workflows include production-ready error handling:
 ### Error Output
 
 **Configuration**:
+
 - `onError: "continueErrorOutput"` on all HTTP nodes
 - Errors flow to dedicated error logging nodes
 - Errors don't stop the entire workflow
@@ -436,6 +465,7 @@ All workflows include production-ready error handling:
 ### Conditional Error Checks
 
 **If Nodes**:
+
 - Validate response structure before proceeding
 - Check for required fields (`id`, `status`, etc.)
 - Route errors to logging branch
@@ -443,6 +473,7 @@ All workflows include production-ready error handling:
 ### Logging
 
 **Log Nodes** (Set nodes) include:
+
 - `level`: `info`, `warning`, `error`
 - `message`: Human-readable description
 - `timestamp`: ISO 8601 format
@@ -455,6 +486,7 @@ All workflows include production-ready error handling:
 ### Execution Logs
 
 View workflow executions in n8n UI:
+
 1. Go to **Executions** tab
 2. Filter by workflow name
 3. Click execution to see detailed logs
@@ -486,6 +518,7 @@ curl http://localhost:3001/queues/summary
 ```
 
 Returns:
+
 ```json
 {
   "active": 2,
@@ -502,10 +535,10 @@ Workflows can run on schedules using **Schedule Trigger** nodes.
 
 ### Current Schedules
 
-| Workflow | Schedule | Cron Expression | Description |
-|----------|----------|-----------------|-------------|
-| Content Plan Generator | Monday 9 AM | `0 9 * * 1` | Weekly planning |
-| Content Pipeline | Tue, Thu 10 AM | `0 10 * * 2,4` | Bi-weekly content |
+| Workflow               | Schedule       | Cron Expression | Description       |
+| ---------------------- | -------------- | --------------- | ----------------- |
+| Content Plan Generator | Monday 9 AM    | `0 9 * * 1`     | Weekly planning   |
+| Content Pipeline       | Tue, Thu 10 AM | `0 10 * * 2,4`  | Bi-weekly content |
 
 ### Modifying Schedules
 
@@ -518,6 +551,7 @@ Workflows can run on schedules using **Schedule Trigger** nodes.
 **Cron Format**: `minute hour day month weekday`
 
 Examples:
+
 - `0 9 * * 1` - Monday at 9:00 AM
 - `0 10 * * 2,4` - Tuesday and Thursday at 10:00 AM
 - `0 */6 * * *` - Every 6 hours
@@ -540,6 +574,7 @@ http://localhost:5678/webhook/comfyui-callback
 1. Install cloudflared: `https://github.com/cloudflare/cloudflared`
 
 2. Start tunnel:
+
    ```bash
    cloudflared tunnel --url http://localhost:5678
    ```
@@ -547,6 +582,7 @@ http://localhost:5678/webhook/comfyui-callback
 3. Copy the generated URL (e.g., `https://random-name.trycloudflare.com`)
 
 4. Use webhook URL:
+
    ```
    https://random-name.trycloudflare.com/webhook/comfyui-callback
    ```
@@ -558,6 +594,7 @@ http://localhost:5678/webhook/comfyui-callback
 **Current**: No authentication (development only)
 
 **Production Recommendations**:
+
 1. Add webhook signature verification
 2. Use API key in query parameter or header
 3. Implement IP whitelisting
@@ -572,6 +609,7 @@ http://localhost:5678/webhook/comfyui-callback
 **Cause**: n8n is not running or wrong URL
 
 **Solution**:
+
 ```bash
 # Check n8n is running
 docker ps | grep n8n
@@ -590,12 +628,15 @@ curl http://localhost:5678/healthz
 **Cause**: Missing or invalid `API_TOKEN`
 
 **Solution**:
+
 1. Check environment variables in n8n container:
+
    ```bash
    docker exec -it <n8n-container> env | grep API_TOKEN
    ```
 
 2. Update `.env` file:
+
    ```bash
    API_TOKEN=dev-token
    ```
@@ -612,6 +653,7 @@ curl http://localhost:5678/healthz
 **Cause**: Long-running jobs exceed workflow timeout
 
 **Solution**:
+
 1. Open workflow in n8n editor
 2. Click **Workflow Settings** (gear icon)
 3. Set **Execution Timeout**: `3600` (1 hour) or higher
@@ -624,12 +666,15 @@ curl http://localhost:5678/healthz
 **Cause**: Worker crashed or job failed without updating status
 
 **Solution**:
+
 1. Check worker logs:
+
    ```bash
    docker logs <worker-container>
    ```
 
 2. Manually update job status:
+
    ```bash
    curl -X PATCH http://localhost:3001/jobs/<job-id> \
      -H "Content-Type: application/json" \
@@ -648,11 +693,13 @@ curl http://localhost:5678/healthz
 **Cause**: ComfyUI can't reach webhook URL
 
 **Solution**:
+
 1. Verify webhook is active in n8n:
    - Open workflow
    - Check "Listening for test event" message
 
 2. Test webhook locally:
+
    ```bash
    curl -X POST http://localhost:5678/webhook/comfyui-callback \
      -H "Content-Type: application/json" \

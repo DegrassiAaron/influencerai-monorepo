@@ -62,6 +62,7 @@ powershell -ExecutionPolicy Bypass -File scripts/db-test.ps1
 ```
 
 Note:
+
 - Richiede `DATABASE_URL` in `.env` (root) o `apps/api/.env`.
 - Richiede `pnpm` disponibile nel PATH.
 
@@ -78,4 +79,3 @@ bash scripts/update-issue-checklist.sh 123
 # Windows
 powershell -ExecutionPolicy Bypass -File scripts/update-issue-checklist.ps1 -IssueNumber 123
 ```
-

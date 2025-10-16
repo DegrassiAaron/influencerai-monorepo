@@ -1,11 +1,11 @@
-"use client";
-import { useQuery } from "@tanstack/react-query";
+'use client';
+import { useQuery } from '@tanstack/react-query';
 
 export function useAuth() {
   const q = useQuery<{ authenticated: boolean }>({
-    queryKey: ["auth/status"],
+    queryKey: ['auth/status'],
     queryFn: async () => {
-      const res = await fetch("/api/session/status", { cache: "no-store" });
+      const res = await fetch('/api/session/status', { cache: 'no-store' });
       if (!res.ok) return { authenticated: false };
       return res.json();
     },
@@ -18,4 +18,3 @@ export function useAuth() {
     refetch: q.refetch,
   };
 }
-

@@ -10,7 +10,7 @@ const BASE_ISSUES: BacklogIssue[] = [
     labels: [],
     assignees: [],
     milestone: undefined,
-    dodComplete: true
+    dodComplete: true,
   },
   {
     code: 'TEST-02',
@@ -19,8 +19,8 @@ const BASE_ISSUES: BacklogIssue[] = [
     labels: [],
     assignees: [],
     milestone: undefined,
-    dodComplete: false
-  }
+    dodComplete: false,
+  },
 ];
 
 describe('verifyBacklog', () => {
@@ -32,8 +32,8 @@ describe('verifyBacklog', () => {
         state: 'closed',
         body: '',
         labels: [],
-        htmlUrl: 'https://example.com/1'
-      })
+        htmlUrl: 'https://example.com/1',
+      }),
     };
 
     const result = await verifyBacklog({ issues: BASE_ISSUES, github });
@@ -50,8 +50,8 @@ describe('verifyBacklog', () => {
         state: 'open',
         body: '',
         labels: [],
-        htmlUrl: 'https://example.com/10'
-      })
+        htmlUrl: 'https://example.com/10',
+      }),
     };
 
     const result = await verifyBacklog({ issues: BASE_ISSUES, github });
@@ -60,14 +60,14 @@ describe('verifyBacklog', () => {
         code: 'TEST-01',
         title: 'TEST-01: Completed',
         reason: 'Issue still open on GitHub',
-        issueUrl: 'https://example.com/10'
-      }
+        issueUrl: 'https://example.com/10',
+      },
     ]);
   });
 
   it('reports missing GitHub issues', async () => {
     const github: Pick<GithubGateway, 'findIssueByCode'> = {
-      findIssueByCode: vi.fn().mockResolvedValue(null)
+      findIssueByCode: vi.fn().mockResolvedValue(null),
     };
 
     const result = await verifyBacklog({ issues: BASE_ISSUES, github });
@@ -75,8 +75,8 @@ describe('verifyBacklog', () => {
       {
         code: 'TEST-01',
         title: 'TEST-01: Completed',
-        reason: 'Issue not found on GitHub'
-      }
+        reason: 'Issue not found on GitHub',
+      },
     ]);
   });
 });

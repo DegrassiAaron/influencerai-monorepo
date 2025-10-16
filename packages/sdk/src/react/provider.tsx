@@ -13,7 +13,11 @@ export interface InfluencerAIProviderProps {
 export function InfluencerAIProvider({ children, baseUrl, client }: InfluencerAIProviderProps) {
   const value = useMemo(() => client ?? new InfluencerAIClient(baseUrl), [client, baseUrl]);
 
-  return <InfluencerAIClientContext.Provider value={value}>{children}</InfluencerAIClientContext.Provider>;
+  return (
+    <InfluencerAIClientContext.Provider value={value}>
+      {children}
+    </InfluencerAIClientContext.Provider>
+  );
 }
 
 export function useInfluencerAIClient(): InfluencerAIClient {

@@ -1,6 +1,7 @@
 # Operational Dashboard (WEB-02)
 
 This feature area covers the `/` home overview and the `/dashboard` workspace with three widgets:
+
 - `Job Queues` summary: active, waiting, failed
 - `Health` card: aggregate status from `/healthz`
 - `Jobs` mini chart: recent successes/failures
@@ -8,6 +9,7 @@ This feature area covers the `/` home overview and the `/dashboard` workspace wi
 Polling uses `@tanstack/react-query` via a top-level `Providers` wrapper.
 
 Config:
+
 - Set `NEXT_PUBLIC_API_BASE_URL` pointing to the API (e.g. `http://localhost:3001`)
 - Endpoints expected:
   - `GET /healthz` -> `{ status: 'ok'|'degraded'|'down', checks: { [name]: boolean } }`
@@ -15,6 +17,7 @@ Config:
   - `GET /jobs/series?window=1h` -> `Array<{ t:string, success:number, failed:number }>`
 
 Files:
+
 - `apps/web/src/app/(dashboard)/page.tsx` (home overview)
 - `apps/web/src/app/(dashboard)/dashboard/page.tsx`
 - `apps/web/src/app/(dashboard)/dashboard/content-plans/page.tsx`
@@ -24,6 +27,7 @@ Files:
 - `apps/web/src/app/layout.tsx` registers providers and global styles
 
 Notes:
+
 - Replace polling with websockets when API supports it.
 - Styles rely on the shared design system primitives documented below.
 
@@ -76,7 +80,10 @@ export function JobDetail({ id }: { id: string }) {
       <h2>{job?.id}</h2>
       <button
         onClick={() =>
-          updateJob.mutate({ id, update: { status: 'succeeded', result: { note: 'Manual override' } } })
+          updateJob.mutate({
+            id,
+            update: { status: 'succeeded', result: { note: 'Manual override' } },
+          })
         }
       >
         Force success

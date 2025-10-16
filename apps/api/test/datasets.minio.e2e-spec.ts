@@ -135,7 +135,14 @@ describe('Datasets + MinIO integration (e2e)', () => {
       .overrideProvider(APP_GUARD)
       .useValue({ canActivate: () => true } as CanActivate)
       .overrideProvider(JwtService)
-      .useValue({ verify: () => ({ sub: 'user', tenantId: 'tenant_e2e', email: 'test@example.com', role: 'admin' }) })
+      .useValue({
+        verify: () => ({
+          sub: 'user',
+          tenantId: 'tenant_e2e',
+          email: 'test@example.com',
+          role: 'admin',
+        }),
+      })
       .overrideProvider(PrismaService)
       .useValue(prismaMock)
       .compile();

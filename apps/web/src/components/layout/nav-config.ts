@@ -7,46 +7,46 @@ export type NavItem = {
 
 export const mainNav: NavItem[] = [
   {
-    title: "Overview",
-    href: "/",
-    icon: "layout-dashboard",
-    description: "Sintesi dello stato della piattaforma.",
+    title: 'Overview',
+    href: '/',
+    icon: 'layout-dashboard',
+    description: 'Sintesi dello stato della piattaforma.',
   },
   {
-    title: "Dashboard",
-    href: "/dashboard",
-    icon: "bar-chart-3",
-    description: "Metriche operative e performance.",
+    title: 'Dashboard',
+    href: '/dashboard',
+    icon: 'bar-chart-3',
+    description: 'Metriche operative e performance.',
   },
   {
-    title: "Jobs",
-    href: "/jobs",
-    icon: "briefcase",
-    description: "Pipeline di generazione e stato dei job.",
+    title: 'Jobs',
+    href: '/jobs',
+    icon: 'briefcase',
+    description: 'Pipeline di generazione e stato dei job.',
   },
   {
-    title: "Content Plans",
-    href: "/dashboard/content-plans",
-    icon: "list-checks",
-    description: "Wizard per generare, approvare e archiviare i piani editoriali.",
+    title: 'Content Plans',
+    href: '/dashboard/content-plans',
+    icon: 'list-checks',
+    description: 'Wizard per generare, approvare e archiviare i piani editoriali.',
   },
   {
-    title: "Library",
-    href: "/library",
-    icon: "library",
-    description: "Asset creativi e dataset condivisi.",
+    title: 'Library',
+    href: '/library',
+    icon: 'library',
+    description: 'Asset creativi e dataset condivisi.',
   },
 ];
 
 export const supportNav: NavItem[] = [
   {
-    title: "Status Page",
-    href: "https://status.influencer.ai",
-    icon: "activity",
+    title: 'Status Page',
+    href: 'https://status.influencer.ai',
+    icon: 'activity',
   },
   {
-    title: "Documentation",
-    href: "https://docs.influencer.ai",
-    icon: "book-open",
+    title: 'Documentation',
+    href: 'https://docs.influencer.ai',
+    icon: 'book-open',
   },
 ];

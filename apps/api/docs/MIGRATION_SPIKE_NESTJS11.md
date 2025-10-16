@@ -15,6 +15,7 @@
 **Estimated Total Effort:** 16-24 hours (2-3 developer days)
 
 **Key Findings:**
+
 - NestJS 11 introduces several breaking changes, but most are well-documented and low-risk
 - The API uses Fastify adapter, which has a critical breaking change in route prefix exclusions
 - Zod v4 upgrade is the highest risk item with significant breaking changes
@@ -24,6 +25,7 @@
 **Recommendation:** GO - Proceed with migration in a phased approach
 
 **Key Risks:**
+
 1. **HIGH:** Zod v4 error handling API changes may break validation logic
 2. **MEDIUM:** ConfigService.get() precedence change may affect environment variable overrides
 3. **MEDIUM:** Reflector.getAllAndOverride() type change requires null safety updates
@@ -38,47 +40,53 @@
 Based on `pnpm outdated` output, the following packages require major version updates:
 
 #### NestJS Core Ecosystem (10.x → 11.x)
-| Package | Current | Target | Category |
-|---------|---------|--------|----------|
-| @nestjs/common | 10.4.20 | 11.1.6 | MAJOR |
-| @nestjs/core | 10.4.20 | 11.1.6 | MAJOR |
-| @nestjs/platform-fastify | 10.4.20 | 11.1.6 | MAJOR |
-| @nestjs/testing | 10.4.20 | 11.1.6 | MAJOR (dev) |
-| @nestjs/cli | 10.4.9 | 11.0.10 | MAJOR (dev) |
-| @nestjs/schematics | 10.2.3 | 11.0.9 | MAJOR (dev) |
+
+| Package                  | Current | Target  | Category    |
+| ------------------------ | ------- | ------- | ----------- |
+| @nestjs/common           | 10.4.20 | 11.1.6  | MAJOR       |
+| @nestjs/core             | 10.4.20 | 11.1.6  | MAJOR       |
+| @nestjs/platform-fastify | 10.4.20 | 11.1.6  | MAJOR       |
+| @nestjs/testing          | 10.4.20 | 11.1.6  | MAJOR (dev) |
+| @nestjs/cli              | 10.4.9  | 11.0.10 | MAJOR (dev) |
+| @nestjs/schematics       | 10.2.3  | 11.0.9  | MAJOR (dev) |
 
 #### NestJS Modules (10.x → 11.x)
-| Package | Current | Target | Category |
-|---------|---------|--------|----------|
-| @nestjs/bullmq | 10.2.3 | 11.0.4 | MAJOR |
-| @nestjs/config | 3.3.0 | 4.0.2 | MAJOR |
-| @nestjs/jwt | 10.2.0 | 11.0.1 | MAJOR |
-| @nestjs/passport | 10.0.3 | 11.0.5 | MAJOR |
-| @nestjs/swagger | 8.1.1 | 11.2.1 | MAJOR |
+
+| Package          | Current | Target | Category |
+| ---------------- | ------- | ------ | -------- |
+| @nestjs/bullmq   | 10.2.3  | 11.0.4 | MAJOR    |
+| @nestjs/config   | 3.3.0   | 4.0.2  | MAJOR    |
+| @nestjs/jwt      | 10.2.0  | 11.0.1 | MAJOR    |
+| @nestjs/passport | 10.0.3  | 11.0.5 | MAJOR    |
+| @nestjs/swagger  | 8.1.1   | 11.2.1 | MAJOR    |
 
 #### Fastify Ecosystem
-| Package | Current | Target | Category |
-|---------|---------|--------|----------|
-| @fastify/static | 7.0.4 | 8.2.0 | MAJOR |
+
+| Package         | Current | Target | Category |
+| --------------- | ------- | ------ | -------- |
+| @fastify/static | 7.0.4   | 8.2.0  | MAJOR    |
 
 #### Core Dependencies
-| Package | Current | Target | Category | Risk |
-|---------|---------|--------|----------|------|
-| zod | 3.25.76 | 4.1.12 | MAJOR | HIGH |
-| pino | 9.12.0 | 10.0.0 | MAJOR | LOW |
-| pino-pretty | 11.3.0 | 13.1.2 | MAJOR | LOW |
-| bcryptjs | 2.4.3 | 3.0.2 | MAJOR | LOW |
+
+| Package     | Current | Target | Category | Risk |
+| ----------- | ------- | ------ | -------- | ---- |
+| zod         | 3.25.76 | 4.1.12 | MAJOR    | HIGH |
+| pino        | 9.12.0  | 10.0.0 | MAJOR    | LOW  |
+| pino-pretty | 11.3.0  | 13.1.2 | MAJOR    | LOW  |
+| bcryptjs    | 2.4.3   | 3.0.2  | MAJOR    | LOW  |
 
 #### Testing Dependencies
-| Package | Current | Target | Category |
-|---------|---------|--------|----------|
-| jest | 29.7.0 | 30.2.0 | MAJOR |
-| @types/jest | 29.5.14 | 30.0.0 | MAJOR |
+
+| Package     | Current | Target | Category |
+| ----------- | ------- | ------ | -------- |
+| jest        | 29.7.0  | 30.2.0 | MAJOR    |
+| @types/jest | 29.5.14 | 30.0.0 | MAJOR    |
 
 #### Minor Updates (Safe)
+
 - @aws-sdk/client-s3: 3.908.0 → 3.911.0
 - bullmq: 5.59.0 → 5.61.0
-- @typescript-eslint/*: 8.45.0 → 8.46.1
+- @typescript-eslint/\*: 8.45.0 → 8.46.1
 - @types/node: 22.18.7 → 24.8.0
 - dotenv: 16.6.1 → 17.2.3
 
@@ -87,6 +95,7 @@ Based on `pnpm outdated` output, the following packages require major version up
 **Analysis:** No blocking peer dependency conflicts identified. All major NestJS packages follow synchronized versioning.
 
 **Potential Issues:**
+
 - `@fastify/static` v8 may have peer dependency requirements for Fastify v5
 - Current Fastify version: 5.6.1 (compatible with NestJS 11's Fastify v5 support)
 
@@ -103,6 +112,7 @@ Based on `pnpm outdated` output, the following packages require major version up
 **Impact:** NONE - Already using Node.js 20
 
 **Evidence:**
+
 ```dockerfile
 # apps/api/Dockerfile
 FROM node:20-alpine AS base
@@ -124,10 +134,11 @@ node-version: '20'
 **Impact:** NONE - API uses Fastify adapter, not Express
 
 **Code Location:** `src/main.ts`
+
 ```typescript
 const app = await NestFactory.create<NestFastifyApplication>(
   AppModule,
-  new FastifyAdapter(),  // Fastify, not Express
+  new FastifyAdapter() // Fastify, not Express
 );
 ```
 
@@ -142,10 +153,11 @@ const app = await NestFactory.create<NestFastifyApplication>(
 **Impact:** LOW - May see console warnings, but functionality preserved
 
 **Affected Code:** None currently, but if global prefix exclusions are added in future:
+
 ```typescript
 // This pattern will generate warnings in NestJS 11 + Fastify:
 app.setGlobalPrefix('api', {
-  exclude: ['/health/*']  // Wildcards no longer supported
+  exclude: ['/health/*'], // Wildcards no longer supported
 });
 ```
 
@@ -164,22 +176,25 @@ app.setGlobalPrefix('api', {
 **Impact:** LOW - Only one usage found, already handles undefined
 
 **Affected Code:**
+
 ```typescript
 // src/auth/jwt-auth.guard.ts:12
 const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
   context.getHandler(),
   context.getClass(),
 ]);
-if (isPublic) return true;  // Handles falsy values (undefined/false)
+if (isPublic) return true; // Handles falsy values (undefined/false)
 ```
 
 **Analysis:** Current code already handles undefined/falsy values correctly. The implicit truthiness check works for both `false` and `undefined`.
 
 **Action Required:**
+
 1. Add explicit undefined check for type safety
 2. Update similar patterns proactively
 
 **Recommendation:**
+
 ```typescript
 // Before (works but not type-safe):
 const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
@@ -193,7 +208,7 @@ const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
   context.getHandler(),
   context.getClass(),
 ]);
-if (isPublic === true) return true;  // Explicit check
+if (isPublic === true) return true; // Explicit check
 ```
 
 ---
@@ -203,6 +218,7 @@ if (isPublic === true) return true;  // Explicit check
 **Breaking Change:** Configuration precedence order changed in `@nestjs/config` v4
 
 **New Order:**
+
 1. Internal configuration (config namespaces, custom config files)
 2. Validated environment variables (if validation enabled)
 3. `process.env` (previously had priority)
@@ -212,12 +228,14 @@ if (isPublic === true) return true;  // Explicit check
 **Current Usage:** ConfigService used extensively (12 files)
 
 **Risk Assessment:**
+
 - Current code uses `ConfigModule.forRoot({ isGlobal: true, validate: validateEnv })`
 - All config loaded from `process.env` via Zod validation schema
 - No custom config factories that would override env vars
 - **Likely safe**, but requires testing to confirm no unexpected behavior
 
 **Affected Code Locations:**
+
 - `src/app.module.ts` - ConfigModule registration
 - `src/main.ts` - Config retrieval for PORT, NODE_ENV, OPENROUTER_API_KEY
 - `src/storage/storage.service.ts` - S3 configuration
@@ -225,11 +243,13 @@ if (isPublic === true) return true;  // Explicit check
 - `src/content-plans/content-plans.service.ts` - OpenRouter API key
 
 **Critical Test Cases:**
+
 1. Verify environment variables are still loaded correctly
 2. Confirm validated env vars take precedence as expected
 3. Test with custom config factories (if added in future)
 
 **Action Required:**
+
 1. Review all ConfigService.get() calls
 2. Add integration tests for critical config values
 3. Test config loading in all environments (dev, test, prod)
@@ -253,6 +273,7 @@ if (isPublic === true) return true;  // Explicit check
 **Impact:** LOW - Major version bump, but NestJS Swagger typically maintains backward compatibility
 
 **Current Usage:**
+
 ```typescript
 // src/main.ts
 const swaggerConfig = new DocumentBuilder()
@@ -265,12 +286,14 @@ SwaggerModule.setup('api', app, document);
 ```
 
 **Affected Files:**
+
 - `src/main.ts` - Swagger setup
 - `src/content-plans/content-plans.controller.ts` - @ApiTags, @ApiOperation, @ApiResponse
 - `src/jobs/jobs.controller.ts` - Swagger decorators
 - `src/jobs/queues.controller.ts` - Swagger decorators
 
 **Action Required:**
+
 1. Test Swagger UI after upgrade (/api endpoint)
 2. Verify decorator behavior unchanged
 3. Check OpenAPI spec generation
@@ -314,12 +337,14 @@ SwaggerModule.setup('api', app, document);
 #### Affected Code Locations:
 
 **High Priority:**
+
 - `src/config/env.validation.ts` - Complex schema with defaults, transforms, superRefine
 - `src/content-plans/dto.ts` - DTOs with safeParse
 - `src/jobs/dto.ts` - Job validation schemas
 - `src/datasets/datasets.service.ts` - Dataset validation
 
 **Medium Priority:**
+
 - `src/auth/login-body.ts` - Simple validation
 - `src/types/content.ts` - Type definitions
 - `src/types/openrouter.ts` - API response validation
@@ -328,16 +353,19 @@ SwaggerModule.setup('api', app, document);
 #### Critical Test Cases:
 
 1. **Environment Validation:**
+
    ```typescript
    // src/config/env.validation.ts
    // Test: Default value application with optional fields
-   const schema = z.object({
-     LOGGER_PRETTY: booleanLike,  // Optional + transform
-     LOG_LEVEL: logLevelEnum.optional(),
-   }).transform(config => {
-     const loggerPretty = (config.LOGGER_PRETTY ?? (config.NODE_ENV !== 'production')) as boolean;
-     // ^^ May behave differently with v4 optional defaults
-   });
+   const schema = z
+     .object({
+       LOGGER_PRETTY: booleanLike, // Optional + transform
+       LOG_LEVEL: logLevelEnum.optional(),
+     })
+     .transform((config) => {
+       const loggerPretty = (config.LOGGER_PRETTY ?? config.NODE_ENV !== 'production') as boolean;
+       // ^^ May behave differently with v4 optional defaults
+     });
    ```
 
 2. **SafeParse Error Handling:**
@@ -345,7 +373,7 @@ SwaggerModule.setup('api', app, document);
    // Controllers use safeParse extensively
    const parsed = CreateContentPlanSchema.safeParse(body);
    if (!parsed.success) {
-     throw new BadRequestException(parsed.error.flatten());  // .flatten() deprecated!
+     throw new BadRequestException(parsed.error.flatten()); // .flatten() deprecated!
    }
    ```
 
@@ -370,6 +398,7 @@ SwaggerModule.setup('api', app, document);
    - Review changes manually before committing
 
 **Mitigation:**
+
 - Upgrade Zod separately from NestJS (allows isolated testing)
 - Add comprehensive validation tests before migration
 - Consider keeping Zod v3 initially if v4 migration is risky
@@ -395,11 +424,13 @@ SwaggerModule.setup('api', app, document);
 **Impact:** LOW - Primarily NestJS 11 compatibility update
 
 **New Features:**
+
 - `forceDisconnectOnShutdown` option (11.0.4)
 - Telemetry support for workers (11.0.3)
 - Extra providers for forRootAsync (11.0.2)
 
 **Current Usage:**
+
 ```typescript
 // src/app.module.ts
 BullModule.forRootAsync({
@@ -409,7 +440,7 @@ BullModule.forRootAsync({
     connection: parseRedisUrl(config.get('REDIS_URL', { infer: true })),
     prefix: config.get('BULL_PREFIX', { infer: true }),
   }),
-})
+});
 ```
 
 **Action Required:** None - Current usage compatible
@@ -423,10 +454,12 @@ BullModule.forRootAsync({
 **Impact:** LOW - Test framework upgrade
 
 **Potential Issues:**
+
 - API changes in matchers or config
 - Performance improvements may reveal flaky tests
 
 **Action Required:**
+
 1. Run test suite after upgrade
 2. Update jest.config.js if needed
 3. Check for deprecated warnings
@@ -440,6 +473,7 @@ BullModule.forRootAsync({
 **Risk:** Password hashing compatibility
 
 **Action Required:**
+
 1. Test authentication after upgrade
 2. Verify existing hashes still validate
 3. Check for performance changes
@@ -450,36 +484,40 @@ BullModule.forRootAsync({
 
 ### 3.1 Module Impact Assessment
 
-| Module | Impact Level | Reason |
-|--------|--------------|--------|
-| Auth (Guards) | LOW | Reflector change minor, already safe |
-| Config | MEDIUM | ConfigService precedence change needs testing |
-| Validation (Zod) | HIGH | Zod v4 has significant breaking changes |
-| Jobs (BullMQ) | LOW | v11 is compatibility update |
-| Storage | NONE | No affected dependencies |
-| Health | NONE | No affected dependencies |
-| Content Plans | MEDIUM | Zod validation + ConfigService usage |
-| Datasets | MEDIUM | Zod validation |
-| Swagger | LOW | Simple usage, backward compatible |
+| Module           | Impact Level | Reason                                        |
+| ---------------- | ------------ | --------------------------------------------- |
+| Auth (Guards)    | LOW          | Reflector change minor, already safe          |
+| Config           | MEDIUM       | ConfigService precedence change needs testing |
+| Validation (Zod) | HIGH         | Zod v4 has significant breaking changes       |
+| Jobs (BullMQ)    | LOW          | v11 is compatibility update                   |
+| Storage          | NONE         | No affected dependencies                      |
+| Health           | NONE         | No affected dependencies                      |
+| Content Plans    | MEDIUM       | Zod validation + ConfigService usage          |
+| Datasets         | MEDIUM       | Zod validation                                |
+| Swagger          | LOW          | Simple usage, backward compatible             |
 
 ### 3.2 Test Impact
 
 **Unit Tests:** 9 spec files
+
 - Most use @nestjs/testing module (requires v11 update)
 - Mocking patterns should remain compatible
 - ConfigService mocking may need updates
 
 **Integration Tests:** Sharded across 2 workers in CI
+
 - Database migrations unaffected
 - BullMQ queue behavior unchanged
 - S3 mocking unchanged
 
 **Critical Test Files:**
+
 - `src/jobs/jobs.service.spec.ts` - BullMQ mocking
 - `src/content-plans/content-plans.service.spec.ts` - ConfigService mocking
 - `src/auth/auth.service.spec.ts` - Authentication logic
 
 **Action Required:**
+
 1. Run full test suite after NestJS upgrade
 2. Run full test suite after Zod upgrade (separately)
 3. Add tests for Reflector undefined handling
@@ -490,6 +528,7 @@ BullModule.forRootAsync({
 **Current Dockerfile:** Node 20-alpine (compatible)
 
 **Changes Required:**
+
 ```dockerfile
 # No changes needed - already using Node 20
 FROM node:20-alpine AS base
@@ -497,11 +536,13 @@ RUN corepack enable pnpm
 ```
 
 **Build Process:**
+
 - `pnpm install` will pull new versions
 - `prisma generate` unaffected (Prisma client independent)
 - TypeScript compilation may show new errors (strictNullChecks)
 
 **Action Required:**
+
 1. Test Docker build locally after package.json updates
 2. Verify production image size unchanged
 3. Test container startup and health checks
@@ -511,15 +552,18 @@ RUN corepack enable pnpm
 **GitHub Actions:** `.github/workflows/ci.yml`
 
 **Current Setup:**
+
 - Node 20 (compatible)
 - pnpm 10.17.1 (compatible)
 - Services: PostgreSQL 16, Redis 7, MinIO (unaffected)
 
 **Potential Issues:**
+
 - Increased build time from larger dependencies
 - Cache invalidation from major version bumps
 
 **Action Required:**
+
 1. Monitor CI job duration after migration
 2. Verify all jobs pass (lint, unit, integration, docker-build)
 3. Check for new TypeScript errors in CI
@@ -539,6 +583,7 @@ The migration will be executed in 4 phases to minimize risk and enable rollback 
 **Objective:** Upgrade low-risk dependencies and verify baseline
 
 **Tasks:**
+
 1. Upgrade Node.js-only breaking changes:
    - `pino@10.0.0`
    - `pino-pretty@13.1.2`
@@ -558,6 +603,7 @@ The migration will be executed in 4 phases to minimize risk and enable rollback 
 **Rollback:** Revert package.json and pnpm-lock.yaml
 
 **Success Criteria:**
+
 - All tests pass
 - No console errors
 - Dev server starts successfully
@@ -569,29 +615,35 @@ The migration will be executed in 4 phases to minimize risk and enable rollback 
 **Objective:** Upgrade NestJS ecosystem to v11
 
 **Tasks:**
+
 1. Upgrade NestJS core packages simultaneously:
+
    ```bash
    pnpm add @nestjs/common@11.1.6 @nestjs/core@11.1.6 @nestjs/platform-fastify@11.1.6
    pnpm add -D @nestjs/cli@11.0.10 @nestjs/schematics@11.0.9 @nestjs/testing@11.1.6
    ```
 
 2. Upgrade NestJS modules:
+
    ```bash
    pnpm add @nestjs/bullmq@11.0.4 @nestjs/jwt@11.0.1 @nestjs/passport@11.0.5 @nestjs/swagger@11.2.1
    ```
 
 3. Upgrade @nestjs/config separately (breaking changes):
+
    ```bash
    pnpm add @nestjs/config@4.0.2
    ```
 
 4. Upgrade Fastify adapter dependencies:
+
    ```bash
    pnpm add @fastify/static@8.2.0
    ```
 
 5. Code changes:
    - **Update jwt-auth.guard.ts:**
+
      ```typescript
      // Before:
      const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
@@ -605,7 +657,7 @@ The migration will be executed in 4 phases to minimize risk and enable rollback 
        context.getHandler(),
        context.getClass(),
      ]);
-     if (isPublic === true) return true;  // Explicit check for type safety
+     if (isPublic === true) return true; // Explicit check for type safety
      ```
 
    - **Verify ConfigService calls:**
@@ -630,6 +682,7 @@ The migration will be executed in 4 phases to minimize risk and enable rollback 
 **Rollback:** Revert package.json and pnpm-lock.yaml, revert code changes
 
 **Success Criteria:**
+
 - All tests pass
 - Swagger UI renders correctly
 - Authentication works
@@ -643,7 +696,9 @@ The migration will be executed in 4 phases to minimize risk and enable rollback 
 **Objective:** Upgrade Zod with careful error handling migration
 
 **Tasks:**
+
 1. Audit current Zod usage:
+
    ```bash
    # Search for flatten() usage (deprecated)
    grep -rn "\.flatten()" src/
@@ -661,6 +716,7 @@ The migration will be executed in 4 phases to minimize risk and enable rollback 
    - Test edge cases (missing fields, invalid types, etc.)
 
 3. Upgrade Zod:
+
    ```bash
    pnpm add zod@4.1.12
    ```
@@ -668,6 +724,7 @@ The migration will be executed in 4 phases to minimize risk and enable rollback 
 4. Critical code updates:
 
    **A. Replace deprecated flatten() in controllers:**
+
    ```typescript
    // src/content-plans/content-plans.controller.ts
    // src/jobs/jobs.controller.ts
@@ -690,6 +747,7 @@ The migration will be executed in 4 phases to minimize risk and enable rollback 
    ```
 
    **B. Review env.validation.ts default behavior:**
+
    ```typescript
    // Test optional fields with defaults
    // Verify transform functions still work
@@ -721,6 +779,7 @@ The migration will be executed in 4 phases to minimize risk and enable rollback 
      ```
 
 6. Consider using codemod:
+
    ```bash
    # Install community codemod
    npm install -g @codemod/zod-v3-to-v4
@@ -732,6 +791,7 @@ The migration will be executed in 4 phases to minimize risk and enable rollback 
 **Rollback:** Revert to Zod v3, revert code changes
 
 **Success Criteria:**
+
 - All validation tests pass
 - Error responses maintain same structure
 - Environment validation works correctly
@@ -745,12 +805,15 @@ The migration will be executed in 4 phases to minimize risk and enable rollback 
 **Objective:** Upgrade remaining dependencies and perform final validation
 
 **Tasks:**
+
 1. Upgrade testing dependencies:
+
    ```bash
    pnpm add -D jest@30.2.0 @types/jest@30.0.0
    ```
 
 2. Upgrade remaining packages:
+
    ```bash
    pnpm add bcryptjs@3.0.2
    pnpm add -D @types/supertest@6.0.3 nock@14.0.10 undici@7.16.0
@@ -762,6 +825,7 @@ The migration will be executed in 4 phases to minimize risk and enable rollback 
    - E2E tests (if applicable)
 
 4. Docker testing:
+
    ```bash
    # Build API image
    docker build -f apps/api/Dockerfile -t influencerai-api:v11 .
@@ -797,6 +861,7 @@ The migration will be executed in 4 phases to minimize risk and enable rollback 
    - Remove unused dependencies
 
 **Success Criteria:**
+
 - All tests pass locally and in CI
 - Docker image builds successfully
 - No performance regressions
@@ -821,21 +886,21 @@ Phase 1 (Foundation)
 
 ### 4.3 Effort Estimates
 
-| Phase | Task | Est. Time | Risk |
-|-------|------|-----------|------|
-| 1 | Foundation upgrades | 2h | LOW |
-| 1 | Baseline testing | 2h | LOW |
-| 2 | NestJS package updates | 1h | LOW |
-| 2 | Code changes (Reflector, ConfigService) | 2h | MEDIUM |
-| 2 | Testing & validation | 3h | MEDIUM |
-| 3 | Zod audit & planning | 2h | HIGH |
-| 3 | Zod upgrade & code updates | 4h | HIGH |
-| 3 | Validation testing | 4h | HIGH |
-| 4 | Testing dependency upgrades | 1h | LOW |
-| 4 | Other dependency upgrades | 1h | LOW |
-| 4 | Full test suite & CI | 2h | LOW |
-| 4 | Docker & performance testing | 2h | LOW |
-| **Total** | | **24h** | |
+| Phase     | Task                                    | Est. Time | Risk   |
+| --------- | --------------------------------------- | --------- | ------ |
+| 1         | Foundation upgrades                     | 2h        | LOW    |
+| 1         | Baseline testing                        | 2h        | LOW    |
+| 2         | NestJS package updates                  | 1h        | LOW    |
+| 2         | Code changes (Reflector, ConfigService) | 2h        | MEDIUM |
+| 2         | Testing & validation                    | 3h        | MEDIUM |
+| 3         | Zod audit & planning                    | 2h        | HIGH   |
+| 3         | Zod upgrade & code updates              | 4h        | HIGH   |
+| 3         | Validation testing                      | 4h        | HIGH   |
+| 4         | Testing dependency upgrades             | 1h        | LOW    |
+| 4         | Other dependency upgrades               | 1h        | LOW    |
+| 4         | Full test suite & CI                    | 2h        | LOW    |
+| 4         | Docker & performance testing            | 2h        | LOW    |
+| **Total** |                                         | **24h**   |        |
 
 **Best Case:** 16 hours (no issues encountered)
 **Worst Case:** 32 hours (multiple rollbacks and debugging)
@@ -846,12 +911,14 @@ Phase 1 (Foundation)
 ### 4.4 Testing Strategy
 
 #### Unit Testing
+
 - Run after each phase
 - Focus on affected modules
 - Mock external dependencies
 - Target: 100% existing test pass rate
 
 #### Integration Testing
+
 - Run after Phases 2 and 3
 - Test database interactions
 - Test queue operations
@@ -859,6 +926,7 @@ Phase 1 (Foundation)
 - Target: 100% existing test pass rate
 
 #### Manual Testing Checklist
+
 - [ ] Dev server starts without errors
 - [ ] Swagger UI loads and renders correctly
 - [ ] POST /auth/login → JWT token returned
@@ -870,12 +938,14 @@ Phase 1 (Foundation)
 - [ ] Validation errors return proper format
 
 #### Performance Testing
+
 - Benchmark key endpoints before/after
 - Monitor memory usage
 - Check job processing throughput
 - Target: <5% regression acceptable
 
 #### Regression Testing
+
 - Run full integration test suite
 - Test edge cases from production bugs
 - Verify error handling unchanged
@@ -886,29 +956,31 @@ Phase 1 (Foundation)
 
 ### 5.1 Risk Register
 
-| Risk | Severity | Probability | Impact | Mitigation |
-|------|----------|-------------|--------|------------|
-| Zod v4 breaks validation error responses | HIGH | MEDIUM | API clients receive unexpected error formats | Phase 3 includes extensive error response testing; add integration tests for error cases |
-| ConfigService precedence breaks environment overrides | MEDIUM | LOW | Configuration values incorrect in prod | Test with actual env files; add integration test for config loading |
-| Reflector undefined handling breaks authentication | LOW | LOW | All routes become public or all protected | Explicit type checking added; unit test for undefined case |
-| Fastify v5 route matching changes break routes | LOW | LOW | Some routes become inaccessible | Not using wildcards currently; monitor console warnings |
-| Type errors from strictNullChecks with Reflector | MEDIUM | MEDIUM | Build fails in CI | Fix type errors proactively; TypeScript strict mode already enabled |
-| Jest v30 breaks test suite | MEDIUM | LOW | CI fails, blocking deployment | Run tests locally first; rollback if needed |
-| BullMQ v11 breaks job processing | LOW | LOW | Background jobs fail to process | Current usage is simple; test job creation/processing |
-| bcryptjs v3 breaks password validation | MEDIUM | LOW | Authentication fails | Test login flow; verify existing hashes validate |
-| Docker build fails with new dependencies | LOW | LOW | Cannot deploy | Test build locally; verify layer caching |
-| Increased bundle size impacts cold start | LOW | LOW | Slower container startup | Monitor image size; acceptable tradeoff for LTS |
+| Risk                                                  | Severity | Probability | Impact                                       | Mitigation                                                                               |
+| ----------------------------------------------------- | -------- | ----------- | -------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| Zod v4 breaks validation error responses              | HIGH     | MEDIUM      | API clients receive unexpected error formats | Phase 3 includes extensive error response testing; add integration tests for error cases |
+| ConfigService precedence breaks environment overrides | MEDIUM   | LOW         | Configuration values incorrect in prod       | Test with actual env files; add integration test for config loading                      |
+| Reflector undefined handling breaks authentication    | LOW      | LOW         | All routes become public or all protected    | Explicit type checking added; unit test for undefined case                               |
+| Fastify v5 route matching changes break routes        | LOW      | LOW         | Some routes become inaccessible              | Not using wildcards currently; monitor console warnings                                  |
+| Type errors from strictNullChecks with Reflector      | MEDIUM   | MEDIUM      | Build fails in CI                            | Fix type errors proactively; TypeScript strict mode already enabled                      |
+| Jest v30 breaks test suite                            | MEDIUM   | LOW         | CI fails, blocking deployment                | Run tests locally first; rollback if needed                                              |
+| BullMQ v11 breaks job processing                      | LOW      | LOW         | Background jobs fail to process              | Current usage is simple; test job creation/processing                                    |
+| bcryptjs v3 breaks password validation                | MEDIUM   | LOW         | Authentication fails                         | Test login flow; verify existing hashes validate                                         |
+| Docker build fails with new dependencies              | LOW      | LOW         | Cannot deploy                                | Test build locally; verify layer caching                                                 |
+| Increased bundle size impacts cold start              | LOW      | LOW         | Slower container startup                     | Monitor image size; acceptable tradeoff for LTS                                          |
 
 ### 5.2 Mitigation Strategies
 
 #### For High-Severity Risks:
 
 **Zod v4 Validation Errors:**
+
 - Mitigation: Add comprehensive integration tests for all validation schemas
 - Contingency: Create adapter function to maintain old error format
 - Rollback: Revert Zod to v3.x, revert error handling code
 
 **ConfigService Precedence:**
+
 - Mitigation: Add integration test that loads config from env file
 - Contingency: Use explicit environment variable access where critical
 - Rollback: Revert @nestjs/config to v3.x
@@ -916,11 +988,13 @@ Phase 1 (Foundation)
 #### For Medium-Severity Risks:
 
 **Type Errors:**
+
 - Mitigation: Run TypeScript compiler after each phase
 - Contingency: Add type assertions where needed
 - Rollback: Fix type errors before proceeding to next phase
 
 **Jest v30 Compatibility:**
+
 - Mitigation: Run full test suite locally before CI
 - Contingency: Update jest.config.js, fix deprecated patterns
 - Rollback: Revert Jest to v29.x
@@ -932,24 +1006,28 @@ Phase 1 (Foundation)
 Each phase has an independent rollback strategy:
 
 **Phase 1 Rollback:**
+
 ```bash
 git checkout package.json pnpm-lock.yaml
 pnpm install
 ```
 
 **Phase 2 Rollback:**
+
 ```bash
 git checkout package.json pnpm-lock.yaml src/auth/jwt-auth.guard.ts
 pnpm install
 ```
 
 **Phase 3 Rollback:**
+
 ```bash
 git checkout package.json pnpm-lock.yaml src/
 pnpm install
 ```
 
 **Phase 4 Rollback:**
+
 ```bash
 # Unlikely needed - only testing dependencies
 git checkout package.json pnpm-lock.yaml
@@ -957,6 +1035,7 @@ pnpm install
 ```
 
 **Full Migration Rollback:**
+
 1. Revert all commits from migration branch
 2. Verify tests pass on main branch
 3. Redeploy previous version to production
@@ -968,6 +1047,7 @@ pnpm install
 ### 6.1 Migration Success Criteria
 
 **Must Have (Go/No-Go):**
+
 - [ ] All existing unit tests pass (100%)
 - [ ] All existing integration tests pass (100%)
 - [ ] CI pipeline passes all jobs (lint, test, build)
@@ -979,6 +1059,7 @@ pnpm install
 - [ ] S3 operations work (upload, download, presigned URLs)
 
 **Should Have (Quality Gates):**
+
 - [ ] No new console warnings (except expected Fastify warnings)
 - [ ] Response time regression <5% on key endpoints
 - [ ] Memory usage regression <10%
@@ -987,6 +1068,7 @@ pnpm install
 - [ ] No TODO comments added (migrate fully, don't defer)
 
 **Nice to Have (Post-Migration):**
+
 - [ ] Improved type safety from Reflector changes
 - [ ] Performance improvements from newer dependencies
 - [ ] Reduced npm audit vulnerabilities
@@ -995,20 +1077,23 @@ pnpm install
 ### 6.2 Monitoring Plan
 
 **During Migration:**
+
 - Run tests after each phase
 - Check console for new errors/warnings
 - Monitor TypeScript compilation errors
 - Track time spent vs. estimates
 
 **Post-Migration:**
+
 - Monitor application logs for new errors
 - Track response times in production
 - Monitor job processing rates
 - Watch for user-reported issues
 
 **Rollback Triggers:**
+
 - Any must-have criteria fails
-- >20% performance regression
+- > 20% performance regression
 - Critical production bug introduced
 - Unable to resolve issue within 4 hours
 
@@ -1019,6 +1104,7 @@ pnpm install
 ### 7.1 Go/No-Go Decision: GO
 
 **Rationale:**
+
 1. **LTS Support:** NestJS 10.x will eventually lose support; upgrading to 11.x ensures long-term maintainability
 2. **Security:** Staying on latest major versions reduces exposure to known vulnerabilities
 3. **Team Velocity:** Delaying migration increases future technical debt and upgrade complexity
@@ -1026,6 +1112,7 @@ pnpm install
 5. **Phased Approach:** Migration plan minimizes risk through incremental rollout
 
 **Conditions:**
+
 - Allocate 3-5 days of focused developer time
 - No other major releases planned during migration window
 - Staging environment available for testing
@@ -1034,15 +1121,18 @@ pnpm install
 ### 7.2 Alternative Approaches
 
 #### Option A: Gradual Migration (Recommended)
+
 **Description:** Follow phased approach outlined in Section 4.1
 
 **Pros:**
+
 - Lowest risk
 - Easy to rollback at each phase
 - Validates changes incrementally
 - Allows parallel work on Phase 3 (Zod)
 
 **Cons:**
+
 - Takes longer (3-5 days)
 - Multiple package.json updates
 
@@ -1051,14 +1141,17 @@ pnpm install
 ---
 
 #### Option B: Big Bang Migration
+
 **Description:** Update all packages simultaneously
 
 **Pros:**
+
 - Faster (1-2 days if no issues)
 - Single package.json update
 - Single PR to review
 
 **Cons:**
+
 - High risk - multiple breaking changes at once
 - Harder to debug issues
 - All-or-nothing rollback
@@ -1069,14 +1162,17 @@ pnpm install
 ---
 
 #### Option C: Deferred Migration
+
 **Description:** Stay on NestJS 10.x, only upgrade critical security patches
 
 **Pros:**
+
 - Zero migration risk
 - No developer time investment
 - No breaking changes to handle
 
 **Cons:**
+
 - Technical debt accumulates
 - Eventually forced to upgrade (harder later)
 - Missing out on performance improvements
@@ -1088,14 +1184,17 @@ pnpm install
 ---
 
 #### Option D: Zod v3 + NestJS v11
+
 **Description:** Upgrade NestJS to v11 but keep Zod on v3
 
 **Pros:**
+
 - Eliminates highest risk item (Zod v4)
 - Faster migration (16-18 hours)
 - Easier rollback
 
 **Cons:**
+
 - Still need to migrate Zod eventually
 - Zod v3 may have compatibility issues with future NestJS
 - Delays inevitable Zod v4 migration
@@ -1109,22 +1208,26 @@ pnpm install
 **Recommended Schedule:**
 
 **Week 1:**
+
 - Day 1-2: Phase 1 (Foundation) + Phase 2 (NestJS Core)
 - Day 3-4: Phase 3 (Zod v4) - Can overlap with Phase 2 by different developer
 - Day 5: Phase 4 (Testing & Cleanup)
 
 **Week 2:**
+
 - Day 1: Staging deployment + smoke testing
 - Day 2: Production deployment (off-peak hours)
 - Day 3-5: Monitor production, address any issues
 
 **Blackout Windows to Avoid:**
+
 - Major feature releases
 - High-traffic periods
 - Holiday weekends
 - End of month/quarter
 
 **Optimal Migration Window:**
+
 - Mid-week (Tuesday-Thursday)
 - Low-traffic hours for production deployment
 - Full team available for support
@@ -1136,26 +1239,31 @@ pnpm install
 **Roles:**
 
 **Migration Lead (1 developer):**
+
 - Execute migration phases
 - Run tests and validate changes
 - Coordinate rollback if needed
 
 **Code Reviewer (1 developer):**
+
 - Review code changes in each phase
 - Validate test coverage
 - Approve PR before merge
 
 **QA/Testing (1 developer, part-time):**
+
 - Run manual test checklist
 - Validate staging deployment
 - Monitor production after deployment
 
 **DevOps/SRE (on-call):**
+
 - Support CI/CD issues
 - Monitor infrastructure during deployment
 - Assist with rollback if needed
 
 **Communication Plan:**
+
 - Create migration tracking ticket (Jira/GitHub Issues)
 - Daily standup updates during migration
 - Slack channel for real-time coordination
@@ -1197,28 +1305,34 @@ pnpm --filter @influencerai/api exec du -sh node_modules
 ### 8.2 Reference Links
 
 **NestJS:**
+
 - Official Migration Guide: https://docs.nestjs.com/migration-guide
 - NestJS 11 Release Notes: https://trilon.io/blog/announcing-nestjs-11-whats-new
 - GitHub Releases: https://github.com/nestjs/nest/releases
 
 **Zod:**
+
 - Zod v4 Migration Guide: https://zod.dev/v4/changelog
 - Zod v4 Release Notes: https://zod.dev/v4
 - Codemod Tool: https://docs.codemod.com/guides/migrations/zod-3-4
 
 **@nestjs/config:**
+
 - Config v4.0.0 Release: https://github.com/nestjs/config/releases/tag/4.0.0
 
 **BullMQ:**
+
 - BullMQ NestJS Docs: https://docs.bullmq.io/guide/nestjs
 - BullMQ Changelog: https://docs.bullmq.io/changelog
 
 **Pino:**
+
 - Pino v10 Release: https://github.com/pinojs/pino/releases/tag/v10.0.0
 
 ### 8.3 Testing Checklist
 
 #### Pre-Migration
+
 - [ ] Backup production database
 - [ ] Document current response times
 - [ ] Note current memory usage
@@ -1226,12 +1340,14 @@ pnpm --filter @influencerai/api exec du -sh node_modules
 - [ ] Review open issues for related bugs
 
 #### Post-Phase 1
+
 - [ ] Unit tests pass
 - [ ] Integration tests pass
 - [ ] Dev server starts
 - [ ] No new console errors
 
 #### Post-Phase 2
+
 - [ ] Unit tests pass
 - [ ] Integration tests pass
 - [ ] Swagger UI renders
@@ -1240,12 +1356,14 @@ pnpm --filter @influencerai/api exec du -sh node_modules
 - [ ] S3 operations work
 
 #### Post-Phase 3
+
 - [ ] Validation tests pass
 - [ ] Error responses correct format
 - [ ] Environment validation works
 - [ ] All DTOs validate correctly
 
 #### Post-Phase 4
+
 - [ ] All tests pass (unit + integration)
 - [ ] Docker build succeeds
 - [ ] CI pipeline passes
@@ -1253,6 +1371,7 @@ pnpm --filter @influencerai/api exec du -sh node_modules
 - [ ] Documentation updated
 
 #### Pre-Production
+
 - [ ] Staging deployment successful
 - [ ] Smoke tests pass in staging
 - [ ] Load testing (if applicable)
@@ -1260,6 +1379,7 @@ pnpm --filter @influencerai/api exec du -sh node_modules
 - [ ] Team notified of deployment
 
 #### Post-Production
+
 - [ ] Application starts successfully
 - [ ] Health checks pass
 - [ ] Monitor logs for errors

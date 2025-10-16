@@ -1,6 +1,7 @@
 # Agent Handbook
 
 ## Quick Repo Facts
+
 - Monorepo layout: `apps/` (web=Next.js, api=NestJS, worker=BullMQ, n8n workflows), `packages/` (core-schemas, sdk, prompts), `data/` for artifacts, `infra/` for docker compose, `scripts/` for helper scripts.
 - Install once with `pnpm -w install` (Node >= 20, pnpm >= 9).
 - Start the local stack via `docker compose up` in `infra/` or `scripts/start-all.ps1`; run `pnpm dev` to watch web/api/worker.
@@ -11,6 +12,7 @@
 - Keep secrets local: never commit `.env`, document new variables in `.env.example`, rotate tokens on your machine.
 
 ## Agent Flow (use these docs in order)
+
 1. Policies - `.docs/agents/POLICIES.md`: main and develop are protected; enforce conventional commits and SemVer; automerge requires green CI plus one review; apply label taxonomy (type, priority, status, area, size, release).
 2. Git workflow - `.docs/agents/GITFLOW.md`: main is production, develop is integration; branch prefixes `feat|fix|hotfix|release/<...>`; rebase feature branches; allow merge commits on main/develop; always back-merge into develop after release or hotfix.
 3. Definition of Done - `.docs/agents/DOD.md`: checklist covers lint, tests, e2e, docs/changelog, migrations, and maintainer sign-off; green CI ticks the automated items.
@@ -22,6 +24,7 @@
 9. Collaboration conventions - `.docs/agents/CONVENTIONS.md`: keep commits imperative and issue-linked (#123), leave PRs in draft until CI is green and review is done, and mirror the release/hotfix strategy from Gitflow.
 
 ## Quick Actions
+
 - Need a branch and draft PR from an issue: review steps 2-6 above and comment `/gitflow run` on the issue.
 - Need DoD status: consult `.docs/agents/DOD.md`, sync via `/dod ...`, and confirm maintainer approval before merging.
 - Need e2e coverage: follow `.docs/agents/PUPPETEER_MCV.md` commands and capture artifacts if tests fail.

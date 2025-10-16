@@ -1,7 +1,7 @@
-import React from "react";
+import React from 'react';
 
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
-import { Badge } from "../ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import { Badge } from '../ui/badge';
 
 export type PromptSummaryCardProps = {
   personaSummary: string;
@@ -10,12 +10,16 @@ export type PromptSummaryCardProps = {
 };
 
 const platformLabels: Record<string, string> = {
-  instagram: "Instagram",
-  tiktok: "TikTok",
-  youtube: "YouTube Shorts",
+  instagram: 'Instagram',
+  tiktok: 'TikTok',
+  youtube: 'YouTube Shorts',
 };
 
-export function PromptSummaryCard({ personaSummary, theme, targetPlatforms }: PromptSummaryCardProps) {
+export function PromptSummaryCard({
+  personaSummary,
+  theme,
+  targetPlatforms,
+}: PromptSummaryCardProps) {
   return (
     <Card data-testid="prompt-summary">
       <CardHeader>

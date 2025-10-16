@@ -17,7 +17,7 @@ export class JobsService {
     @InjectQueue('lora-training') private readonly loraQueue: Queue,
     @InjectQueue('video-generation') private readonly videoQueue: Queue,
     private readonly config: ConfigService<AppConfig, true>,
-    @Optional() private readonly logger?: LoggerService,
+    @Optional() private readonly logger?: LoggerService
   ) {}
 
   async createJob(input: { type: JobType; payload: unknown; priority?: number }) {
@@ -82,10 +82,11 @@ export class JobsService {
       ORDER BY bucket ASC
     `;
 
-    const rows = (await this.prisma.$queryRawUnsafe(
-      query,
-      from,
-    )) as Array<{ bucket: Date; success: bigint; failed: bigint }>;
+    const rows = (await this.prisma.$queryRawUnsafe(query, from)) as Array<{
+      bucket: Date;
+      success: bigint;
+      failed: bigint;
+    }>;
 
     const normalized = new Map<string, { success: number; failed: number }>();
     for (const row of rows) {
@@ -136,7 +137,10 @@ export class JobsService {
       return await this.prisma.job.update({ where: { id }, data });
     } catch (error) {
       if (typeof this.logger?.warn === 'function') {
-        this.logger.warn('Job update failed', error instanceof Error ? error : new Error(String(error)));
+        this.logger.warn(
+          'Job update failed',
+          error instanceof Error ? error : new Error(String(error))
+        );
       }
       // Prisma throws if record not found
       return null;
@@ -167,12 +171,14 @@ export class JobsService {
     }
 
     const unitKey = match[2] as 'm' | 'h' | 'd';
-    const unitConfig: Record<'m' | 'h' | 'd', { unitMs: number; unitName: 'minute' | 'hour' | 'day' }>
-      = {
-        m: { unitMs: 60 * 1000, unitName: 'minute' },
-        h: { unitMs: 60 * 60 * 1000, unitName: 'hour' },
-        d: { unitMs: 24 * 60 * 60 * 1000, unitName: 'day' },
-      };
+    const unitConfig: Record<
+      'm' | 'h' | 'd',
+      { unitMs: number; unitName: 'minute' | 'hour' | 'day' }
+    > = {
+      m: { unitMs: 60 * 1000, unitName: 'minute' },
+      h: { unitMs: 60 * 60 * 1000, unitName: 'hour' },
+      d: { unitMs: 24 * 60 * 60 * 1000, unitName: 'day' },
+    };
 
     const { unitMs, unitName } = unitConfig[unitKey];
 

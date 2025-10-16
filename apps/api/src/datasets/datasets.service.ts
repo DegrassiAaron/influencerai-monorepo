@@ -19,9 +19,14 @@ export type UpdateDatasetStatusDto = z.infer<typeof UpdateDatasetStatusSchema>;
 
 @Injectable()
 export class DatasetsService {
-  constructor(private readonly prisma: PrismaService, private readonly storage: StorageService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly storage: StorageService
+  ) {}
 
-  async create(input: CreateDatasetDto): Promise<{ id: string; uploadUrl: string; key: string; bucket: string }> {
+  async create(
+    input: CreateDatasetDto
+  ): Promise<{ id: string; uploadUrl: string; key: string; bucket: string }> {
     const ctx = getRequestContext();
     const tenantId = ctx.tenantId || 'unknown';
 
@@ -44,15 +49,20 @@ export class DatasetsService {
       await this.prisma.dataset.update({ where: { id: ds.id }, data: { path: finalKey } });
     }
 
-    const uploadUrl = await this.storage.getPresignedPutUrl({ key: finalKey, contentType: input.contentType });
+    const uploadUrl = await this.storage.getPresignedPutUrl({
+      key: finalKey,
+      contentType: input.contentType,
+    });
     return { id: ds.id, uploadUrl, key: finalKey, bucket: this.storage.getBucketName() };
   }
 
   async updateStatus(id: string, input: UpdateDatasetStatusDto) {
     // Update within tenant scope thanks to Prisma middleware
-    const updated = await this.prisma.dataset.update({ where: { id }, data: { status: input.status } });
+    const updated = await this.prisma.dataset.update({
+      where: { id },
+      data: { status: input.status },
+    });
     if (!updated) throw new NotFoundException('Dataset not found');
     return updated;
   }
 }
-

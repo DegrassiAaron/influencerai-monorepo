@@ -11,11 +11,13 @@ export const OpenRouterChoiceSchema = z.object({
   finish_reason: z.string().optional(),
 });
 
-export const OpenRouterUsageSchema = z.object({
-  prompt_tokens: z.number().optional(),
-  completion_tokens: z.number().optional(),
-  total_tokens: z.number().optional(),
-}).partial();
+export const OpenRouterUsageSchema = z
+  .object({
+    prompt_tokens: z.number().optional(),
+    completion_tokens: z.number().optional(),
+    total_tokens: z.number().optional(),
+  })
+  .partial();
 
 export const OpenRouterResponseSchema = z.object({
   id: z.string().optional(),

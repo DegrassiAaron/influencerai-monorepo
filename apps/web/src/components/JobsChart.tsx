@@ -1,17 +1,11 @@
-"use client";
+'use client';
 
-import { useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
-import { ApiError, apiGet } from "../lib/api";
+import { ApiError, apiGet } from '../lib/api';
 
 type JobSeriesPoint = {
   t: string;
@@ -34,16 +28,16 @@ function ChartSkeleton() {
 
 function formatTimestamp(timestamp: string) {
   const date = new Date(timestamp);
-  return new Intl.DateTimeFormat("it-IT", {
-    hour: "2-digit",
-    minute: "2-digit",
+  return new Intl.DateTimeFormat('it-IT', {
+    hour: '2-digit',
+    minute: '2-digit',
   }).format(date);
 }
 
 export function JobsChart() {
   const { data, error, isLoading } = useQuery<JobSeriesPoint[], Error>({
-    queryKey: ["jobs-series"],
-    queryFn: () => apiGet<JobSeriesPoint[]>("/jobs/series?window=1h"),
+    queryKey: ['jobs-series'],
+    queryFn: () => apiGet<JobSeriesPoint[]>('/jobs/series?window=1h'),
     refetchInterval: 6000,
   });
 
@@ -52,10 +46,7 @@ export function JobsChart() {
       return { maxValue: 1, points: [] as JobSeriesPoint[] };
     }
 
-    const maximum = Math.max(
-      1,
-      ...data.map((point) => Math.max(point.success, point.failed))
-    );
+    const maximum = Math.max(1, ...data.map((point) => Math.max(point.success, point.failed)));
 
     return { maxValue: maximum, points: data };
   }, [data]);
@@ -70,13 +61,15 @@ export function JobsChart() {
         {isLoading && <ChartSkeleton />}
         {error && (
           <p className="rounded-md border border-destructive/30 bg-destructive/10 p-3 text-destructive">
-            {error instanceof ApiError ? error.message : "Impossibile recuperare la serie dei job"}
+            {error instanceof ApiError ? error.message : 'Impossibile recuperare la serie dei job'}
           </p>
         )}
         {!isLoading && !error && (
           <>
             {points.length === 0 ? (
-              <p className="text-sm text-muted-foreground">{"Nessun job registrato nell’ultima ora."}</p>
+              <p className="text-sm text-muted-foreground">
+                {'Nessun job registrato nell’ultima ora.'}
+              </p>
             ) : (
               <div
                 role="img"

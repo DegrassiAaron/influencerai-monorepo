@@ -1,6 +1,10 @@
 import { BadRequestException, Body, Controller, Param, Patch, Post } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
-import { DatasetsService, CreateDatasetSchema, UpdateDatasetStatusSchema } from './datasets.service';
+import {
+  DatasetsService,
+  CreateDatasetSchema,
+  UpdateDatasetStatusSchema,
+} from './datasets.service';
 
 @ApiTags('datasets')
 @Controller('datasets')
@@ -23,4 +27,3 @@ export class DatasetsController {
     return this.svc.updateStatus(id, parsed.data);
   }
 }
-

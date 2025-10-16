@@ -49,7 +49,11 @@ vi.mock('bullmq', () => {
     opts: Record<string, unknown>;
     listeners: Map<string, Listener[]>;
 
-    constructor(queueName: string, processor: (...args: any[]) => unknown, opts: Record<string, unknown>) {
+    constructor(
+      queueName: string,
+      processor: (...args: any[]) => unknown,
+      opts: Record<string, unknown>
+    ) {
       this.queueName = queueName;
       this.processor = processor;
       this.opts = opts;
@@ -198,7 +202,9 @@ describe('createWorkers', () => {
       getClient: vi.fn(() => s3Client),
       putTextObject: vi.fn().mockResolvedValue(undefined),
       putBinaryObject: vi.fn().mockResolvedValue(undefined),
-      getSignedGetUrl: vi.fn(async (_client: unknown, _bucket: string, key: string) => `https://assets.local/${key}`),
+      getSignedGetUrl: vi.fn(
+        async (_client: unknown, _bucket: string, key: string) => `https://assets.local/${key}`
+      ),
     };
     const fetchDataset = vi.fn();
     const fetchLoraConfig = vi.fn();
@@ -248,7 +254,10 @@ describe('createWorkers', () => {
     ]);
 
     workerInstances.forEach((instance) => {
-      expect(instance.opts).toMatchObject({ connection: expect.objectContaining({ kind: 'redis-mock' }), prefix: 'test-prefix' });
+      expect(instance.opts).toMatchObject({
+        connection: expect.objectContaining({ kind: 'redis-mock' }),
+        prefix: 'test-prefix',
+      });
     });
 
     expect(createContentGenerationProcessorMock).toHaveBeenCalledTimes(1);
@@ -290,15 +299,30 @@ describe('createWorkers', () => {
 
     expect(s3.getClient).toHaveBeenCalledTimes(1);
     expect(s3.getClient).toHaveBeenCalledWith(logger);
-    expect(s3.putTextObject).toHaveBeenCalledWith(s3Client.client, s3Client.bucket, 'content-generation/job-1/caption.txt', 'caption text');
-    expect(s3.putTextObject).toHaveBeenCalledWith(s3Client.client, s3Client.bucket, 'content-generation/job-1/script.txt', 'script text');
+    expect(s3.putTextObject).toHaveBeenCalledWith(
+      s3Client.client,
+      s3Client.bucket,
+      'content-generation/job-1/caption.txt',
+      'caption text'
+    );
+    expect(s3.putTextObject).toHaveBeenCalledWith(
+      s3Client.client,
+      s3Client.bucket,
+      'content-generation/job-1/script.txt',
+      'script text'
+    );
     expect(s3.getSignedGetUrl).toHaveBeenCalledWith(
       s3Client.client,
       s3Client.bucket,
       'content-generation/job-1/caption.txt',
       24 * 3600
     );
-    expect(s3.getSignedGetUrl).toHaveBeenCalledWith(s3Client.client, s3Client.bucket, 'content-generation/job-1/script.txt', 24 * 3600);
+    expect(s3.getSignedGetUrl).toHaveBeenCalledWith(
+      s3Client.client,
+      s3Client.bucket,
+      'content-generation/job-1/script.txt',
+      24 * 3600
+    );
     expect(uploadResult).toEqual({
       captionUrl: 'https://assets.local/content-generation/job-1/caption.txt',
       scriptUrl: 'https://assets.local/content-generation/job-1/script.txt',
@@ -321,45 +345,81 @@ describe('createWorkers', () => {
     expect(videoDependencies.comfy.maxPollAttempts).toBe(8);
     expect(videoDependencies.comfy.workflowPayload).toEqual({ nodes: [] });
 
-    const comfyFetchResult = await videoDependencies.comfy.fetch('http://localhost:8188/prompt', { method: 'POST' });
-    expect(fetchWithTimeoutMock).toHaveBeenCalledWith('http://localhost:8188/prompt', { method: 'POST' }, 45000);
+    const comfyFetchResult = await videoDependencies.comfy.fetch('http://localhost:8188/prompt', {
+      method: 'POST',
+    });
+    expect(fetchWithTimeoutMock).toHaveBeenCalledWith(
+      'http://localhost:8188/prompt',
+      { method: 'POST' },
+      45000
+    );
     expect(comfyFetchResult).toBe('fetch-result');
 
-    const contentQueueWorker = workerInstances.find((instance) => instance.queueName === 'content-generation');
+    const contentQueueWorker = workerInstances.find(
+      (instance) => instance.queueName === 'content-generation'
+    );
     expect(contentQueueWorker).toBeDefined();
 
-    contentQueueWorker!.emit('completed', { id: 'job-success', processedOn: 0, finishedOn: 10 } as any);
+    contentQueueWorker!.emit('completed', {
+      id: 'job-success',
+      processedOn: 0,
+      finishedOn: 10,
+    } as any);
     expect(monitoringInstance.recordCompletion).toHaveBeenCalledWith(
       'content-generation',
       expect.objectContaining({ id: 'job-success', processedOn: 0, finishedOn: 10 })
     );
 
-    contentQueueWorker!.emit(
-      'failed',
-      { data: { jobId: 'job-failed' } },
-      new Error('Boom')
-    );
+    contentQueueWorker!.emit('failed', { data: { jobId: 'job-failed' } }, new Error('Boom'));
 
     await vi.waitFor(() => {
-      expect(updateJob).toHaveBeenCalledWith('job-failed', expect.objectContaining({ status: 'failed' }));
+      expect(updateJob).toHaveBeenCalledWith(
+        'job-failed',
+        expect.objectContaining({ status: 'failed' })
+      );
     });
-    expect(logger.error).toHaveBeenCalledWith(expect.objectContaining({ id: undefined, err: expect.any(Error) }), expect.any(String));
-    expect(monitoringInstance.recordFailure).toHaveBeenCalledWith('content-generation', 'job-failed', expect.any(Error));
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.objectContaining({ id: undefined, err: expect.any(Error) }),
+      expect.any(String)
+    );
+    expect(monitoringInstance.recordFailure).toHaveBeenCalledWith(
+      'content-generation',
+      'job-failed',
+      expect.any(Error)
+    );
 
-    const loraFailedWorker = workerInstances.find((instance) => instance.queueName === 'lora-training');
+    const loraFailedWorker = workerInstances.find(
+      (instance) => instance.queueName === 'lora-training'
+    );
     expect(loraFailedWorker).toBeDefined();
     loraFailedWorker!.emit('failed', { data: { jobId: 'lora-job' } }, new Error('LoRA failed'));
 
-    const videoFailedWorker = workerInstances.find((instance) => instance.queueName === 'video-generation');
+    const videoFailedWorker = workerInstances.find(
+      (instance) => instance.queueName === 'video-generation'
+    );
     expect(videoFailedWorker).toBeDefined();
     videoFailedWorker!.emit('failed', { data: { jobId: 'video-job' } }, new Error('Video failed'));
 
     await vi.waitFor(() => {
-      expect(updateJob).toHaveBeenCalledWith('lora-job', expect.objectContaining({ status: 'failed' }));
-      expect(updateJob).toHaveBeenCalledWith('video-job', expect.objectContaining({ status: 'failed' }));
+      expect(updateJob).toHaveBeenCalledWith(
+        'lora-job',
+        expect.objectContaining({ status: 'failed' })
+      );
+      expect(updateJob).toHaveBeenCalledWith(
+        'video-job',
+        expect.objectContaining({ status: 'failed' })
+      );
     });
-    expect(monitoringInstance.recordFailure).toHaveBeenCalledWith('lora-training', 'lora-job', expect.any(Error));
-    expect(monitoringInstance.recordFailure).toHaveBeenCalledWith('video-generation', 'video-job', expect.any(Error));
+    expect(monitoringInstance.recordFailure).toHaveBeenCalledWith(
+      'lora-training',
+      'lora-job',
+      expect.any(Error)
+    );
+    expect(monitoringInstance.recordFailure).toHaveBeenCalledWith(
+      'video-generation',
+      'video-job',
+      expect.any(Error)
+    );
 
     expect(startMonitoringMock).toHaveBeenCalledTimes(1);
     const startMonitoringArgs = startMonitoringMock.mock.calls[0][0];
@@ -442,7 +502,11 @@ describe('createWorkers', () => {
 
     expect(updateJob).toHaveBeenCalledTimes(2);
     expect(logger.warn).toHaveBeenCalledWith(
-      expect.objectContaining({ jobId: 'job-3', data: { status: 'running' }, err: expect.any(Error) }),
+      expect.objectContaining({
+        jobId: 'job-3',
+        data: { status: 'running' },
+        err: expect.any(Error),
+      }),
       'Failed to PATCH job status after retries'
     );
   });
@@ -502,7 +566,9 @@ describe('createWorkers', () => {
     );
 
     const failureAlerter = createFailureAlerterMock.mock.results[0].value;
-    const contentWorker = workerInstances.find((instance) => instance.queueName === 'content-generation');
+    const contentWorker = workerInstances.find(
+      (instance) => instance.queueName === 'content-generation'
+    );
     expect(contentWorker).toBeDefined();
 
     const completedHandler = contentWorker!.listeners.get('completed')?.[0];
@@ -513,7 +579,11 @@ describe('createWorkers', () => {
 
     const job = { id: 'job-123', data: { jobId: 'job-123' } };
     failedHandler?.(job, new Error('boom'));
-    expect(failureAlerter.handleFailure).toHaveBeenCalledWith('content-generation', job, expect.any(Error));
+    expect(failureAlerter.handleFailure).toHaveBeenCalledWith(
+      'content-generation',
+      job,
+      expect.any(Error)
+    );
 
     completedHandler?.(job);
     expect(failureAlerter.resetFailures).toHaveBeenCalledWith('content-generation');

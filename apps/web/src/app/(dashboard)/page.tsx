@@ -1,30 +1,30 @@
-"use client";
+'use client';
 
-import Link from "next/link";
+import Link from 'next/link';
 
-import { useCallback } from "react";
-import { ArrowUpRight, Sparkles } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useCallback } from 'react';
+import { ArrowUpRight, Sparkles } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 const highlights = [
   {
-    title: "Campagne attive",
-    value: "12",
-    delta: "+3 rispetto alla scorsa settimana",
+    title: 'Campagne attive',
+    value: '12',
+    delta: '+3 rispetto alla scorsa settimana',
   },
   {
-    title: "Scene generate",
-    value: "248",
-    delta: "Ultimo batch completato 8 min fa",
+    title: 'Scene generate',
+    value: '248',
+    delta: 'Ultimo batch completato 8 min fa',
   },
   {
-    title: "Soddisfazione QA",
-    value: "96%",
-    delta: "Nuove linee guida adottate",
+    title: 'Soddisfazione QA',
+    value: '96%',
+    delta: 'Nuove linee guida adottate',
   },
 ] as const;
 
@@ -33,7 +33,7 @@ export default function Home() {
 
   const handleLogout = useCallback(async () => {
     try {
-      await fetch("/api/session/logout", { method: "POST" });
+      await fetch('/api/session/logout', { method: 'POST' });
     } finally {
       router.refresh();
     }
@@ -50,8 +50,8 @@ export default function Home() {
             Benvenuto nel Control Center di InfluencerAI
           </h1>
           <p className="text-sm text-muted-foreground lg:text-base">
-            Monitora campagne, job e content plan in un unico spazio. Usa le azioni rapide per passare alla dashboard o
-            lanciare un nuovo piano editoriale.
+            Monitora campagne, job e content plan in un unico spazio. Usa le azioni rapide per
+            passare alla dashboard o lanciare un nuovo piano editoriale.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -75,10 +75,15 @@ export default function Home() {
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {highlights.map((item) => (
-          <Card key={item.title} className="border border-border/60 bg-card/80 shadow-sm backdrop-blur">
+          <Card
+            key={item.title}
+            className="border border-border/60 bg-card/80 shadow-sm backdrop-blur"
+          >
             <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
               <div>
-                <CardTitle className="text-sm font-medium text-muted-foreground">{item.title}</CardTitle>
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  {item.title}
+                </CardTitle>
                 <CardDescription className="text-xs">Aggiornato pochi minuti fa</CardDescription>
               </div>
               <Badge variant="secondary" className="text-xs font-medium">
@@ -95,12 +100,18 @@ export default function Home() {
       <Card className="border border-dashed border-brand-200 bg-brand-50 text-brand-700">
         <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <CardTitle className="text-lg font-semibold">Velocizza l&apos;onboarding del team</CardTitle>
+            <CardTitle className="text-lg font-semibold">
+              Velocizza l&apos;onboarding del team
+            </CardTitle>
             <CardDescription className="text-sm text-brand-700/80">
               Esplora la guida rapida per mappare funzionalità, ruoli e DoD dei flussi WEB-06.
             </CardDescription>
           </div>
-          <Button asChild variant="secondary" className="bg-white text-brand-700 hover:bg-brand-100">
+          <Button
+            asChild
+            variant="secondary"
+            className="bg-white text-brand-700 hover:bg-brand-100"
+          >
             <Link href="/docs/web-shell">
               Apri guida
               <ArrowUpRight className="ml-2 h-4 w-4" />

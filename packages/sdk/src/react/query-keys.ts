@@ -6,13 +6,19 @@ const QUEUES_ROOT = ['influencerai', 'queues'] as const;
 const CONTENT_PLANS_ROOT = ['influencerai', 'content-plans'] as const;
 
 function normalizeJobsFilters(filters?: ListJobsParams) {
-  return [filters?.status ?? null, filters?.type ?? null, filters?.take ?? null, filters?.skip ?? null] as const;
+  return [
+    filters?.status ?? null,
+    filters?.type ?? null,
+    filters?.take ?? null,
+    filters?.skip ?? null,
+  ] as const;
 }
 
 export const influencerAIQueryKeys = {
   jobs: {
     root: JOBS_ROOT,
-    list: (filters?: ListJobsParams) => [...JOBS_ROOT, 'list', ...normalizeJobsFilters(filters)] as const,
+    list: (filters?: ListJobsParams) =>
+      [...JOBS_ROOT, 'list', ...normalizeJobsFilters(filters)] as const,
     detail: (id: string) => [...JOBS_ROOT, 'detail', id] as const,
   },
   datasets: {

@@ -15,12 +15,15 @@ export class QueuesController {
     @InjectQueue('lora-training')
     private readonly loraTrainingQueue: Queue,
     @InjectQueue('video-generation')
-    private readonly videoGenerationQueue: Queue,
+    private readonly videoGenerationQueue: Queue
   ) {}
 
   @Get('summary')
   @ApiOperation({ summary: 'Get aggregated BullMQ queue counts' })
-  @ApiResponse({ status: 200, description: 'Aggregated counts for active, waiting and failed jobs' })
+  @ApiResponse({
+    status: 200,
+    description: 'Aggregated counts for active, waiting and failed jobs',
+  })
   async summary(): Promise<QueueSummaryDto> {
     const [content, lora, video] = await Promise.all([
       this.contentGenerationQueue.getJobCounts(),
@@ -34,7 +37,7 @@ export class QueuesController {
         waiting: totals.waiting + (counts.waiting ?? 0),
         failed: totals.failed + (counts.failed ?? 0),
       }),
-      { active: 0, waiting: 0, failed: 0 },
+      { active: 0, waiting: 0, failed: 0 }
     );
 
     return QueueSummarySchema.parse(aggregate);

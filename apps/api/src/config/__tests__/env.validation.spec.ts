@@ -43,7 +43,7 @@ describe('validateEnv', () => {
         NODE_ENV: 'production',
         SKIP_S3_INIT: 'treu',
         OPENROUTER_API_KEY: 'sk-test',
-      }),
+      })
     ).toThrow(/boolean/i);
   });
 
@@ -52,7 +52,7 @@ describe('validateEnv', () => {
       validateEnv({
         DATABASE_URL: 'postgresql://user:pass@localhost:5432/db',
         NODE_ENV: 'production',
-      }),
+      })
     ).toThrow(/OPENROUTER_API_KEY/);
   });
 
@@ -92,7 +92,7 @@ describe('validateEnv', () => {
         computeBullEnabled({
           NODE_ENV: 'production',
           DISABLE_BULL: undefined,
-        }),
+        })
       ).toBe(true);
     });
 
@@ -105,7 +105,7 @@ describe('validateEnv', () => {
         computeBullEnabled({
           NODE_ENV: 'development',
           DISABLE_BULL: 'Yes',
-        }),
+        })
       ).toBe(false);
     });
 
@@ -114,7 +114,7 @@ describe('validateEnv', () => {
         computeBullEnabled({
           NODE_ENV: 'development',
           DISABLE_BULL: 'nah',
-        }),
+        })
       ).toThrow(/boolean/i);
     });
   });

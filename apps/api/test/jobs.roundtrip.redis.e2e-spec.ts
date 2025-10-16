@@ -26,24 +26,22 @@ describe('Jobs Roundtrip + Redis (e2e)', () => {
   // Simple in-memory Prisma mock
   const mem: Record<string, any> = {};
   const prismaMock: Partial<PrismaService> = {
-     
     job: {
-       
       create: async (args: any) => {
         const id = 'job_rt';
         mem[id] = { id, ...args.data };
         return mem[id];
       },
-       
+
       update: async (args: any) => {
         const id = args.where.id;
         if (!mem[id]) throw new Error('NotFound');
         mem[id] = { ...mem[id], ...args.data };
         return mem[id];
       },
-       
+
       findUnique: async (args: any) => mem[args.where.id] || null,
-       
+
       findMany: async (_args: any) => Object.values(mem),
     } as any,
     onModuleInit: jest.fn(),
@@ -94,7 +92,10 @@ describe('Jobs Roundtrip + Redis (e2e)', () => {
 
       await (app.getHttpAdapter().getInstance() as any).ready();
     } catch (error) {
-      console.warn('Impossibile avviare l\'app con Bull/HTTP; salto suite Roundtrip + Redis (e2e)', error);
+      console.warn(
+        "Impossibile avviare l'app con Bull/HTTP; salto suite Roundtrip + Redis (e2e)",
+        error
+      );
       skipSuite = true;
       return;
     }
@@ -144,12 +145,24 @@ describe('Jobs Roundtrip + Redis (e2e)', () => {
   });
 
   afterAll(async () => {
-    try { if (testWorker) await testWorker.close(); } catch {}
-    try { if (workerRedis) workerRedis.disconnect(); } catch {}
-    try { if (appVideoQ) await appVideoQ.close(); } catch {}
-    try { if (appLoraQ) await appLoraQ.close(); } catch {}
-    try { if (appContentQ) await appContentQ.close(); } catch {}
-    if (app) { await app.close(); }
+    try {
+      if (testWorker) await testWorker.close();
+    } catch {}
+    try {
+      if (workerRedis) workerRedis.disconnect();
+    } catch {}
+    try {
+      if (appVideoQ) await appVideoQ.close();
+    } catch {}
+    try {
+      if (appLoraQ) await appLoraQ.close();
+    } catch {}
+    try {
+      if (appContentQ) await appContentQ.close();
+    } catch {}
+    if (app) {
+      await app.close();
+    }
   });
 
   it('Roundtrip: POST /jobs → worker runs → PATCH updates to succeeded', async () => {

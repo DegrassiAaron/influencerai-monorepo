@@ -20,34 +20,51 @@ describe('Content Plans (e2e)', () => {
           influencerId: dto.influencerId,
           theme: dto.theme,
           targetPlatforms: dto.targetPlatforms ?? ['instagram'],
-          posts: [ { caption: 'Hello world', hashtags: ['hi'] } ],
+          posts: [{ caption: 'Hello world', hashtags: ['hi'] }],
           createdAt: new Date().toISOString(),
         },
       })),
       getPlan: jest.fn(async (id: string) => ({
         id,
-        plan: ({
+        plan: {
           influencerId: 'inf_1',
           theme: 'tech',
           targetPlatforms: ['instagram'],
           posts: [{ caption: 'c', hashtags: [] as string[] }],
           createdAt: new Date().toISOString(),
-        } as any),
+        } as any,
       })),
-      listPlans: jest.fn(async () => ([{
-        id: 'cp_1',
-        plan: ({ influencerId: 'inf_1', theme: 'tech', targetPlatforms: ['instagram'], posts: [{ caption: 'c', hashtags: [] as string[] }], createdAt: new Date().toISOString() } as any)
-      }]))
+      listPlans: jest.fn(async () => [
+        {
+          id: 'cp_1',
+          plan: {
+            influencerId: 'inf_1',
+            theme: 'tech',
+            targetPlatforms: ['instagram'],
+            posts: [{ caption: 'c', hashtags: [] as string[] }],
+            createdAt: new Date().toISOString(),
+          } as any,
+        },
+      ]),
     };
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     })
-      .overrideProvider(getQueueToken('content-generation')).useValue({ add: jest.fn(async () => null) })
-      .overrideProvider(getQueueToken('lora-training')).useValue({ add: jest.fn(async () => null) })
-      .overrideProvider(getQueueToken('video-generation')).useValue({ add: jest.fn(async () => null) })
-      .overrideProvider(ContentPlansService).useValue(svcMock)
-      .overrideProvider(PrismaService).useValue({ onModuleInit: jest.fn(), onModuleDestroy: jest.fn(), enableShutdownHooks: jest.fn() })
+      .overrideProvider(getQueueToken('content-generation'))
+      .useValue({ add: jest.fn(async () => null) })
+      .overrideProvider(getQueueToken('lora-training'))
+      .useValue({ add: jest.fn(async () => null) })
+      .overrideProvider(getQueueToken('video-generation'))
+      .useValue({ add: jest.fn(async () => null) })
+      .overrideProvider(ContentPlansService)
+      .useValue(svcMock)
+      .overrideProvider(PrismaService)
+      .useValue({
+        onModuleInit: jest.fn(),
+        onModuleDestroy: jest.fn(),
+        enableShutdownHooks: jest.fn(),
+      })
       .compile();
 
     app = moduleFixture.createNestApplication(new FastifyAdapter());

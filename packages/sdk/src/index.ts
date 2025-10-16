@@ -16,13 +16,7 @@ import type {
   CreateDatasetResponse,
   ContentPlanEnvelope,
 } from './types';
-import {
-  QueueSummarySchema,
-  JobSpec,
-  ContentPlan,
-  DatasetSpec,
-  LoRAConfig,
-} from './core-schemas';
+import { QueueSummarySchema, JobSpec, ContentPlan, DatasetSpec, LoRAConfig } from './core-schemas';
 
 type QueryValue = string | number | boolean | undefined;
 
@@ -76,7 +70,15 @@ export class InfluencerAIClient {
     return parsed.data;
   }
 
-  private async request<T>({ path, method = 'GET', body, headers, query, schema, timeoutMs }: RequestConfig<T>): Promise<T> {
+  private async request<T>({
+    path,
+    method = 'GET',
+    body,
+    headers,
+    query,
+    schema,
+    timeoutMs,
+  }: RequestConfig<T>): Promise<T> {
     const url = this.buildUrl(path, query);
     const finalHeaders: Record<string, string> = { ...(headers || {}) };
     let finalBody: BodyInit | undefined;
@@ -134,7 +136,12 @@ export class InfluencerAIClient {
   }
 
   async updateJob(id: string, update: UpdateJobInput) {
-    return this.request({ path: `/jobs/${id}`, method: 'PATCH', body: update, schema: JobResponseSchema });
+    return this.request({
+      path: `/jobs/${id}`,
+      method: 'PATCH',
+      body: update,
+      schema: JobResponseSchema,
+    });
   }
 
   async getQueuesSummary(): Promise<QueueSummary> {
@@ -142,7 +149,12 @@ export class InfluencerAIClient {
   }
 
   async createContentPlan(plan: Omit<ContentPlan, 'createdAt'>) {
-    return this.request({ path: '/content-plans', method: 'POST', body: plan, schema: ContentPlanEnvelopeSchema });
+    return this.request({
+      path: '/content-plans',
+      method: 'POST',
+      body: plan,
+      schema: ContentPlanEnvelopeSchema,
+    });
   }
 
   async health() {
@@ -156,9 +168,17 @@ export class InfluencerAIClient {
   async createDataset(input: CreateDatasetInput): Promise<CreateDatasetResponse> {
     const parsedInput = CreateDatasetInputSchema.safeParse(input);
     if (!parsedInput.success) {
-      throw new APIError('Invalid dataset payload', { status: 400, body: parsedInput.error.flatten() });
+      throw new APIError('Invalid dataset payload', {
+        status: 400,
+        body: parsedInput.error.flatten(),
+      });
     }
-    return this.request({ path: '/datasets', method: 'POST', body: parsedInput.data, schema: DatasetCreationSchema });
+    return this.request({
+      path: '/datasets',
+      method: 'POST',
+      body: parsedInput.data,
+      schema: DatasetCreationSchema,
+    });
   }
 
   async getContentPlan(id: string): Promise<ContentPlanEnvelope> {

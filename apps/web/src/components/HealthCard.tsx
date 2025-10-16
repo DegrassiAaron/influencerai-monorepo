@@ -1,39 +1,30 @@
-"use client";
+'use client';
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery } from '@tanstack/react-query';
 
-import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { cn } from "@/lib/utils";
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
 
-import { apiGet, ApiError } from "../lib/api";
+import { apiGet, ApiError } from '../lib/api';
 
 type HealthResponse = {
-  status: "ok" | "degraded" | "down";
+  status: 'ok' | 'degraded' | 'down';
   checks: Record<string, boolean>;
 };
 
-const STATUS_CONFIG: Record<
-  HealthResponse["status"],
-  { label: string; badgeClass: string }
-> = {
+const STATUS_CONFIG: Record<HealthResponse['status'], { label: string; badgeClass: string }> = {
   ok: {
-    label: "Tutti i servizi operativi",
-    badgeClass: "border-emerald-200 bg-emerald-50 text-emerald-700",
+    label: 'Tutti i servizi operativi',
+    badgeClass: 'border-emerald-200 bg-emerald-50 text-emerald-700',
   },
   degraded: {
-    label: "Servizi con degrado",
-    badgeClass: "border-amber-200 bg-amber-50 text-amber-700",
+    label: 'Servizi con degrado',
+    badgeClass: 'border-amber-200 bg-amber-50 text-amber-700',
   },
   down: {
-    label: "Servizi non disponibili",
-    badgeClass: "border-red-200 bg-red-50 text-red-700",
+    label: 'Servizi non disponibili',
+    badgeClass: 'border-red-200 bg-red-50 text-red-700',
   },
 };
 
@@ -49,8 +40,8 @@ function ChecksSkeleton() {
 
 export function HealthCard() {
   const { data, error, isLoading } = useQuery<HealthResponse, Error>({
-    queryKey: ["health"],
-    queryFn: () => apiGet<HealthResponse>("/healthz"),
+    queryKey: ['health'],
+    queryFn: () => apiGet<HealthResponse>('/healthz'),
     refetchInterval: 5000,
   });
 
@@ -68,7 +59,7 @@ export function HealthCard() {
           {status && (
             <Badge
               variant="secondary"
-              className={cn("border px-3 py-1 text-xs font-semibold", status.badgeClass)}
+              className={cn('border px-3 py-1 text-xs font-semibold', status.badgeClass)}
             >
               {status.label}
             </Badge>
@@ -79,7 +70,7 @@ export function HealthCard() {
         {isLoading && <ChecksSkeleton />}
         {error && (
           <p className="rounded-md border border-destructive/30 bg-destructive/10 p-3 text-destructive">
-            {error instanceof ApiError ? error.message : "Impossibile recuperare lo stato"}
+            {error instanceof ApiError ? error.message : 'Impossibile recuperare lo stato'}
           </p>
         )}
         {!isLoading && !error && (
@@ -91,14 +82,19 @@ export function HealthCard() {
                 <Badge
                   variant="outline"
                   className={cn(
-                    "inline-flex items-center gap-2 border px-3 py-1 text-xs font-semibold",
+                    'inline-flex items-center gap-2 border px-3 py-1 text-xs font-semibold',
                     healthy
-                      ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                      : "border-red-200 bg-red-50 text-red-700",
+                      ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                      : 'border-red-200 bg-red-50 text-red-700'
                   )}
                 >
-                  <span className={cn("h-2 w-2 rounded-full", healthy ? "bg-emerald-500" : "bg-red-500")} />
-                  {healthy ? "OK" : "Down"}
+                  <span
+                    className={cn(
+                      'h-2 w-2 rounded-full',
+                      healthy ? 'bg-emerald-500' : 'bg-red-500'
+                    )}
+                  />
+                  {healthy ? 'OK' : 'Down'}
                 </Badge>
               </li>
             ))}

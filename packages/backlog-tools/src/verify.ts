@@ -21,7 +21,7 @@ export async function verifyBacklog(options: VerifyOptions): Promise<Verificatio
       mismatches.push({
         code: issue.code,
         title: issue.title,
-        reason: 'Issue not found on GitHub'
+        reason: 'Issue not found on GitHub',
       });
       continue;
     }
@@ -31,13 +31,13 @@ export async function verifyBacklog(options: VerifyOptions): Promise<Verificatio
         code: issue.code,
         title: issue.title,
         reason: 'Issue still open on GitHub',
-        issueUrl: remote.htmlUrl
+        issueUrl: remote.htmlUrl,
       });
     }
   }
 
   return {
     checked,
-    mismatches
+    mismatches,
   };
 }

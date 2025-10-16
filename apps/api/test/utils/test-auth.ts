@@ -11,7 +11,7 @@ const defaultPayload = {
 };
 
 export function getAuthHeader(
-  overrides: Partial<typeof defaultPayload> = {},
+  overrides: Partial<typeof defaultPayload> = {}
 ): Record<'Authorization', string> {
   const token = jwtService.sign({ ...defaultPayload, ...overrides });
   return { Authorization: `Bearer ${token}` };

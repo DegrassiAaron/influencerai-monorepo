@@ -14,7 +14,7 @@ export class StorageModule implements OnModuleInit {
   private readonly logger = new Logger(StorageModule.name);
   constructor(
     private readonly storage: StorageService,
-    private readonly config: ConfigService<AppConfig, true>,
+    private readonly config: ConfigService<AppConfig, true>
   ) {}
   async onModuleInit() {
     try {

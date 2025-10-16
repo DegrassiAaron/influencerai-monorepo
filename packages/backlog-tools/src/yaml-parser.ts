@@ -41,7 +41,7 @@ function createDefaultResolver(): ModuleResolver {
     },
     import<T>(specifier: string): T {
       return require(specifier) as T;
-    }
+    },
   } satisfies ModuleResolver;
 }
 

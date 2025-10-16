@@ -128,4 +128,3 @@ describe('Health Endpoints (e2e) - Failures', () => {
     await request(app.getHttpServer()).get('/readyz').expect(503);
   });
 });
-

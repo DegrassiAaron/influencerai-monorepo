@@ -22,7 +22,10 @@ import type { APIError as InfluencerAIAPIError } from '../fetch-utils';
 import { useInfluencerAIClient } from './provider';
 import { influencerAIQueryKeys } from './query-keys';
 
-type QueryOptions<TData> = Omit<UseQueryOptions<TData, InfluencerAIAPIError>, 'queryKey' | 'queryFn'>;
+type QueryOptions<TData> = Omit<
+  UseQueryOptions<TData, InfluencerAIAPIError>,
+  'queryKey' | 'queryFn'
+>;
 
 type MutationOptions<TData, TVariables, TContext = unknown> = Omit<
   UseMutationOptions<TData, InfluencerAIAPIError, TVariables, TContext>,
@@ -38,7 +41,7 @@ async function runMutationSuccess<TData, TVariables, TContext>(
   data: TData,
   variables: TVariables,
   context: Parameters<MutationSuccessHandler<TData, TVariables, TContext>>[2],
-  meta: UseMutationOptions<TData, InfluencerAIAPIError, TVariables, TContext>['meta'],
+  meta: UseMutationOptions<TData, InfluencerAIAPIError, TVariables, TContext>['meta']
 ) {
   if (!handler) {
     return;
@@ -54,10 +57,22 @@ export type UseJobOptions = QueryOptions<JobResponse>;
 export type UseDatasetsOptions = QueryOptions<Dataset[]>;
 export type UseQueuesSummaryOptions = QueryOptions<QueueSummary>;
 export type UseContentPlanOptions = QueryOptions<ContentPlanEnvelope>;
-export type UseCreateJobOptions<TContext = unknown> = MutationOptions<JobResponse, JobSpec, TContext>;
-export type UseCreateDatasetOptions<TContext = unknown> = MutationOptions<CreateDatasetResponse, CreateDatasetInput, TContext>;
+export type UseCreateJobOptions<TContext = unknown> = MutationOptions<
+  JobResponse,
+  JobSpec,
+  TContext
+>;
+export type UseCreateDatasetOptions<TContext = unknown> = MutationOptions<
+  CreateDatasetResponse,
+  CreateDatasetInput,
+  TContext
+>;
 export type UpdateJobVariables = { id: string; update: UpdateJobInput };
-export type UseUpdateJobOptions<TContext = unknown> = MutationOptions<JobResponse, UpdateJobVariables, TContext>;
+export type UseUpdateJobOptions<TContext = unknown> = MutationOptions<
+  JobResponse,
+  UpdateJobVariables,
+  TContext
+>;
 export type UseCreateContentPlanOptions<TContext = unknown> = MutationOptions<
   ContentPlanEnvelope,
   Omit<ContentPlan, 'createdAt'>,
@@ -66,7 +81,7 @@ export type UseCreateContentPlanOptions<TContext = unknown> = MutationOptions<
 
 export function useJobs(
   filters?: ListJobsParams,
-  options?: UseJobsOptions,
+  options?: UseJobsOptions
 ): UseQueryResult<JobResponse[], InfluencerAIAPIError> {
   const client = useInfluencerAIClient();
 
@@ -77,7 +92,10 @@ export function useJobs(
   });
 }
 
-export function useJob(id: string, options?: UseJobOptions): UseQueryResult<JobResponse, InfluencerAIAPIError> {
+export function useJob(
+  id: string,
+  options?: UseJobOptions
+): UseQueryResult<JobResponse, InfluencerAIAPIError> {
   const client = useInfluencerAIClient();
 
   return useQuery<JobResponse, InfluencerAIAPIError>({
@@ -88,7 +106,9 @@ export function useJob(id: string, options?: UseJobOptions): UseQueryResult<JobR
   });
 }
 
-export function useDatasets(options?: UseDatasetsOptions): UseQueryResult<Dataset[], InfluencerAIAPIError> {
+export function useDatasets(
+  options?: UseDatasetsOptions
+): UseQueryResult<Dataset[], InfluencerAIAPIError> {
   const client = useInfluencerAIClient();
 
   return useQuery<Dataset[], InfluencerAIAPIError>({
@@ -98,7 +118,9 @@ export function useDatasets(options?: UseDatasetsOptions): UseQueryResult<Datase
   });
 }
 
-export function useQueuesSummary(options?: UseQueuesSummaryOptions): UseQueryResult<QueueSummary, InfluencerAIAPIError> {
+export function useQueuesSummary(
+  options?: UseQueuesSummaryOptions
+): UseQueryResult<QueueSummary, InfluencerAIAPIError> {
   const client = useInfluencerAIClient();
 
   return useQuery<QueueSummary, InfluencerAIAPIError>({
@@ -110,7 +132,7 @@ export function useQueuesSummary(options?: UseQueuesSummaryOptions): UseQueryRes
 
 export function useContentPlan(
   id: string,
-  options?: UseContentPlanOptions,
+  options?: UseContentPlanOptions
 ): UseQueryResult<ContentPlanEnvelope, InfluencerAIAPIError> {
   const client = useInfluencerAIClient();
 
@@ -123,7 +145,7 @@ export function useContentPlan(
 }
 
 export function useCreateJob<TContext = unknown>(
-  options?: UseCreateJobOptions<TContext>,
+  options?: UseCreateJobOptions<TContext>
 ): UseMutationResult<JobResponse, InfluencerAIAPIError, JobSpec, TContext> {
   const client = useInfluencerAIClient();
   const queryClient = useQueryClient();
@@ -144,7 +166,7 @@ export function useCreateJob<TContext = unknown>(
 }
 
 export function useUpdateJob<TContext = unknown>(
-  options?: UseUpdateJobOptions<TContext>,
+  options?: UseUpdateJobOptions<TContext>
 ): UseMutationResult<JobResponse, InfluencerAIAPIError, UpdateJobVariables, TContext> {
   const client = useInfluencerAIClient();
   const queryClient = useQueryClient();
@@ -155,7 +177,9 @@ export function useUpdateJob<TContext = unknown>(
     async onSuccess(data, variables, context) {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: influencerAIQueryKeys.jobs.root }),
-        queryClient.invalidateQueries({ queryKey: influencerAIQueryKeys.jobs.detail(variables.id) }),
+        queryClient.invalidateQueries({
+          queryKey: influencerAIQueryKeys.jobs.detail(variables.id),
+        }),
       ]);
       await runMutationSuccess(onSuccess, data, variables, context, meta);
     },
@@ -165,7 +189,7 @@ export function useUpdateJob<TContext = unknown>(
 }
 
 export function useCreateDataset<TContext = unknown>(
-  options?: UseCreateDatasetOptions<TContext>,
+  options?: UseCreateDatasetOptions<TContext>
 ): UseMutationResult<CreateDatasetResponse, InfluencerAIAPIError, CreateDatasetInput, TContext> {
   const client = useInfluencerAIClient();
   const queryClient = useQueryClient();
@@ -183,13 +207,23 @@ export function useCreateDataset<TContext = unknown>(
 }
 
 export function useCreateContentPlan<TContext = unknown>(
-  options?: UseCreateContentPlanOptions<TContext>,
-): UseMutationResult<ContentPlanEnvelope, InfluencerAIAPIError, Omit<ContentPlan, 'createdAt'>, TContext> {
+  options?: UseCreateContentPlanOptions<TContext>
+): UseMutationResult<
+  ContentPlanEnvelope,
+  InfluencerAIAPIError,
+  Omit<ContentPlan, 'createdAt'>,
+  TContext
+> {
   const client = useInfluencerAIClient();
   const queryClient = useQueryClient();
   const { onSuccess, meta, ...rest } = options ?? {};
 
-  return useMutation<ContentPlanEnvelope, InfluencerAIAPIError, Omit<ContentPlan, 'createdAt'>, TContext>({
+  return useMutation<
+    ContentPlanEnvelope,
+    InfluencerAIAPIError,
+    Omit<ContentPlan, 'createdAt'>,
+    TContext
+  >({
     mutationFn: (input) => client.createContentPlan(input),
     async onSuccess(data, variables, context) {
       await queryClient.invalidateQueries({ queryKey: influencerAIQueryKeys.contentPlans.root });

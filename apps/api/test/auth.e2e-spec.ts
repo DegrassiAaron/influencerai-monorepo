@@ -12,12 +12,20 @@ describe('Auth Guard (e2e)', () => {
   beforeAll(async () => {
     process.env.NODE_ENV = 'test';
     process.env.DISABLE_BULL = '1';
-    const prismaMock: Partial<PrismaService> = { onModuleInit: jest.fn(), onModuleDestroy: jest.fn(), enableShutdownHooks: jest.fn() };
-    const storageMock: Partial<StorageService> = { ensureBucket: jest.fn(async () => undefined) } as any;
+    const prismaMock: Partial<PrismaService> = {
+      onModuleInit: jest.fn(),
+      onModuleDestroy: jest.fn(),
+      enableShutdownHooks: jest.fn(),
+    };
+    const storageMock: Partial<StorageService> = {
+      ensureBucket: jest.fn(async () => undefined),
+    } as any;
 
     const moduleFixture: TestingModule = await Test.createTestingModule({ imports: [AppModule] })
-      .overrideProvider(PrismaService).useValue(prismaMock)
-      .overrideProvider(StorageService).useValue(storageMock)
+      .overrideProvider(PrismaService)
+      .useValue(prismaMock)
+      .overrideProvider(StorageService)
+      .useValue(storageMock)
       .compile();
 
     app = moduleFixture.createNestApplication(new FastifyAdapter());
@@ -25,10 +33,11 @@ describe('Auth Guard (e2e)', () => {
     await (app.getHttpAdapter().getInstance() as any).ready();
   });
 
-  afterAll(async () => { if (app) await app.close(); });
+  afterAll(async () => {
+    if (app) await app.close();
+  });
 
   it('rejects unauthenticated request with 401', async () => {
     await request(app!.getHttpServer()).get('/jobs').expect(401);
   });
 });
-

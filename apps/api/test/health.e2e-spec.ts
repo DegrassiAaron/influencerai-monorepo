@@ -12,7 +12,8 @@ describe('Health (e2e)', () => {
 
   beforeAll(async () => {
     // Provide a safe DATABASE_URL for PrismaService constructor (won't be used)
-    process.env.DATABASE_URL = process.env.DATABASE_URL || 'postgresql://user:pass@localhost:5432/db?schema=public';
+    process.env.DATABASE_URL =
+      process.env.DATABASE_URL || 'postgresql://user:pass@localhost:5432/db?schema=public';
 
     const prismaMock: Partial<PrismaService> = {
       onModuleInit: jest.fn(),
@@ -23,9 +24,12 @@ describe('Health (e2e)', () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     })
-      .overrideProvider(getQueueToken('content-generation')).useValue({ add: jest.fn(async () => null) })
-      .overrideProvider(getQueueToken('lora-training')).useValue({ add: jest.fn(async () => null) })
-      .overrideProvider(getQueueToken('video-generation')).useValue({ add: jest.fn(async () => null) })
+      .overrideProvider(getQueueToken('content-generation'))
+      .useValue({ add: jest.fn(async () => null) })
+      .overrideProvider(getQueueToken('lora-training'))
+      .useValue({ add: jest.fn(async () => null) })
+      .overrideProvider(getQueueToken('video-generation'))
+      .useValue({ add: jest.fn(async () => null) })
       .overrideProvider(PrismaService)
       .useValue(prismaMock)
       .compile();

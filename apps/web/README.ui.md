@@ -4,11 +4,11 @@ The web dashboard uses a small set of primitives generated with the [shadcn/ui](
 
 ## Available components
 
-| Component | File | What it solves |
-| --- | --- | --- |
-| `Button` | `src/components/ui/button.tsx` | Primary and secondary call-to-action buttons with shared focus states. |
-| `Card` (and `CardHeader`, `CardContent`, `CardTitle`, `CardDescription`, `CardFooter`) | `src/components/ui/card.tsx` | Surface container with spacing, borders, and typography defaults. |
-| `Badge` | `src/components/ui/badge.tsx` | Inline status labels with consistent color variants. |
+| Component                                                                              | File                           | What it solves                                                         |
+| -------------------------------------------------------------------------------------- | ------------------------------ | ---------------------------------------------------------------------- |
+| `Button`                                                                               | `src/components/ui/button.tsx` | Primary and secondary call-to-action buttons with shared focus states. |
+| `Card` (and `CardHeader`, `CardContent`, `CardTitle`, `CardDescription`, `CardFooter`) | `src/components/ui/card.tsx`   | Surface container with spacing, borders, and typography defaults.      |
+| `Badge`                                                                                | `src/components/ui/badge.tsx`  | Inline status labels with consistent color variants.                   |
 
 All primitives rely on the CSS variables declared in `src/app/globals.css`. Tailwind classes reference tokens such as `bg-card`, `text-muted-foreground`, and `ring-ring` that automatically adapt to theme changes.
 
@@ -17,7 +17,7 @@ All primitives rely on the CSS variables declared in `src/app/globals.css`. Tail
 ### Cards
 
 ```tsx
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 
 export function ExampleCard() {
   return (
@@ -27,9 +27,7 @@ export function ExampleCard() {
         <CardDescription>Ultimo aggiornamento 5 minuti fa</CardDescription>
       </CardHeader>
       <CardContent>
-        <p className="text-sm text-muted-foreground">
-          Contenuto del widget o del grafico.
-        </p>
+        <p className="text-sm text-muted-foreground">Contenuto del widget o del grafico.</p>
       </CardContent>
     </Card>
   );

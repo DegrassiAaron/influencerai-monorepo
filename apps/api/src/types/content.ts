@@ -8,4 +8,3 @@ export const ContentPlanPostSchema = z.object({
 export const ContentPlanDataSchema = z.array(ContentPlanPostSchema);
 
 export type ContentPlanData = z.infer<typeof ContentPlanDataSchema>;
-

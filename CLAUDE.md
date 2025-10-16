@@ -9,6 +9,7 @@ InfluencerAI is a local TypeScript monorepo system for generating content (text,
 ## Repository Structure
 
 This is a monorepo with the following structure:
+
 - `apps/web/` - Next.js dashboard (App Router, Tailwind, shadcn/ui, TanStack Query)
 - `apps/api/` - NestJS backend (Fastify, Prisma, Zod DTOs, BullMQ)
 - `apps/worker/` - BullMQ consumers for async job processing
@@ -32,6 +33,7 @@ This is a monorepo with the following structure:
 ## Development Commands
 
 ### Initial Setup
+
 ```bash
 docker compose -f infra/docker-compose.yml up -d
 pnpm install
@@ -39,6 +41,7 @@ cd apps/api && pnpm dlx prisma generate && pnpm dlx prisma migrate dev
 ```
 
 ### Running Services
+
 ```bash
 # Start all Docker services (Postgres, Redis, MinIO, n8n)
 docker compose -f infra/docker-compose.yml up -d
@@ -53,6 +56,7 @@ pnpm --filter worker dev
 ```
 
 ### Database Management
+
 ```bash
 # Generate Prisma client
 cd apps/api && pnpm dlx prisma generate
@@ -68,6 +72,7 @@ cd apps/api && pnpm dlx prisma studio
 ```
 
 ### Testing
+
 ```bash
 # Run all tests
 pnpm test
@@ -81,6 +86,7 @@ pnpm --filter api test:watch
 ```
 
 ### Building
+
 ```bash
 # Build all apps
 pnpm build
@@ -91,6 +97,7 @@ pnpm --filter web build
 ```
 
 ### Linting and Formatting
+
 ```bash
 pnpm lint
 pnpm format
@@ -99,19 +106,25 @@ pnpm format
 ## Key Architectural Patterns
 
 ### Job Queue System
+
 All async operations (LoRA training, content generation, video rendering) are processed through BullMQ queues:
+
 - Jobs are created via NestJS API endpoints and persisted in the `Job` table
 - Worker processes consume jobs from Redis queues
 - Job status, cost tracking (OpenRouter tokens), and results are stored back in Postgres
 
 ### Multi-Tenancy
+
 The system supports multiple tenants:
+
 - Each tenant can have multiple influencers
 - Data isolation is enforced at the database level via `tenantId` foreign keys
 - All API endpoints require tenant context
 
 ### n8n Workflow Integration
+
 n8n orchestrates complex multi-step workflows:
+
 - `/plan/generate` - Creates ContentPlan using OpenRouter
 - `/lora/train` - Triggers LoRA training jobs via kohya_ss
 - `/content/run` - Full pipeline: caption generation → image (Leonardo or ComfyUI) → video (ComfyUI) → autopost

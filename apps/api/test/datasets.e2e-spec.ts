@@ -12,7 +12,8 @@ describe('Datasets (e2e)', () => {
 
   beforeAll(async () => {
     process.env.NODE_ENV = 'test';
-    process.env.DATABASE_URL = process.env.DATABASE_URL || 'postgresql://user:pass@localhost:5432/db?schema=public';
+    process.env.DATABASE_URL =
+      process.env.DATABASE_URL || 'postgresql://user:pass@localhost:5432/db?schema=public';
 
     // Mock Prisma dataset CRUD minimal surface
     const prismaMock: Partial<PrismaService> = {
@@ -45,7 +46,9 @@ describe('Datasets (e2e)', () => {
 
     const storageMock: Partial<StorageService> = {
       getBucketName: jest.fn(() => 'datasets-test'),
-      getPresignedPutUrl: jest.fn(async ({ key }: any) => `http://minio.local/presign/${encodeURIComponent(key)}`),
+      getPresignedPutUrl: jest.fn(
+        async ({ key }: any) => `http://minio.local/presign/${encodeURIComponent(key)}`
+      ),
     };
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -73,7 +76,12 @@ describe('Datasets (e2e)', () => {
       .send({ kind: 'training', filename: 'dataset.zip', contentType: 'application/zip' })
       .expect(201);
 
-    expect(res.body).toMatchObject({ id: expect.any(String), uploadUrl: expect.any(String), key: expect.any(String), bucket: expect.any(String) });
+    expect(res.body).toMatchObject({
+      id: expect.any(String),
+      uploadUrl: expect.any(String),
+      key: expect.any(String),
+      bucket: expect.any(String),
+    });
     expect(res.body.key).toContain('/ds_');
     expect(res.body.uploadUrl).toContain(encodeURIComponent(res.body.key));
   });
@@ -87,4 +95,3 @@ describe('Datasets (e2e)', () => {
     expect(res.body).toMatchObject({ id: 'ds_123', status: 'ready' });
   });
 });
-

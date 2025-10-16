@@ -71,8 +71,13 @@ function parseHistoryState(history: any): HistoryState {
 
   const status = history.status ?? history;
   const statusText = typeof status?.status === 'string' ? status.status.toLowerCase() : undefined;
-  const completed = status?.completed === true || statusText === 'completed' || statusText === 'success';
-  const failed = statusText === 'error' || statusText === 'failed' || statusText === 'cancelled' || status?.failed === true;
+  const completed =
+    status?.completed === true || statusText === 'completed' || statusText === 'success';
+  const failed =
+    statusText === 'error' ||
+    statusText === 'failed' ||
+    statusText === 'cancelled' ||
+    status?.failed === true;
   const error = status?.error ?? status?.err ?? status?.message;
 
   if (failed) {
@@ -98,7 +103,12 @@ function extractVideoAsset(history: any): ComfyOutputAsset | null {
   for (const arr of outputArrays) {
     for (const entry of arr) {
       if (!entry || typeof entry !== 'object') continue;
-      if (entry.type === 'video' || entry.type === 'output' || entry.url || (entry.filename && entry.filename.endsWith('.mp4'))) {
+      if (
+        entry.type === 'video' ||
+        entry.type === 'output' ||
+        entry.url ||
+        (entry.filename && entry.filename.endsWith('.mp4'))
+      ) {
         return entry;
       }
     }
@@ -167,7 +177,9 @@ async function pollForCompletion(
 
   while (attempt < maxPollAttempts) {
     attempt += 1;
-    const historyRes = await config.fetch(`${config.baseUrl.replace(/\/$/, '')}/history/${encodeURIComponent(comfyJobId)}`);
+    const historyRes = await config.fetch(
+      `${config.baseUrl.replace(/\/$/, '')}/history/${encodeURIComponent(comfyJobId)}`
+    );
     if (historyRes.status === 404) {
       await sleep(pollIntervalMs);
       continue;
@@ -223,8 +235,16 @@ async function pollForCompletion(
 
 export function createComfyClient(config: ComfyClientConfig) {
   return {
-    async submitVideoJob({ metadata, inputs, logger }: SubmitVideoJobOptions): Promise<SubmitVideoJobResult> {
-      const promptPayload = attachPromptMetadata(cloneWorkflowPayload(config.workflowPayload), metadata, inputs);
+    async submitVideoJob({
+      metadata,
+      inputs,
+      logger,
+    }: SubmitVideoJobOptions): Promise<SubmitVideoJobResult> {
+      const promptPayload = attachPromptMetadata(
+        cloneWorkflowPayload(config.workflowPayload),
+        metadata,
+        inputs
+      );
 
       const requestBody = {
         client_id: config.clientId,
@@ -251,7 +271,9 @@ export function createComfyClient(config: ComfyClientConfig) {
       }
 
       const comfyJobId =
-        (json?.prompt_id as string | undefined) || (json?.id as string | undefined) || (json?.job_id as string | undefined);
+        (json?.prompt_id as string | undefined) ||
+        (json?.id as string | undefined) ||
+        (json?.job_id as string | undefined);
 
       if (!comfyJobId) {
         throw new Error('ComfyUI prompt response missing job identifier');

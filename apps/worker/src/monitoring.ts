@@ -43,7 +43,12 @@ export type MonitoringServer = {
   stop: () => Promise<void>;
   recordCompletion: (
     queueName: string,
-    job: { processedOn?: number | null; finishedOn?: number | null; timestamp?: number | null; id?: string }
+    job: {
+      processedOn?: number | null;
+      finishedOn?: number | null;
+      timestamp?: number | null;
+      id?: string;
+    }
   ) => void;
   recordFailure: (queueName: string, jobId: string | undefined, error: unknown) => Promise<void>;
 };
@@ -53,7 +58,15 @@ const JOB_COUNT_STATUSES = ['waiting', 'failed', 'completed'] as const;
 const DEFAULT_DURATION_BUCKETS = [0.1, 0.5, 1, 2, 5, 10, 30, 60, 120, 300];
 
 export function createMonitoringServer(input: CreateMonitoringServerInput): MonitoringServer {
-  const { logger, queues, auth, port = 3031, host = '0.0.0.0', registry = new Registry(), webhook } = input;
+  const {
+    logger,
+    queues,
+    auth,
+    port = 3031,
+    host = '0.0.0.0',
+    registry = new Registry(),
+    webhook,
+  } = input;
 
   const app = Fastify({ logger: false });
 
@@ -149,12 +162,21 @@ export function createMonitoringServer(input: CreateMonitoringServerInput): Moni
 
   function recordCompletion(
     queueName: string,
-    job: { processedOn?: number | null; finishedOn?: number | null; timestamp?: number | null; id?: string }
+    job: {
+      processedOn?: number | null;
+      finishedOn?: number | null;
+      timestamp?: number | null;
+      id?: string;
+    }
   ) {
     resetFailures(queueName);
     const processedOn = job.processedOn ?? job.timestamp;
     const finishedOn = job.finishedOn;
-    if (typeof processedOn === 'number' && typeof finishedOn === 'number' && finishedOn >= processedOn) {
+    if (
+      typeof processedOn === 'number' &&
+      typeof finishedOn === 'number' &&
+      finishedOn >= processedOn
+    ) {
       const durationSeconds = (finishedOn - processedOn) / 1000;
       if (Number.isFinite(durationSeconds) && durationSeconds >= 0) {
         jobDurationHistogram.observe({ queue: queueName }, durationSeconds);
@@ -171,9 +193,10 @@ export function createMonitoringServer(input: CreateMonitoringServerInput): Moni
       return;
     }
 
-    const threshold = webhook.consecutiveFailuresThreshold && webhook.consecutiveFailuresThreshold > 0
-      ? webhook.consecutiveFailuresThreshold
-      : 3;
+    const threshold =
+      webhook.consecutiveFailuresThreshold && webhook.consecutiveFailuresThreshold > 0
+        ? webhook.consecutiveFailuresThreshold
+        : 3;
 
     if (next < threshold || alertedQueues.has(queueName)) {
       return;
@@ -195,11 +218,17 @@ export function createMonitoringServer(input: CreateMonitoringServerInput): Moni
         }),
       });
       if (!response.ok) {
-        logger.warn({ queue: queueName, status: (response as any).status }, 'Failure webhook responded with non-OK status');
+        logger.warn(
+          { queue: queueName, status: (response as any).status },
+          'Failure webhook responded with non-OK status'
+        );
         return;
       }
       alertedQueues.add(queueName);
-      logger.info({ queue: queueName, jobId, consecutiveFailures: next }, 'Sent failure alert webhook');
+      logger.info(
+        { queue: queueName, jobId, consecutiveFailures: next },
+        'Sent failure alert webhook'
+      );
     } catch (err) {
       logger.error({ err, queue: queueName, jobId }, 'Failed to send failure webhook');
     }

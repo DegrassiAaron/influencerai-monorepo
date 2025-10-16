@@ -52,14 +52,22 @@ describe('Jobs + Redis (e2e)', () => {
         .overrideProvider(APP_GUARD)
         .useValue({ canActivate: () => true })
         .overrideProvider(PrismaService)
-        .useValue({ onModuleInit: jest.fn(), onModuleDestroy: jest.fn(), enableShutdownHooks: jest.fn(), job: { create: jest.fn(async (data: any) => ({ id: 'job_e2e', ...data.data })) } })
+        .useValue({
+          onModuleInit: jest.fn(),
+          onModuleDestroy: jest.fn(),
+          enableShutdownHooks: jest.fn(),
+          job: { create: jest.fn(async (data: any) => ({ id: 'job_e2e', ...data.data })) },
+        })
         .compile();
 
       app = moduleFixture.createNestApplication(new FastifyAdapter());
       await app.init();
       await (app.getHttpAdapter().getInstance() as any).ready();
     } catch (error) {
-      console.warn('Impossibile avviare l\'app con Bull abilitato; salto suite Jobs + Redis (e2e)', error);
+      console.warn(
+        "Impossibile avviare l'app con Bull abilitato; salto suite Jobs + Redis (e2e)",
+        error
+      );
       skipSuite = true;
       return;
     }
@@ -91,16 +99,26 @@ describe('Jobs + Redis (e2e)', () => {
         // Clean up waiting jobs created by the test
         const jobs = await controlQueue.getJobs(['waiting', 'delayed', 'active']);
         for (const j of jobs) {
-          try { await j.remove(); } catch {}
+          try {
+            await j.remove();
+          } catch {}
         }
         await controlQueue.resume();
         await controlQueue.close();
       }
     } catch {}
-    try { if (appVideoQ) await appVideoQ.close(); } catch {}
-    try { if (appLoraQ) await appLoraQ.close(); } catch {}
-    try { if (appContentQ) await appContentQ.close(); } catch {}
-    if (app) { await app.close(); }
+    try {
+      if (appVideoQ) await appVideoQ.close();
+    } catch {}
+    try {
+      if (appLoraQ) await appLoraQ.close();
+    } catch {}
+    try {
+      if (appContentQ) await appContentQ.close();
+    } catch {}
+    if (app) {
+      await app.close();
+    }
   });
 
   it('POST /jobs enqueues into Redis', async () => {
@@ -120,7 +138,14 @@ describe('Jobs + Redis (e2e)', () => {
     let found: any | undefined;
     const deadline = Date.now() + 10000;
     while (!found && Date.now() < deadline) {
-      const jobs = await appContentQ!.getJobs(['waiting', 'delayed', 'active', 'paused', 'prioritized', 'waiting-children']);
+      const jobs = await appContentQ!.getJobs([
+        'waiting',
+        'delayed',
+        'active',
+        'paused',
+        'prioritized',
+        'waiting-children',
+      ]);
       found = jobs.find((j) => (j.data as any).jobId === 'job_e2e');
       if (!found) {
         await new Promise((r) => setTimeout(r, 200));

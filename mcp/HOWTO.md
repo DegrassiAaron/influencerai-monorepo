@@ -20,7 +20,9 @@ Questo documento fornisce istruzioni dettagliate su come utilizzare i server MCP
 ## 🎯 Quando Usare Quale MCP
 
 ### Sequential Thinking
+
 **Usa quando:**
+
 - Devi pianificare architetture complesse
 - Serve decomposizione di task in step
 - Necessiti analisi metodica di un problema
@@ -29,6 +31,7 @@ Questo documento fornisce istruzioni dettagliate su come utilizzare i server MCP
 **Parole chiave trigger:** "pianifica", "strategia", "step-by-step", "analizza", "pensa metodicamente"
 
 **Esempi:**
+
 ```bash
 claude.code "Pianifica l'architettura per un sistema di autenticazione con OAuth2"
 
@@ -40,7 +43,9 @@ claude.code "Pensa metodicamente alla migrazione da REST a GraphQL"
 ---
 
 ### GitHub Project Manager
+
 **Usa quando:**
+
 - Devi creare/gestire branch, commit, PR
 - Cerchi issue o commit history
 - Gestisci milestone e release
@@ -49,6 +54,7 @@ claude.code "Pensa metodicamente alla migrazione da REST a GraphQL"
 **Parole chiave trigger:** "branch", "commit", "PR", "issue", "repository", "merge"
 
 **Esempi:**
+
 ```bash
 claude.code "Crea branch feature/user-profile e inizializza la struttura"
 
@@ -62,7 +68,9 @@ claude.code "Crea PR per mergare feature/cart in develop con checklist completa"
 ---
 
 ### Memory Bank
+
 **Usa quando:**
+
 - Vuoi recuperare decisioni/pattern passati
 - Devi salvare convenzioni per riferimento futuro
 - Cerchi "come abbiamo fatto X in passato"
@@ -71,6 +79,7 @@ claude.code "Crea PR per mergare feature/cart in develop con checklist completa"
 **Parole chiave trigger:** "ricorda", "abbiamo già", "salva in memoria", "pattern usato", "convenzioni"
 
 **Esempi per RECUPERARE:**
+
 ```bash
 claude.code "Ricorda: quali pattern usiamo per gestione stato?"
 
@@ -80,6 +89,7 @@ claude.code "Recupera dalla memoria le convenzioni di naming per API endpoints"
 ```
 
 **Esempi per SALVARE:**
+
 ```bash
 claude.code "Implementa autenticazione JWT e SALVA IN MEMORIA il pattern usato"
 
@@ -91,7 +101,9 @@ claude.code "Salva in memory bank: struttura cartelle per feature modules"
 ---
 
 ### Playwright
+
 **Usa quando:**
+
 - Testing E2E di UI/UX
 - Automazione browser
 - Screenshot e video testing
@@ -100,6 +112,7 @@ claude.code "Salva in memory bank: struttura cartelle per feature modules"
 **Parole chiave trigger:** "test E2E", "playwright", "screenshot", "automatizza browser", "user flow"
 
 **Esempi:**
+
 ```bash
 claude.code "Scrivi test Playwright per il flusso di login completo"
 
@@ -111,6 +124,7 @@ claude.code "Automatizza: vai su /products, aggiungi 3 items, verifica totale"
 ```
 
 **Test responsivi:**
+
 ```bash
 claude.code "Test Playwright su iPhone 12, iPad e Desktop per la home page"
 
@@ -120,7 +134,9 @@ claude.code "Screenshot comparativi mobile vs desktop della dashboard"
 ---
 
 ### Knowledge Graph
+
 **Usa quando:**
+
 - Analizzi dipendenze tra componenti
 - Serve impact analysis di modifiche
 - Mappi relazioni in architettura
@@ -129,6 +145,7 @@ claude.code "Screenshot comparativi mobile vs desktop della dashboard"
 **Parole chiave trigger:** "dipendenze", "impatto", "quali componenti usano", "relazioni", "mappa"
 
 **Esempi:**
+
 ```bash
 claude.code "Usa knowledge graph: quali componenti dipendono da UserContext?"
 
@@ -142,7 +159,9 @@ claude.code "Quali file saranno affetti modificando l'API di PaymentService?"
 ---
 
 ### n8n
+
 **Usa quando:**
+
 - Setup workflow CI/CD
 - Automazioni con trigger temporali
 - Integrazioni tra servizi (GitHub, Slack, etc)
@@ -151,6 +170,7 @@ claude.code "Quali file saranno affetti modificando l'API di PaymentService?"
 **Parole chiave trigger:** "automatizza", "workflow", "trigger", "schedule", "integra"
 
 **Esempi:**
+
 ```bash
 claude.code "Crea workflow n8n: trigger su push → run tests → deploy staging"
 
@@ -164,7 +184,9 @@ claude.code "Workflow deployment automatico quando test Playwright passano"
 ---
 
 ### Magic
+
 **Usa quando:**
+
 - Analisi dati complesse
 - Generazione report o contenuti
 - Pattern recognition avanzato
@@ -173,6 +195,7 @@ claude.code "Workflow deployment automatico quando test Playwright passano"
 **Parole chiave trigger:** "analizza pattern", "genera report", "AI avanzato", "insights"
 
 **Esempi:**
+
 ```bash
 claude.code "Usa Magic per analizzare log e identificare pattern di errori"
 
@@ -329,6 +352,7 @@ claude.code "Esegui manualmente SENZA automation"
 ## 📋 Template di Prompt
 
 ### Template Base
+
 ```
 [AZIONE] [COSA] [CON MCP] [SENZA MCP] [CONTESTO]
 ```
@@ -337,23 +361,23 @@ claude.code "Esegui manualmente SENZA automation"
 
 ```bash
 # Feature completa con tutti i MCP rilevanti
-claude.code "Pianifica (sequential) e implementa (github) autenticazione OAuth, 
+claude.code "Pianifica (sequential) e implementa (github) autenticazione OAuth,
 testa (playwright), salva pattern (memory), SENZA automation n8n"
 
 # Bug fix rapido minimalista
-claude.code "Quick fix validazione in LoginForm.tsx, 
+claude.code "Quick fix validazione in LoginForm.tsx,
 solo codice SENZA branch/test/pianificazione"
 
 # Refactoring guidato
-claude.code "Analizza dipendenze (knowledge graph), pianifica (sequential), 
+claude.code "Analizza dipendenze (knowledge graph), pianifica (sequential),
 implementa (github), testa (playwright), documenta (memory)"
 
 # Setup automation
-claude.code "Crea workflow n8n per deploy quando test playwright passano, 
+claude.code "Crea workflow n8n per deploy quando test playwright passano,
 notifica Slack, SENZA modificare codice applicazione"
 
 # Analisi architetturale
-claude.code "Usa magic per analizzare codebase, knowledge graph per dipendenze, 
+claude.code "Usa magic per analizzare codebase, knowledge graph per dipendenze,
 genera report ottimizzazioni, SENZA implementare modifiche"
 ```
 
@@ -364,27 +388,27 @@ genera report ottimizzazioni, SENZA implementare modifiche"
 ### Pattern: Research → Plan → Implement → Test → Document
 
 ```bash
-claude.code "Ricerca (memory + github) pattern auth esistenti, 
-pianifica (sequential) nuovo sistema OAuth, 
-implementa (github), 
-testa (playwright), 
+claude.code "Ricerca (memory + github) pattern auth esistenti,
+pianifica (sequential) nuovo sistema OAuth,
+implementa (github),
+testa (playwright),
 salva (memory) decisioni"
 ```
 
 ### Pattern: Analyze → Refactor → Validate
 
 ```bash
-claude.code "Analizza (knowledge graph) dipendenze OrderService, 
-pianifica (sequential) refactoring, 
-implementa (github), 
+claude.code "Analizza (knowledge graph) dipendenze OrderService,
+pianifica (sequential) refactoring,
+implementa (github),
 valida (playwright) non-regressione"
 ```
 
 ### Pattern: Automate → Monitor → Alert
 
 ```bash
-claude.code "Automatizza (n8n) deploy pipeline, 
-monitora (playwright) smoke tests, 
+claude.code "Automatizza (n8n) deploy pipeline,
+monitora (playwright) smoke tests,
 alert (n8n + github) su failures"
 ```
 
@@ -394,35 +418,38 @@ alert (n8n + github) su failures"
 
 ### MCP per Fase di Sviluppo
 
-| Fase | MCP Primari | MCP Secondari |
-|------|-------------|---------------|
-| **Planning** | Sequential | Memory, Knowledge Graph |
-| **Setup** | GitHub | Sequential, Memory |
-| **Implementazione** | GitHub | Sequential, Memory |
-| **Testing** | Playwright | Sequential, Memory |
-| **Bug Fixing** | GitHub, Knowledge Graph | Memory, Sequential |
-| **Refactoring** | Sequential, Knowledge Graph | GitHub, Memory |
-| **Deployment** | n8n, GitHub | Playwright, Magic |
-| **Code Review** | GitHub, Knowledge Graph | Memory, Sequential |
-| **Performance** | Magic, Playwright | Sequential, Memory |
-| **Automation** | n8n | Playwright, GitHub |
+| Fase                | MCP Primari                 | MCP Secondari           |
+| ------------------- | --------------------------- | ----------------------- |
+| **Planning**        | Sequential                  | Memory, Knowledge Graph |
+| **Setup**           | GitHub                      | Sequential, Memory      |
+| **Implementazione** | GitHub                      | Sequential, Memory      |
+| **Testing**         | Playwright                  | Sequential, Memory      |
+| **Bug Fixing**      | GitHub, Knowledge Graph     | Memory, Sequential      |
+| **Refactoring**     | Sequential, Knowledge Graph | GitHub, Memory          |
+| **Deployment**      | n8n, GitHub                 | Playwright, Magic       |
+| **Code Review**     | GitHub, Knowledge Graph     | Memory, Sequential      |
+| **Performance**     | Magic, Playwright           | Sequential, Memory      |
+| **Automation**      | n8n                         | Playwright, GitHub      |
 
 ### Task Semplici vs Complessi
 
 **Task Semplice (1 MCP):**
+
 ```bash
 claude.code "Fix typo in README (solo github)"
 claude.code "Aggiungi console.log per debug (no mcp)"
 ```
 
 **Task Medio (2-3 MCP):**
+
 ```bash
 claude.code "Pianifica (sequential) e implementa (github) validator email"
 ```
 
 **Task Complesso (4+ MCP):**
+
 ```bash
-claude.code "Analizza (knowledge graph), pianifica (sequential), 
+claude.code "Analizza (knowledge graph), pianifica (sequential),
 implementa (github), testa (playwright), automatizza (n8n), documenta (memory)"
 ```
 
@@ -431,6 +458,7 @@ implementa (github), testa (playwright), automatizza (n8n), documenta (memory)"
 ## 💡 Best Practices
 
 ### 1. Sii Esplicito sui MCP Desiderati
+
 ```bash
 # ✅ CHIARO
 claude.code "Usa sequential per pianificare, poi github per implementare"
@@ -440,11 +468,13 @@ claude.code "Implementa feature carrello"
 ```
 
 ### 2. Usa Parentesi per Chiarezza
+
 ```bash
 claude.code "Analizza (knowledge graph) dipendenze poi refactora (github) SENZA test (no playwright)"
 ```
 
 ### 3. Sequenza Logica
+
 ```bash
 # ✅ ORDINE LOGICO
 Sequential → Memory (ricerca) → GitHub → Playwright → Memory (salva)
@@ -454,6 +484,7 @@ GitHub → Sequential → Memory → GitHub → Sequential
 ```
 
 ### 4. Minimizza per Task Semplici
+
 ```bash
 # ✅ MINIMALISTA per fix veloce
 claude.code "Correggi validazione email in utils.ts"
@@ -463,6 +494,7 @@ claude.code "Pianifica, analizza dipendenze, crea branch, test E2E per fix typo"
 ```
 
 ### 5. Combina Sapientemente
+
 ```bash
 # ✅ SMART COMBINATION
 claude.code "Ricorda pattern (memory), pianifica (sequential), implementa (github)"
@@ -479,6 +511,7 @@ claude.code "Usa sequential e magic e claude context per pianificare"
 ### Claude non usa l'MCP che voglio
 
 **Soluzione:** Sii più esplicito
+
 ```bash
 # Invece di:
 claude.code "Testa il login"
@@ -490,6 +523,7 @@ claude.code "Usa Playwright per test E2E del login flow"
 ### Claude usa troppi MCP
 
 **Soluzione:** Specifica cosa NON usare
+
 ```bash
 claude.code "Fix rapido SENZA branch/test/pianificazione: correggi typo"
 ```
@@ -497,16 +531,18 @@ claude.code "Fix rapido SENZA branch/test/pianificazione: correggi typo"
 ### Voglio workflow multi-step chiaro
 
 **Soluzione:** Numera gli step
+
 ```bash
-claude.code "Step 1: pianifica (sequential). 
-Step 2: ricorda pattern (memory). 
-Step 3: implementa (github). 
+claude.code "Step 1: pianifica (sequential).
+Step 2: ricorda pattern (memory).
+Step 3: implementa (github).
 Step 4: testa (playwright)"
 ```
 
 ### Non ricordo quale MCP serve
 
 **Soluzione:** Descrivi il task, Claude sceglierà
+
 ```bash
 claude.code "Voglio implementare auth, testarlo e salvare il pattern per dopo"
 # Claude userà automaticamente: Sequential, GitHub, Playwright, Memory
@@ -520,8 +556,8 @@ claude.code "Voglio implementare auth, testarlo e salvare il pattern per dopo"
 
 ```bash
 # Sessione completa
-claude.code "Ricorda (memory): abbiamo pattern per feature user-specific? 
-Pianifica (sequential) implementazione wishlist con persistenza DB e UI. 
+claude.code "Ricorda (memory): abbiamo pattern per feature user-specific?
+Pianifica (sequential) implementazione wishlist con persistenza DB e UI.
 Crea issue e branch (github) feature/wishlist"
 
 # [Claude pianifica e crea branch]
@@ -546,8 +582,8 @@ claude.code "Se test OK, crea PR con descrizione completa e salva pattern in mem
 ### Esempio 2: Performance Optimization
 
 ```bash
-claude.code "Usa Magic per analizzare bundle size e identificare bottleneck. 
-Pianifica (sequential) ottimizzazioni. 
+claude.code "Usa Magic per analizzare bundle size e identificare bottleneck.
+Pianifica (sequential) ottimizzazioni.
 Ricorda (memory) precedenti optimization wins"
 
 # [Claude analizza e pianifica]
@@ -559,20 +595,20 @@ claude.code "Crea branch perf/optimize-bundle (github) e implementa:
 
 # [Claude implementa]
 
-claude.code "Test Playwright performance: lighthouse score, load time, FCP, LCP. 
+claude.code "Test Playwright performance: lighthouse score, load time, FCP, LCP.
 Confronta prima/dopo"
 
 # [Claude testa]
 
-claude.code "Se metrics migliorati, crea PR con grafici before/after. 
+claude.code "Se metrics migliorati, crea PR con grafici before/after.
 Salva (memory) tecniche che hanno funzionato meglio"
 ```
 
 ### Esempio 3: Security Audit + Fix
 
 ```bash
-claude.code "Pianifica (sequential) security audit completo: 
-XSS, CSRF, SQL injection, auth bypass. 
+claude.code "Pianifica (sequential) security audit completo:
+XSS, CSRF, SQL injection, auth bypass.
 Ricorda (memory) security issues passati"
 
 # [Claude pianifica audit]
@@ -589,7 +625,7 @@ Salva findings"
 
 # [Claude esegue security tests]
 
-claude.code "Crea issue (github) per ogni vulnerability trovata. 
+claude.code "Crea issue (github) per ogni vulnerability trovata.
 Per critical issues crea branch fix/security-* e implementa fix"
 
 # [Claude crea issues e applica fix]
@@ -608,29 +644,29 @@ claude.code "Salva in memory: security checklist e remediation patterns usati"
 ### Pattern: Multi-Repo Coordination
 
 ```bash
-claude.code "Analizza (knowledge graph) dipendenze tra repo frontend e backend. 
-Pianifica (sequential) breaking change API. 
-Crea branch su entrambi (github) sync/api-v2. 
+claude.code "Analizza (knowledge graph) dipendenze tra repo frontend e backend.
+Pianifica (sequential) breaking change API.
+Crea branch su entrambi (github) sync/api-v2.
 Setup n8n per deploy coordinato"
 ```
 
 ### Pattern: Legacy Refactoring
 
 ```bash
-claude.code "Usa Magic per analizzare legacy code patterns. 
-Knowledge graph per mappare ogni dipendenza. 
-Sequential per pianificare refactoring incrementale. 
-Memory per trackare progresso e decisioni. 
+claude.code "Usa Magic per analizzare legacy code patterns.
+Knowledge graph per mappare ogni dipendenza.
+Sequential per pianificare refactoring incrementale.
+Memory per trackare progresso e decisioni.
 Playwright per test regressione continua"
 ```
 
 ### Pattern: Feature Flag Rollout
 
 ```bash
-claude.code "Implementa feature flag (github). 
-Setup n8n workflow: gradual rollout 10% → 50% → 100%. 
-Playwright monitoring ad ogni step. 
-Magic per analizzare metriche. 
+claude.code "Implementa feature flag (github).
+Setup n8n workflow: gradual rollout 10% → 50% → 100%.
+Playwright monitoring ad ogni step.
+Magic per analizzare metriche.
 Auto-rollback su errori"
 ```
 
@@ -639,6 +675,7 @@ Auto-rollback su errori"
 ## 📚 Appendice: Glossario Comandi
 
 ### Comandi Memory Bank
+
 ```bash
 "Ricorda [cosa]"
 "Abbiamo già [fatto cosa]?"
@@ -648,6 +685,7 @@ Auto-rollback su errori"
 ```
 
 ### Comandi GitHub
+
 ```bash
 "Crea branch [nome]"
 "Commit [messaggio]"
@@ -657,6 +695,7 @@ Auto-rollback su errori"
 ```
 
 ### Comandi Playwright
+
 ```bash
 "Test E2E [flusso]"
 "Screenshot [pagina] su [device]"
@@ -665,6 +704,7 @@ Auto-rollback su errori"
 ```
 
 ### Comandi Sequential
+
 ```bash
 "Pianifica [task]"
 "Analizza step-by-step [problema]"
@@ -673,6 +713,7 @@ Auto-rollback su errori"
 ```
 
 ### Comandi Knowledge Graph
+
 ```bash
 "Analizza dipendenze di [componente]"
 "Quali componenti usano [cosa]?"
@@ -681,6 +722,7 @@ Auto-rollback su errori"
 ```
 
 ### Comandi n8n
+
 ```bash
 "Automatizza [workflow]"
 "Setup trigger [evento] → [azione]"
@@ -695,22 +737,25 @@ Auto-rollback su errori"
 ### Per iniziare velocemente:
 
 1. **Task semplice:** Usa prompt diretto senza MCP espliciti
+
    ```bash
    claude.code "Aggiungi validazione email"
    ```
 
 2. **Task medio:** Specifica 1-2 MCP
+
    ```bash
    claude.code "Pianifica (sequential) e implementa (github) login"
    ```
 
 3. **Task complesso:** Workflow multi-MCP
    ```bash
-   claude.code "Ricerca (memory), pianifica (sequential), implementa (github), 
+   claude.code "Ricerca (memory), pianifica (sequential), implementa (github),
    testa (playwright), automatizza (n8n), documenta (memory)"
    ```
 
 ### Regola d'oro:
+
 > **Meno è meglio.** Usa solo gli MCP necessari per il task specifico.
 
 ---
@@ -718,6 +763,7 @@ Auto-rollback su errori"
 ## 📞 Support
 
 Se Claude non si comporta come previsto:
+
 1. Sii più esplicito sui MCP desiderati
 2. Usa "SENZA [mcp]" per escludere
 3. Numera gli step per workflow chiari

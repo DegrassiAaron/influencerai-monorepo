@@ -26,9 +26,19 @@ export function getClient(logger: LoggerLike = defaultLogger): S3ClientInfo | nu
   }
 }
 
-export async function putTextObject(client: S3Client, bucket: string, key: string, content: string) {
+export async function putTextObject(
+  client: S3Client,
+  bucket: string,
+  key: string,
+  content: string
+) {
   await client.send(
-    new PutObjectCommand({ Bucket: bucket, Key: key, Body: Buffer.from(content, 'utf8'), ContentType: 'text/plain' })
+    new PutObjectCommand({
+      Bucket: bucket,
+      Key: key,
+      Body: Buffer.from(content, 'utf8'),
+      ContentType: 'text/plain',
+    })
   );
 }
 
@@ -39,10 +49,17 @@ export async function putBinaryObject(
   body: NodeJS.ReadableStream | Uint8Array | Buffer,
   contentType = 'application/octet-stream'
 ) {
-  await client.send(new PutObjectCommand({ Bucket: bucket, Key: key, Body: body, ContentType: contentType }));
+  await client.send(
+    new PutObjectCommand({ Bucket: bucket, Key: key, Body: body, ContentType: contentType })
+  );
 }
 
-export async function getSignedGetUrl(client: S3Client, bucket: string, key: string, expiresInSeconds = 3600): Promise<string> {
+export async function getSignedGetUrl(
+  client: S3Client,
+  bucket: string,
+  key: string,
+  expiresInSeconds = 3600
+): Promise<string> {
   const cmd = new GetObjectCommand({ Bucket: bucket, Key: key });
   return getSignedUrl(client, cmd, { expiresIn: expiresInSeconds });
 }

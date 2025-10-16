@@ -3,7 +3,10 @@ import { z } from 'zod';
 export const CreateContentPlanSchema = z.object({
   influencerId: z.string().min(1),
   theme: z.string().min(1),
-  targetPlatforms: z.array(z.enum(['instagram', 'tiktok', 'youtube'])).default(['instagram']).optional(),
+  targetPlatforms: z
+    .array(z.enum(['instagram', 'tiktok', 'youtube']))
+    .default(['instagram'])
+    .optional(),
 });
 
 export type CreateContentPlanDto = z.infer<typeof CreateContentPlanSchema>;
@@ -13,9 +16,7 @@ export const ContentPlanResponseSchema = z.object({
   influencerId: z.string(),
   theme: z.string(),
   targetPlatforms: z.array(z.enum(['instagram', 'tiktok', 'youtube'])),
-  posts: z.array(
-    z.object({ caption: z.string(), hashtags: z.array(z.string()) })
-  ),
+  posts: z.array(z.object({ caption: z.string(), hashtags: z.array(z.string()) })),
   createdAt: z.string().datetime(),
 });
 export type ContentPlanResponse = z.infer<typeof ContentPlanResponseSchema>;

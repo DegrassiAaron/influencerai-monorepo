@@ -62,7 +62,11 @@ export type LoraTrainingPayload = {
 };
 
 export type LoraTrainingProcessorDeps = {
-  logger: { info: (...args: any[]) => void; warn: (...args: any[]) => void; error: (...args: any[]) => void };
+  logger: {
+    info: (...args: any[]) => void;
+    warn: (...args: any[]) => void;
+    error: (...args: any[]) => void;
+  };
   patchJobStatus: PatchJobStatusFn;
   s3: {
     getClient: () => { client: S3Client; bucket: string } | null;
@@ -73,7 +77,12 @@ export type LoraTrainingProcessorDeps = {
       body: NodeJS.ReadableStream | Uint8Array | Buffer,
       contentType?: string
     ) => Promise<void>;
-    getSignedGetUrl: (client: S3Client, bucket: string, key: string, expiresInSeconds?: number) => Promise<string>;
+    getSignedGetUrl: (
+      client: S3Client,
+      bucket: string,
+      key: string,
+      expiresInSeconds?: number
+    ) => Promise<string>;
   };
   fetchDataset?: (datasetId: string) => Promise<LoraDatasetInfo | null>;
   fetchLoraConfig?: (configId: string) => Promise<LoraConfigInfo | null>;

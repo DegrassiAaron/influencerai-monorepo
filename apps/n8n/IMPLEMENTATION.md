@@ -14,15 +14,16 @@ This implementation delivers production-ready n8n workflows for the InfluencerAI
 
 **Location**: `apps/n8n/workflows/`
 
-| Workflow | File | Description | Triggers |
-|----------|------|-------------|----------|
-| Content Plan Generator | `plan-generate.json` | Generate content plans via OpenRouter API | Manual, Scheduled (Mon 9AM) |
-| LoRA Training | `lora-train.json` | Enqueue and monitor LoRA training jobs | Manual |
-| Content Pipeline | `content-run-pipeline.json` | Full end-to-end content generation | Manual, Scheduled (Tue/Thu 10AM) |
-| Social Media Publisher | `publish.json` | Publish to Instagram/TikTok/YouTube | Manual |
-| ComfyUI Webhook | `webhook-comfyui.json` | Receive ComfyUI completion callbacks | Webhook |
+| Workflow               | File                        | Description                               | Triggers                         |
+| ---------------------- | --------------------------- | ----------------------------------------- | -------------------------------- |
+| Content Plan Generator | `plan-generate.json`        | Generate content plans via OpenRouter API | Manual, Scheduled (Mon 9AM)      |
+| LoRA Training          | `lora-train.json`           | Enqueue and monitor LoRA training jobs    | Manual                           |
+| Content Pipeline       | `content-run-pipeline.json` | Full end-to-end content generation        | Manual, Scheduled (Tue/Thu 10AM) |
+| Social Media Publisher | `publish.json`              | Publish to Instagram/TikTok/YouTube       | Manual                           |
+| ComfyUI Webhook        | `webhook-comfyui.json`      | Receive ComfyUI completion callbacks      | Webhook                          |
 
 **Key Features**:
+
 - ✅ Error handling with conditional branching
 - ✅ Retry logic (3 retries with exponential backoff)
 - ✅ Comprehensive logging (info, warning, error levels)
@@ -34,14 +35,15 @@ This implementation delivers production-ready n8n workflows for the InfluencerAI
 
 **Location**: `apps/n8n/scripts/`
 
-| Script | Purpose | Usage |
-|--------|---------|-------|
-| `import-workflows.js` | Import workflows via n8n REST API | `node import-workflows.js [file]` |
-| `export-workflows.js` | Export workflows from n8n | `node export-workflows.js [--all]` |
-| `import.sh` | Shell wrapper for import | `./import.sh [file]` |
-| `export.sh` | Shell wrapper for export | `./export.sh [--all]` |
+| Script                | Purpose                           | Usage                              |
+| --------------------- | --------------------------------- | ---------------------------------- |
+| `import-workflows.js` | Import workflows via n8n REST API | `node import-workflows.js [file]`  |
+| `export-workflows.js` | Export workflows from n8n         | `node export-workflows.js [--all]` |
+| `import.sh`           | Shell wrapper for import          | `./import.sh [file]`               |
+| `export.sh`           | Shell wrapper for export          | `./export.sh [--all]`              |
 
 **Features**:
+
 - ✅ Bulk import/export
 - ✅ Duplicate detection (update vs create)
 - ✅ Environment variable loading from `.env`
@@ -53,13 +55,14 @@ This implementation delivers production-ready n8n workflows for the InfluencerAI
 
 **Location**: `apps/n8n/`
 
-| Document | Purpose | Pages |
-|----------|---------|-------|
-| `README.md` | Complete user guide | ~20 |
-| `TESTING.md` | Testing instructions and test cases | ~18 |
-| `IMPLEMENTATION.md` | This summary | 1 |
+| Document            | Purpose                             | Pages |
+| ------------------- | ----------------------------------- | ----- |
+| `README.md`         | Complete user guide                 | ~20   |
+| `TESTING.md`        | Testing instructions and test cases | ~18   |
+| `IMPLEMENTATION.md` | This summary                        | 1     |
 
 **README.md Sections**:
+
 - Overview and architecture
 - Directory structure
 - Prerequisites and environment setup
@@ -76,6 +79,7 @@ This implementation delivers production-ready n8n workflows for the InfluencerAI
 - Migration guide
 
 **TESTING.md Sections**:
+
 - Testing environment setup
 - 20+ test cases covering:
   - Manual triggers
@@ -116,6 +120,7 @@ YOUTUBE_ACCESS_TOKEN=
 ```
 
 **Already Configured** in `infra/docker-compose.yml`:
+
 - ✅ `API_BASE_URL=http://api:3001`
 - ✅ `API_TOKEN=dev-token`
 - ✅ n8n volumes mounted to `apps/n8n`
@@ -131,6 +136,7 @@ Trigger → Configure → API Call → Validate → Success/Error Branch → Log
 ```
 
 **Error Handling Pattern**:
+
 ```
 HTTP Request (onError: continueErrorOutput)
   → If Node (check success)
@@ -150,6 +156,7 @@ Create Job → Save Job ID → Wait Loop → Poll Status → Check Complete
 ### HTTP Request Configuration
 
 All API calls use:
+
 ```json
 {
   "timeout": 10000-60000,
@@ -166,17 +173,18 @@ All API calls use:
 
 ### Endpoints Used
 
-| Endpoint | Method | Workflow | Purpose |
-|----------|--------|----------|---------|
-| `/content-plans` | POST | plan-generate, content-run-pipeline | Create content plan |
-| `/content-plans/:id` | GET | (testing) | Retrieve plan |
-| `/jobs` | POST | lora-train, content-run-pipeline | Create job |
-| `/jobs/:id` | GET | lora-train, content-run-pipeline | Poll job status |
-| `/jobs/:id` | PATCH | webhook-comfyui | Update job status |
+| Endpoint             | Method | Workflow                            | Purpose             |
+| -------------------- | ------ | ----------------------------------- | ------------------- |
+| `/content-plans`     | POST   | plan-generate, content-run-pipeline | Create content plan |
+| `/content-plans/:id` | GET    | (testing)                           | Retrieve plan       |
+| `/jobs`              | POST   | lora-train, content-run-pipeline    | Create job          |
+| `/jobs/:id`          | GET    | lora-train, content-run-pipeline    | Poll job status     |
+| `/jobs/:id`          | PATCH  | webhook-comfyui                     | Update job status   |
 
 ### Authentication
 
 All API calls use Bearer token:
+
 ```
 Authorization: Bearer {{ $env.API_TOKEN }}
 ```
@@ -188,35 +196,41 @@ Token configured via environment variable in docker-compose.yml.
 ### Test Cases Implemented
 
 ✅ **Content Plan Generator** (4 tests):
+
 - Manual trigger with defaults
 - Custom parameters
 - API unavailable error handling
 - Scheduled execution
 
 ✅ **LoRA Training** (3 tests):
+
 - Job creation and polling
 - Custom parameters
 - Polling timeout
 
 ✅ **Content Pipeline** (4 tests):
+
 - Full pipeline execution
 - Single platform
 - Plan creation failure
 - Scheduled execution
 
 ✅ **Social Publisher** (4 tests):
+
 - Instagram routing
 - TikTok routing
 - YouTube routing
 - Multiple platforms
 
 ✅ **ComfyUI Webhook** (4 tests):
+
 - Success callback
 - Failure callback
 - Invalid payload
 - (Future) Authentication
 
 ✅ **Integration Tests** (2 tests):
+
 - End-to-end workflow
 - Real worker processing
 
@@ -225,12 +239,14 @@ Token configured via environment variable in docker-compose.yml.
 ## Migration from Templates
 
 **Old Templates** (kept for reference):
+
 - `content-plan.template.json`
 - `content-generation.template.json`
 - `lora-training.template.json`
 - `autopost.template.json`
 
 **New Production Workflows** (enhanced):
+
 - `plan-generate.json` (replaces content-plan.template)
 - `lora-train.json` (replaces lora-training.template)
 - `content-run-pipeline.json` (NEW - full pipeline)
@@ -238,6 +254,7 @@ Token configured via environment variable in docker-compose.yml.
 - `webhook-comfyui.json` (NEW - webhook handler)
 
 **Key Improvements**:
+
 - Error handling and retry logic
 - Scheduled triggers
 - Job polling loops
@@ -315,17 +332,20 @@ open http://localhost:5678
 ## Definition of Done (DoD) Compliance
 
 ✅ **1. Export main workflows as JSON files**
+
 - ✅ 5 production workflows in `apps/n8n/workflows/`
 - ✅ All workflows include error handling, retry logic, and logging
 - ✅ Workflows integrate with existing NestJS API endpoints
 
 ✅ **2. Document required variables and credentials**
+
 - ✅ Comprehensive environment variable documentation in README
 - ✅ Configuration examples provided
 - ✅ Docker compose integration documented
 - ✅ Security best practices included
 
 ✅ **3. Create script for automated import**
+
 - ✅ Node.js import script with REST API integration
 - ✅ Shell wrapper for easier usage
 - ✅ NPM scripts configured
@@ -334,6 +354,7 @@ open http://localhost:5678
 - ✅ Detailed error reporting
 
 ✅ **4. Create documentation for manual verification**
+
 - ✅ TESTING.md with 21 test cases
 - ✅ Step-by-step testing instructions
 - ✅ API stub testing examples

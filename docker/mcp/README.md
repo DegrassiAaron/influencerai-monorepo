@@ -108,16 +108,16 @@ claude mcp add memory -- docker run -i \
 
 ### Spiegazione dei Flag di Sicurezza
 
-| Flag | Scopo |
-|------|-------|
-| `--read-only` | Filesystem read-only, previene modifiche |
-| `--tmpfs /tmp:rw,size=64m` | Solo /tmp è scrivibile, limitato a 64MB |
-| `--cap-drop ALL` | Rimuove tutte le Linux capabilities |
-| `--security-opt no-new-privileges` | Impedisce escalation di privilegi |
-| `--pids-limit 128` | Limita il numero di processi |
-| `--memory 512m` | Limita la memoria RAM a 512MB |
-| `--user $(id -u):$(id -g)` | Esegue come utente non-root |
-| `--rm` | Rimuove il container all'uscita |
+| Flag                               | Scopo                                    |
+| ---------------------------------- | ---------------------------------------- |
+| `--read-only`                      | Filesystem read-only, previene modifiche |
+| `--tmpfs /tmp:rw,size=64m`         | Solo /tmp è scrivibile, limitato a 64MB  |
+| `--cap-drop ALL`                   | Rimuove tutte le Linux capabilities      |
+| `--security-opt no-new-privileges` | Impedisce escalation di privilegi        |
+| `--pids-limit 128`                 | Limita il numero di processi             |
+| `--memory 512m`                    | Limita la memoria RAM a 512MB            |
+| `--user $(id -u):$(id -g)`         | Esegue come utente non-root              |
+| `--rm`                             | Rimuove il container all'uscita          |
 
 ## Configurazione Claude Desktop
 
@@ -133,17 +133,28 @@ Aggiungi i server MCP al file di configurazione:
     "github": {
       "command": "docker",
       "args": [
-        "run", "-i", "--rm",
+        "run",
+        "-i",
+        "--rm",
         "--read-only",
-        "--tmpfs", "/tmp:rw,size=64m",
-        "--cap-drop", "ALL",
-        "--security-opt", "no-new-privileges",
-        "--pids-limit", "128",
-        "--memory", "512m",
-        "--user", "1000:1000",
-        "-e", "GITHUB_TOKEN",
-        "-e", "GITHUB_OWNER",
-        "-e", "GITHUB_REPO",
+        "--tmpfs",
+        "/tmp:rw,size=64m",
+        "--cap-drop",
+        "ALL",
+        "--security-opt",
+        "no-new-privileges",
+        "--pids-limit",
+        "128",
+        "--memory",
+        "512m",
+        "--user",
+        "1000:1000",
+        "-e",
+        "GITHUB_TOKEN",
+        "-e",
+        "GITHUB_OWNER",
+        "-e",
+        "GITHUB_REPO",
         "meepleai/mcp-github:latest"
       ],
       "env": {
@@ -155,32 +166,52 @@ Aggiungi i server MCP al file di configurazione:
     "memory": {
       "command": "docker",
       "args": [
-        "run", "-i", "--rm",
+        "run",
+        "-i",
+        "--rm",
         "--read-only",
-        "--tmpfs", "/tmp:rw,size=64m",
-        "--cap-drop", "ALL",
-        "--security-opt", "no-new-privileges",
-        "--pids-limit", "128",
-        "--memory", "512m",
-        "--user", "1000:1000",
-        "-v", "mcp-memory:/data:rw",
+        "--tmpfs",
+        "/tmp:rw,size=64m",
+        "--cap-drop",
+        "ALL",
+        "--security-opt",
+        "no-new-privileges",
+        "--pids-limit",
+        "128",
+        "--memory",
+        "512m",
+        "--user",
+        "1000:1000",
+        "-v",
+        "mcp-memory:/data:rw",
         "meepleai/mcp-memory:latest"
       ]
     },
     "knowledge-graph": {
       "command": "docker",
       "args": [
-        "run", "-i", "--rm",
+        "run",
+        "-i",
+        "--rm",
         "--read-only",
-        "--tmpfs", "/tmp:rw,size=64m",
-        "--cap-drop", "ALL",
-        "--security-opt", "no-new-privileges",
-        "--pids-limit", "128",
-        "--memory", "512m",
-        "--user", "1000:1000",
-        "--network", "mcp-network",
-        "-e", "QDRANT_URL=http://qdrant:6333",
-        "-e", "OPENROUTER_API_KEY",
+        "--tmpfs",
+        "/tmp:rw,size=64m",
+        "--cap-drop",
+        "ALL",
+        "--security-opt",
+        "no-new-privileges",
+        "--pids-limit",
+        "128",
+        "--memory",
+        "512m",
+        "--user",
+        "1000:1000",
+        "--network",
+        "mcp-network",
+        "-e",
+        "QDRANT_URL=http://qdrant:6333",
+        "-e",
+        "OPENROUTER_API_KEY",
         "meepleai/mcp-knowledge-graph:latest"
       ],
       "env": {
@@ -367,10 +398,10 @@ Modifica `docker-compose.yml` per adattare i limiti:
 ```yaml
 services:
   github-project-manager:
-    mem_limit: 512m        # Aumenta se necessario
-    memswap_limit: 512m    # Disabilita swap
-    cpus: '0.5'            # Limita CPU al 50%
-    pids_limit: 128        # Limita processi
+    mem_limit: 512m # Aumenta se necessario
+    memswap_limit: 512m # Disabilita swap
+    cpus: '0.5' # Limita CPU al 50%
+    pids_limit: 128 # Limita processi
 ```
 
 ## Manutenzione

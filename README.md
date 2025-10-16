@@ -29,10 +29,10 @@ Unico costo previsto: **API OpenRouter** per generazione testi.
 
 ## Stack
 
-- **Frontend**: Next.js (App Router), Tailwind, shadcn/ui, TanStack Query.  
-- **Backend**: NestJS (Fastify) + Prisma su Postgres, Zod per DTO, BullMQ su Redis.  
-- **Storage**: MinIO (S3-compat) locale; cartelle “hot” su SSD per dataset/LoRA.  
-- **Orchestrazione**: n8n locale (Docker) → chiama API interne, lancia job (HTTP/queues), riceve webhooks.  
+- **Frontend**: Next.js (App Router), Tailwind, shadcn/ui, TanStack Query.
+- **Backend**: NestJS (Fastify) + Prisma su Postgres, Zod per DTO, BullMQ su Redis.
+- **Storage**: MinIO (S3-compat) locale; cartelle “hot” su SSD per dataset/LoRA.
+- **Orchestrazione**: n8n locale (Docker) → chiama API interne, lancia job (HTTP/queues), riceve webhooks.
 - **AI**: OpenRouter (testo); immagini da Leonardo (manuale), video/immagini locali con ComfyUI; kohya_ss per addestrare LoRA.
 
 ---
@@ -73,7 +73,7 @@ influencerai/
 ## Docker Compose
 
 ```yaml
-version: "3.8"
+version: '3.8'
 services:
   postgres:
     image: postgres:16
@@ -82,11 +82,11 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_DB: influencerai
     volumes: [pg:/var/lib/postgresql/data]
-    ports: ["5432:5432"]
+    ports: ['5432:5432']
 
   redis:
     image: redis:7-alpine
-    ports: ["6379:6379"]
+    ports: ['6379:6379']
 
   minio:
     image: minio/minio:latest
@@ -95,7 +95,7 @@ services:
       MINIO_ROOT_USER: minio
       MINIO_ROOT_PASSWORD: minio12345
     volumes: [minio:/data]
-    ports: ["9000:9000", "9001:9001"]
+    ports: ['9000:9000', '9001:9001']
 
   n8n:
     image: n8nio/n8n:latest
@@ -104,7 +104,7 @@ services:
       - N8N_PROTOCOL=http
       - WEBHOOK_URL=http://localhost:5678/
       - N8N_SECURE_COOKIE=false
-    ports: ["5678:5678"]
+    ports: ['5678:5678']
     volumes:
       - ./apps/n8n:/home/node/.n8n
 
@@ -112,7 +112,7 @@ services:
     build: ./apps/api
     env_file: [.env]
     depends_on: [postgres, redis, minio]
-    ports: ["3001:3001"]
+    ports: ['3001:3001']
 
   worker:
     build: ./apps/worker
@@ -123,7 +123,7 @@ services:
     build: ./apps/web
     env_file: [.env]
     depends_on: [api]
-    ports: ["3000:3000"]
+    ports: ['3000:3000']
 
 volumes:
   pg:
@@ -135,13 +135,13 @@ volumes:
 Per avviare l'intero stack (Postgres, Redis, MinIO, n8n, API, worker, Web UI) con un solo comando dalla root del repo:
 
 - Bash (macOS/Linux/Git Bash):
-  
+
   ```bash
   bash scripts/start-all.sh
   ```
 
 - PowerShell (Windows):
-  
+
   ```powershell
   powershell -ExecutionPolicy Bypass -File scripts/start-all.ps1
   ```
@@ -151,6 +151,7 @@ Il comando richiama `docker compose -f infra/docker-compose.yml`, crea `.env` da
 Le migrazioni Prisma vengono applicate automaticamente al primo avvio tramite il servizio `api-migrate` (vedi `infra/docker-compose.yml`).
 
 Endpoint utili dopo l'avvio:
+
 - Web UI: `http://localhost:3000`
 - API Swagger: `http://localhost:3001/api`
 - n8n: `http://localhost:5678`
@@ -176,7 +177,6 @@ Per stoppare manualmente dalla root: `docker compose -f infra/docker-compose.yml
 - Variabili mancanti: assicurati che `.env` esista nella root (il comando di start lo crea da `.env.example` se presente).
 - Porte occupate: chiudi le app in conflitto o cambia il mapping in `infra/docker-compose.yml`.
 
-
 ---
 
 ## Variabili ambiente (.env)
@@ -184,6 +184,7 @@ Per stoppare manualmente dalla root: `docker compose -f infra/docker-compose.yml
 ### Setup
 
 1. **Crea il file `.env` dalla root del repository**:
+
    ```bash
    cp .env.example .env
    ```
@@ -277,10 +278,10 @@ model Asset {
 
 ## Workflow n8n
 
-- **/plan/generate** → crea ContentPlan con OpenRouter.  
-- **/lora/train** → job di training LoRA con kohya_ss.  
-- **/content/run** → sequenza caption → img (Leonardo o ComfyUI) → video (ComfyUI) → autopost.  
-- **/publish** → invia verso API social.  
+- **/plan/generate** → crea ContentPlan con OpenRouter.
+- **/lora/train** → job di training LoRA con kohya_ss.
+- **/content/run** → sequenza caption → img (Leonardo o ComfyUI) → video (ComfyUI) → autopost.
+- **/publish** → invia verso API social.
 - **/webhook/comfyui** → riceve completamento render.
 
 Tunnel consigliato: **cloudflared** per esporre webhook esterni.
@@ -289,35 +290,35 @@ Tunnel consigliato: **cloudflared** per esporre webhook esterni.
 
 ## Pipeline LoRA
 
-1. Dataset in `data/datasets/<nome>` con immagini + caption.  
-2. Auto-caption (BLIP/CLIP) opzionale.  
-3. Training con kohya_ss.  
-4. Output in `data/loras/NAME`.  
+1. Dataset in `data/datasets/<nome>` con immagini + caption.
+2. Auto-caption (BLIP/CLIP) opzionale.
+3. Training con kohya_ss.
+4. Output in `data/loras/NAME`.
 5. Uso in ComfyUI per generazione coerente.
 
 ---
 
 ## Pipeline video
 
-- ComfyUI con graph AnimateDiff/SVD.  
-- FFmpeg per aspect ratio, sottotitoli, loudness.  
+- ComfyUI con graph AnimateDiff/SVD.
+- FFmpeg per aspect ratio, sottotitoli, loudness.
 - n8n per orchestrazione batch.
 
 ---
 
 ## Autopost
 
-- Instagram/Facebook: Graph API (account Business/Creator).  
-- YouTube Shorts: API upload.  
-- TikTok: limitazioni → fallback export.  
+- Instagram/Facebook: Graph API (account Business/Creator).
+- YouTube Shorts: API upload.
+- TikTok: limitazioni → fallback export.
 - Scheduler: cron n8n + coda autopost.
 
 ---
 
 ## Controllo costi OpenRouter
 
-- Stima token ex-ante.  
-- Cap mensile.  
+- Stima token ex-ante.
+- Cap mensile.
 - Cache risultati.
 
 ---
@@ -346,21 +347,21 @@ pnpm -w install
 
 ## Failure modes
 
-- GPU saturata/VRAM insufficiente → ridurre batch/resolution, code con priorità.  
-- API social cambiano → astrazione con connettori n8n.  
-- Qualità incoerente → versionare StylePack per influencer.  
-- Costi OpenRouter → cap hard + cache.  
+- GPU saturata/VRAM insufficiente → ridurre batch/resolution, code con priorità.
+- API social cambiano → astrazione con connettori n8n.
+- Qualità incoerente → versionare StylePack per influencer.
+- Costi OpenRouter → cap hard + cache.
 - I/O lento → usare SSD NVMe.
 
 ---
 
 ## MVP Sprint 0 (7 giorni)
 
-- Giorno 1–2: scaffold monorepo.  
-- Giorno 3: DB schema + Prisma + Redis + BullMQ.  
-- Giorno 4: wrapper OpenRouter + ContentPlan.  
-- Giorno 5: integrazione Leonardo + Asset manager.  
-- Giorno 6: worker video locale con ComfyUI.  
+- Giorno 1–2: scaffold monorepo.
+- Giorno 3: DB schema + Prisma + Redis + BullMQ.
+- Giorno 4: wrapper OpenRouter + ContentPlan.
+- Giorno 5: integrazione Leonardo + Asset manager.
+- Giorno 6: worker video locale con ComfyUI.
 - Giorno 7: workflow n8n end-to-end.
 
 ## API Endpoints (summary)

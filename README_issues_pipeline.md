@@ -29,7 +29,6 @@ Questo starter consente di:
 - La workflow `.github/workflows/auto-issues.yml`:
   - Esegue `select_top10.py` per generare `backlog/top10.yaml`.
   - Crea su GitHub le 10 issue tramite `create_issues.sh`.
-  
 - La workflow `.github/workflows/sync-backlog-issues.yml` aggiorna anche le issue già esistenti
   sincronizzando il corpo e i label con quanto definito in `backlog/issues.yaml` (crea le label mancanti con colori di default).
 
@@ -70,20 +69,20 @@ Puoi adattare `select_top10.py` per modificare i pesi.
 
 ```yaml
 issues:
-  - code: "API-01"
-    title: "API-01: Titolo azionabile"
+  - code: 'API-01'
+    title: 'API-01: Titolo azionabile'
     body: |-
       ### Contesto
       ...
       ### DoD
       - [ ] test: <asserzione chiudibile>
-    labels: ["area:modulo","type:feat","priority:P1"]
-    assignees: ["utente1"]
-    milestone: "Sprint 42"
-    estimate: "S"           # XS/S/M/L/XL
-    impact: "High"          # High/Medium/Low
-    depends_on: ["..."]     # opzionale (per governance interna, non usato da gh)
-    parent: "EPIC: Nome"    # opzionale
+    labels: ['area:modulo', 'type:feat', 'priority:P1']
+    assignees: ['utente1']
+    milestone: 'Sprint 42'
+    estimate: 'S' # XS/S/M/L/XL
+    impact: 'High' # High/Medium/Low
+    depends_on: ['...'] # opzionale (per governance interna, non usato da gh)
+    parent: 'EPIC: Nome' # opzionale
 ```
 
 ## Sicurezza e limiti
@@ -98,25 +97,25 @@ issues:
 
 ```yaml
 issues:
-  - code: "WEB-01"
-    title: "WEB-01: Fix race condition in /apps/web/hooks/useAuth"
+  - code: 'WEB-01'
+    title: 'WEB-01: Fix race condition in /apps/web/hooks/useAuth'
     body: |
       ### Contesto
       ...
       ### DoD
       - [ ] test: login concurrent prevent dup calls
-    labels: ["area:web","type:bug","priority:P1"]
-    estimate: "S"
-    impact: "High"
+    labels: ['area:web', 'type:bug', 'priority:P1']
+    estimate: 'S'
+    impact: 'High'
 
-  - code: "API-02"
-    title: "API-02: Add zod schema for /auth/login"
+  - code: 'API-02'
+    title: 'API-02: Add zod schema for /auth/login'
     body: |
       ### Contesto
       ...
       ### DoD
       - [ ] test: parse ok/ko
-    labels: ["area:api","type:feat","priority:P2"]
-    estimate: "S"
-    impact: "Medium"
+    labels: ['area:api', 'type:feat', 'priority:P2']
+    estimate: 'S'
+    impact: 'Medium'
 ```

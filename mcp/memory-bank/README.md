@@ -44,15 +44,24 @@ docker run -i --rm \
     "memory": {
       "command": "docker",
       "args": [
-        "run", "-i", "--rm",
+        "run",
+        "-i",
+        "--rm",
         "--read-only",
-        "--tmpfs", "/tmp:rw,size=64m",
-        "--cap-drop", "ALL",
-        "--security-opt", "no-new-privileges",
-        "--pids-limit", "128",
-        "--memory", "512m",
-        "--user", "1000:1000",
-        "-v", "mcp-memory:/data:rw",
+        "--tmpfs",
+        "/tmp:rw,size=64m",
+        "--cap-drop",
+        "ALL",
+        "--security-opt",
+        "no-new-privileges",
+        "--pids-limit",
+        "128",
+        "--memory",
+        "512m",
+        "--user",
+        "1000:1000",
+        "-v",
+        "mcp-memory:/data:rw",
         "meepleai/mcp-memory:latest"
       ]
     }
@@ -63,6 +72,7 @@ docker run -i --rm \
 ## Tools Disponibili
 
 ### `memory_store`
+
 Memorizza informazioni nella banca dati.
 
 ```json
@@ -78,6 +88,7 @@ Memorizza informazioni nella banca dati.
 ```
 
 ### `memory_recall`
+
 Recupera ricordi in base a query semantica.
 
 ```json
@@ -89,6 +100,7 @@ Recupera ricordi in base a query semantica.
 ```
 
 ### `memory_search`
+
 Ricerca full-text nei ricordi.
 
 ```json
@@ -100,6 +112,7 @@ Ricerca full-text nei ricordi.
 ```
 
 ### `memory_forget`
+
 Elimina ricordi specifici.
 
 ```json
@@ -110,9 +123,11 @@ Elimina ricordi specifici.
 ```
 
 ### `memory_export`
+
 Esporta tutti i ricordi in JSON.
 
 ### `memory_import`
+
 Importa ricordi da file JSON.
 
 ## Esempi d'Uso

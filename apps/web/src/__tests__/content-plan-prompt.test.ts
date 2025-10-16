@@ -1,21 +1,21 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from 'vitest';
 
-import { buildContentPlanPrompt } from "../lib/content-plans/prompt";
+import { buildContentPlanPrompt } from '../lib/content-plans/prompt';
 
 const baseInput = {
   persona: {
-    name: "Social Media Manager",
-    audience: "Marketing Team",
-    context: "Gestisce i contenuti per un brand tech",
+    name: 'Social Media Manager',
+    audience: 'Marketing Team',
+    context: 'Gestisce i contenuti per un brand tech',
   },
-  theme: "Lancio prodotto Q1",
-  tone: "Ispirazionale",
-  callToAction: "Scarica la guida completa",
+  theme: 'Lancio prodotto Q1',
+  tone: 'Ispirazionale',
+  callToAction: 'Scarica la guida completa',
   postCount: 3,
 };
 
-describe("buildContentPlanPrompt", () => {
-  it("produces a stable prompt for the content plan generation", () => {
+describe('buildContentPlanPrompt', () => {
+  it('produces a stable prompt for the content plan generation', () => {
     expect(buildContentPlanPrompt(baseInput)).toMatchInlineSnapshot(`
 "Genera un piano editoriale per social media.
 

@@ -1,7 +1,13 @@
 import { afterEach, describe, expect, expectTypeOf, it, vi } from 'vitest';
-import { APIError, fetchWithTimeout, handleResponse, NotFoundError, TooManyRequestsError } from './fetch-utils';
+import {
+  APIError,
+  fetchWithTimeout,
+  handleResponse,
+  NotFoundError,
+  TooManyRequestsError,
+} from './fetch-utils';
 
-type IsAny<T> = 0 extends (1 & T) ? true : false;
+type IsAny<T> = 0 extends 1 & T ? true : false;
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -104,7 +110,10 @@ describe('fetchWithTimeout', () => {
     vi.stubGlobal('fetch', mockFetch);
     const response = await fetchWithTimeout('http://example.com', { method: 'POST' }, 50);
     expect(response).toBe(mockResponse);
-    expect(mockFetch).toHaveBeenCalledWith('http://example.com', expect.objectContaining({ method: 'POST' }));
+    expect(mockFetch).toHaveBeenCalledWith(
+      'http://example.com',
+      expect.objectContaining({ method: 'POST' })
+    );
   });
 
   it('throws APIError on timeout', async () => {
@@ -125,7 +134,9 @@ describe('fetchWithTimeout', () => {
     const failingFetch = vi.fn().mockRejectedValue(networkError);
     vi.stubGlobal('fetch', failingFetch);
 
-    await expect(fetchWithTimeout('http://broken.test', { method: 'DELETE' }, 50)).rejects.toMatchObject({
+    await expect(
+      fetchWithTimeout('http://broken.test', { method: 'DELETE' }, 50)
+    ).rejects.toMatchObject({
       status: 0,
       url: 'http://broken.test',
       method: 'DELETE',

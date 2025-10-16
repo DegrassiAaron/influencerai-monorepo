@@ -56,7 +56,10 @@ describe('MinIO integration (e2e)', () => {
       return;
     }
     const testKey = `e2e/presign-${Date.now()}.bin`;
-    const url = await storage.getPresignedPutUrl({ key: testKey, contentType: 'application/octet-stream' });
+    const url = await storage.getPresignedPutUrl({
+      key: testKey,
+      contentType: 'application/octet-stream',
+    });
     expect(typeof url).toBe('string');
     expect(url).toContain(new URL(endpoint).host);
     // Some S3 providers keep slashes unencoded in path-style URLs

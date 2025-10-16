@@ -124,7 +124,10 @@ describe('video-generation processor', () => {
     const patchCalls: Array<{ id: string; data: Record<string, unknown> }> = [];
     const fetchSpy = vi.fn(async (input: string) => {
       if (input.endsWith('/prompt')) {
-        return createResponse(JSON.stringify({ prompt_id: 'job-err' }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+        return createResponse(JSON.stringify({ prompt_id: 'job-err' }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        });
       }
       if (input.includes('/history/job-err')) {
         return createResponse(

@@ -133,11 +133,19 @@ describe('InfluencerAIClient', () => {
     const result = await client.listDatasets();
 
     expect(result).toEqual(datasets);
-    expect(mockFetch).toHaveBeenCalledWith('http://api.test/datasets', expect.objectContaining({ method: 'GET' }));
+    expect(mockFetch).toHaveBeenCalledWith(
+      'http://api.test/datasets',
+      expect.objectContaining({ method: 'GET' })
+    );
   });
 
   it('creates a dataset and returns upload information', async () => {
-    const payload = { id: 'ds-1', uploadUrl: 'https://upload', key: 'datasets/tenant/ds-1/file.zip', bucket: 'uploads' };
+    const payload = {
+      id: 'ds-1',
+      uploadUrl: 'https://upload',
+      key: 'datasets/tenant/ds-1/file.zip',
+      bucket: 'uploads',
+    };
     const mockResponse = createMockResponse(payload);
     const mockFetch = vi.fn().mockResolvedValue(mockResponse);
     vi.stubGlobal('fetch', mockFetch);
@@ -174,6 +182,9 @@ describe('InfluencerAIClient', () => {
     const result = await client.getContentPlan('plan-1');
 
     expect(result).toEqual(plan);
-    expect(mockFetch).toHaveBeenCalledWith('http://api.test/content-plans/plan-1', expect.objectContaining({ method: 'GET' }));
+    expect(mockFetch).toHaveBeenCalledWith(
+      'http://api.test/content-plans/plan-1',
+      expect.objectContaining({ method: 'GET' })
+    );
   });
 });

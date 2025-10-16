@@ -1,14 +1,14 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { cn } from "@/lib/utils";
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
+import { cn } from '@/lib/utils';
 
-import { mainNav, supportNav } from "./nav-config";
-import { iconMap } from "./icon-map";
+import { mainNav, supportNav } from './nav-config';
+import { iconMap } from './icon-map';
 
 function NavButton({
   href,
@@ -26,21 +26,25 @@ function NavButton({
   const Icon = icon ? iconMap[icon] : undefined;
   return (
     <Button
-      variant={isActive ? "secondary" : "ghost"}
+      variant={isActive ? 'secondary' : 'ghost'}
       asChild
       className={cn(
-        "h-auto w-full justify-start gap-3 px-3 py-2 text-left font-medium",
-        isActive && "bg-brand-50 text-brand-700 hover:bg-brand-100",
+        'h-auto w-full justify-start gap-3 px-3 py-2 text-left font-medium',
+        isActive && 'bg-brand-50 text-brand-700 hover:bg-brand-100'
       )}
     >
       <Link href={href}>
         <div className="flex items-center gap-3">
           {Icon ? (
-            <Icon className={cn("h-4 w-4", isActive ? "text-brand-600" : "text-muted-foreground")} />
+            <Icon
+              className={cn('h-4 w-4', isActive ? 'text-brand-600' : 'text-muted-foreground')}
+            />
           ) : null}
           <div className="flex flex-col">
             <span>{label}</span>
-            {description ? <span className="text-xs font-normal text-muted-foreground">{description}</span> : null}
+            {description ? (
+              <span className="text-xs font-normal text-muted-foreground">{description}</span>
+            ) : null}
           </div>
         </div>
       </Link>
@@ -101,7 +105,8 @@ export function AppSidebar() {
       <div className="mt-auto rounded-lg border border-dashed border-border/60 bg-muted/50 p-4 text-xs text-muted-foreground">
         <p className="font-medium text-foreground">Suggerimento</p>
         <p className="mt-2">
-          Organizza i workflow del team direttamente dalla dashboard: crea viste salvate per campagne, personaggi e sprint.
+          Organizza i workflow del team direttamente dalla dashboard: crea viste salvate per
+          campagne, personaggi e sprint.
         </p>
       </div>
     </aside>

@@ -7,11 +7,11 @@ export default defineConfig({
     include: ['specs/**/*.spec.ts'],
     threads: false,
     testTimeout: 60000,
-    hookTimeout: 60000
+    hookTimeout: 60000,
   },
   browser: {
     enabled: false,
     headless: true,
-    screenshotFailures: false
-  }
+    screenshotFailures: false,
+  },
 });

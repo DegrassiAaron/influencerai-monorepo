@@ -1,4 +1,4 @@
-type ApiRequestInit = Omit<globalThis.RequestInit, "body"> & { body?: globalThis.BodyInit | null };
+type ApiRequestInit = Omit<globalThis.RequestInit, 'body'> & { body?: globalThis.BodyInit | null };
 
 const DEFAULT_TIMEOUT_MS = 30_000;
 
@@ -7,7 +7,7 @@ export class ApiError extends Error {
 
   constructor(message: string, status?: number) {
     super(message);
-    this.name = "ApiError";
+    this.name = 'ApiError';
     this.status = status;
   }
 }
@@ -15,18 +15,18 @@ export class ApiError extends Error {
 function getApiBaseUrl(): string {
   const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
   if (!baseUrl) {
-    throw new ApiError("Missing NEXT_PUBLIC_API_BASE_URL environment variable");
+    throw new ApiError('Missing NEXT_PUBLIC_API_BASE_URL environment variable');
   }
   return baseUrl;
 }
 
 async function readErrorMessage(response: Response): Promise<string> {
-  const contentType = response.headers.get("content-type") ?? "";
+  const contentType = response.headers.get('content-type') ?? '';
 
-  if (contentType.includes("application/json")) {
+  if (contentType.includes('application/json')) {
     try {
       const payload = (await response.json()) as { message?: string };
-      if (payload && typeof payload.message === "string") {
+      if (payload && typeof payload.message === 'string') {
         return payload.message;
       }
     } catch {
@@ -52,7 +52,7 @@ async function apiRequest<TResponse>(path: string, init: ApiRequestInit = {}): P
 
   try {
     const response = await fetch(`${getApiBaseUrl()}${path}`, {
-      cache: "no-store",
+      cache: 'no-store',
       ...init,
       signal: init.signal ?? controller.signal,
     });
@@ -65,15 +65,15 @@ async function apiRequest<TResponse>(path: string, init: ApiRequestInit = {}): P
       return undefined as TResponse;
     }
 
-    const contentType = response.headers.get("content-type") ?? "";
-    if (contentType.includes("application/json")) {
+    const contentType = response.headers.get('content-type') ?? '';
+    if (contentType.includes('application/json')) {
       return (await response.json()) as TResponse;
     }
 
     return undefined as TResponse;
   } catch (error) {
-    if (error instanceof DOMException && error.name === "AbortError") {
-      throw new ApiError("Request timed out", 408);
+    if (error instanceof DOMException && error.name === 'AbortError') {
+      throw new ApiError('Request timed out', 408);
     }
     throw error;
   } finally {
@@ -82,22 +82,22 @@ async function apiRequest<TResponse>(path: string, init: ApiRequestInit = {}): P
 }
 
 export function apiGet<TResponse>(path: string, init?: ApiRequestInit): Promise<TResponse> {
-  return apiRequest<TResponse>(path, { method: "GET", ...init });
+  return apiRequest<TResponse>(path, { method: 'GET', ...init });
 }
 
 export function apiPost<TBody, TResponse>(
   path: string,
   body: TBody,
-  init?: ApiRequestInit,
+  init?: ApiRequestInit
 ): Promise<TResponse> {
   const headers = new Headers(init?.headers ?? {});
-  if (!headers.has("Content-Type")) {
-    headers.set("Content-Type", "application/json");
+  if (!headers.has('Content-Type')) {
+    headers.set('Content-Type', 'application/json');
   }
 
   return apiRequest<TResponse>(path, {
     ...init,
-    method: "POST",
+    method: 'POST',
     headers,
     body: JSON.stringify(body),
   });
@@ -106,16 +106,16 @@ export function apiPost<TBody, TResponse>(
 export function apiPatch<TBody, TResponse>(
   path: string,
   body: TBody,
-  init?: ApiRequestInit,
+  init?: ApiRequestInit
 ): Promise<TResponse> {
   const headers = new Headers(init?.headers ?? {});
-  if (!headers.has("Content-Type")) {
-    headers.set("Content-Type", "application/json");
+  if (!headers.has('Content-Type')) {
+    headers.set('Content-Type', 'application/json');
   }
 
   return apiRequest<TResponse>(path, {
     ...init,
-    method: "PATCH",
+    method: 'PATCH',
     headers,
     body: JSON.stringify(body),
   });

@@ -58,6 +58,7 @@ powershell -ExecutionPolicy Bypass -File scripts/start-all.ps1
 Il comando costruisce e avvia tramite `infra/docker-compose.yml` i servizi: Postgres, Redis, MinIO, n8n, API, worker e Web UI. Se `.env` non esiste, viene creato a partire da `.env.example`.
 
 Endpoint utili dopo l’avvio:
+
 - Web UI: `http://localhost:3000`
 - API Swagger: `http://localhost:3001/api`
 - n8n: `http://localhost:5678`
@@ -129,4 +130,3 @@ docker compose down         # stop
 - ComfyUI installato localmente per pipeline immagini/video.
 - FFmpeg nel PATH per elaborazioni video/audio.
 - GPU con driver aggiornati; se VRAM è limitata, riduci risoluzione/batch.
-

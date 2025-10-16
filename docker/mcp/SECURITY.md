@@ -20,12 +20,13 @@ I server MCP implementano molteplici livelli di sicurezza:
 #### Filesystem Security
 
 ```yaml
-read_only: true              # Filesystem read-only
+read_only: true # Filesystem read-only
 tmpfs:
-  - /tmp:rw,size=64m,mode=1777  # Solo /tmp scrivibile, limitato
+  - /tmp:rw,size=64m,mode=1777 # Solo /tmp scrivibile, limitato
 ```
 
 **Benefici**:
+
 - Previene modifiche al codice runtime
 - Impedisce download di malware
 - Limita superficie d'attacco
@@ -34,12 +35,13 @@ tmpfs:
 
 ```yaml
 cap_drop:
-  - ALL                      # Rimuove tutte le capabilities
+  - ALL # Rimuove tutte le capabilities
 security_opt:
-  - no-new-privileges:true   # Impedisce escalation
+  - no-new-privileges:true # Impedisce escalation
 ```
 
 **Capabilities rimosse**:
+
 - `CAP_NET_RAW`: Previene packet sniffing
 - `CAP_SYS_ADMIN`: Previene operazioni amministrative
 - `CAP_SETUID/SETGID`: Previene cambio UID/GID
@@ -47,13 +49,14 @@ security_opt:
 #### Resource Limits
 
 ```yaml
-pids_limit: 128              # Max 128 processi
-mem_limit: 512m              # Max 512MB RAM
-memswap_limit: 512m          # Disabilita swap
-cpus: '0.5'                  # Max 50% CPU
+pids_limit: 128 # Max 128 processi
+mem_limit: 512m # Max 512MB RAM
+memswap_limit: 512m # Disabilita swap
+cpus: '0.5' # Max 50% CPU
 ```
 
 **Protezioni**:
+
 - Fork bombs prevention (pids_limit)
 - Memory exhaustion prevention
 - CPU starvation prevention
@@ -61,10 +64,11 @@ cpus: '0.5'                  # Max 50% CPU
 #### User Security
 
 ```yaml
-user: "1000:1000"            # Non-root user
+user: '1000:1000' # Non-root user
 ```
 
 **Benefici**:
+
 - Limita danni in caso di compromissione
 - Previene accesso a file sensibili dell'host
 - Limita operazioni privilegiate
@@ -119,7 +123,7 @@ user: "1000:1000"            # Non-root user
 
 ```yaml
 environment:
-  - GITHUB_TOKEN=ghp_hardcoded_token_here  # WRONG!
+  - GITHUB_TOKEN=ghp_hardcoded_token_here # WRONG!
 ```
 
 ```dockerfile
@@ -138,6 +142,7 @@ GITHUB_TOKEN=ghp_actual_token_here
 ```
 
 **Produzione**:
+
 ```bash
 # Use Docker secrets
 docker secret create github_token /path/to/token
@@ -152,10 +157,10 @@ docker service create --secret github_token ...
 networks:
   mcp-network:
     driver: bridge
-    internal: true  # No internet access
+    internal: true # No internet access
 
   external-network:
-    driver: bridge  # With internet
+    driver: bridge # With internet
 ```
 
 #### Firewall Rules
@@ -223,6 +228,7 @@ profile docker-mcp flags=(attach_disconnected,mediate_deleted) {
 ```
 
 Applica:
+
 ```yaml
 security_opt:
   - apparmor=docker-mcp
@@ -244,6 +250,7 @@ security_opt:
 ```
 
 Applica:
+
 ```yaml
 security_opt:
   - seccomp=/path/to/profile.json
@@ -255,11 +262,11 @@ security_opt:
 
 ```yaml
 logging:
-  driver: "json-file"
+  driver: 'json-file'
   options:
-    max-size: "10m"
-    max-file: "3"
-    labels: "mcp.service,mcp.type"
+    max-size: '10m'
+    max-file: '3'
+    labels: 'mcp.service,mcp.type'
 ```
 
 #### Audit Events
@@ -319,11 +326,13 @@ docker run -d \
 ### Container Compromesso
 
 1. **Isola immediatamente**
+
    ```bash
    docker network disconnect mcp-network mcp-compromised
    ```
 
 2. **Cattura stato**
+
    ```bash
    docker inspect mcp-compromised > compromise-state.json
    docker logs mcp-compromised > compromise-logs.txt
@@ -331,6 +340,7 @@ docker run -d \
    ```
 
 3. **Termina container**
+
    ```bash
    docker stop mcp-compromised
    docker rm mcp-compromised
@@ -356,6 +366,7 @@ docker run -d \
 2. **Genera nuova chiave**
 
 3. **Aggiorna configurazione**
+
    ```bash
    # Update .env
    nano .env

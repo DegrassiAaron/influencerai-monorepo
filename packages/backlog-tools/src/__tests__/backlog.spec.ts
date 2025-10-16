@@ -25,13 +25,13 @@ describe('parseBacklog', () => {
         code: 'TEST-01',
         title: 'TEST-01: Example',
         dodComplete: true,
-        labels: ['priority:P1']
+        labels: ['priority:P1'],
       })
     );
     expect(issues[1]).toEqual(
       expect.objectContaining({
         code: 'TEST-02',
-        dodComplete: false
+        dodComplete: false,
       })
     );
   });

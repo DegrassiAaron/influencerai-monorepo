@@ -30,7 +30,7 @@ const server = setupServer(
         payload: { foo: 'bar' },
         createdAt: new Date().toISOString(),
       },
-    ]),
+    ])
   ),
   http.get(`${API_BASE_URL}/jobs/:jobId`, ({ params }) =>
     HttpResponse.json({
@@ -39,7 +39,7 @@ const server = setupServer(
       type: 'content-generation',
       payload: { foo: 'bar' },
       createdAt: new Date().toISOString(),
-    }),
+    })
   ),
   http.post(`${API_BASE_URL}/jobs`, async ({ request }) => {
     const body = (await request.json()) as Record<string, unknown>;
@@ -65,7 +65,7 @@ const server = setupServer(
     });
   }),
   http.get(`${API_BASE_URL}/queues/summary`, () =>
-    HttpResponse.json({ active: 2, waiting: 5, failed: 1 }),
+    HttpResponse.json({ active: 2, waiting: 5, failed: 1 })
   ),
   http.get(`${API_BASE_URL}/datasets`, () =>
     HttpResponse.json([
@@ -77,7 +77,7 @@ const server = setupServer(
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       },
-    ]),
+    ])
   ),
   http.post(`${API_BASE_URL}/datasets`, async ({ request }) => {
     const body = (await request.json()) as Record<string, unknown>;
@@ -103,8 +103,8 @@ const server = setupServer(
         ],
         createdAt: new Date().toISOString(),
       },
-    }),
-  ),
+    })
+  )
 );
 
 function createTestQueryClient() {
@@ -167,11 +167,11 @@ describe('React Query hooks', () => {
 
     await waitFor(() =>
       expect(invalidateSpy).toHaveBeenCalledWith(
-        expect.objectContaining({ queryKey: influencerAIQueryKeys.jobs.root }),
-      ),
+        expect.objectContaining({ queryKey: influencerAIQueryKeys.jobs.root })
+      )
     );
     expect(invalidateSpy).toHaveBeenCalledWith(
-      expect.objectContaining({ queryKey: influencerAIQueryKeys.queues.root }),
+      expect.objectContaining({ queryKey: influencerAIQueryKeys.queues.root })
     );
 
     expect(mutation.result.current.data?.id).toBe('job-created');
@@ -196,18 +196,18 @@ describe('React Query hooks', () => {
 
     await waitFor(() =>
       expect(invalidateSpy).toHaveBeenCalledWith(
-        expect.objectContaining({ queryKey: influencerAIQueryKeys.jobs.root }),
-      ),
+        expect.objectContaining({ queryKey: influencerAIQueryKeys.jobs.root })
+      )
     );
     expect(invalidateSpy).toHaveBeenCalledWith(
-      expect.objectContaining({ queryKey: influencerAIQueryKeys.jobs.detail('job-1') }),
+      expect.objectContaining({ queryKey: influencerAIQueryKeys.jobs.detail('job-1') })
     );
 
     expect(onSuccess).toHaveBeenCalledWith(
       expect.objectContaining({ id: 'job-1', status: 'succeeded', costTok: 123 }),
       { id: 'job-1', update: { status: 'succeeded', result: { outcome: 'ok' }, costTok: 123 } },
       undefined,
-      expect.objectContaining({ meta: undefined }),
+      expect.objectContaining({ meta: undefined })
     );
 
     expect(mutation.result.current.data?.status).toBe('succeeded');
@@ -247,8 +247,8 @@ describe('React Query hooks', () => {
 
     await waitFor(() =>
       expect(invalidateSpy).toHaveBeenCalledWith(
-        expect.objectContaining({ queryKey: influencerAIQueryKeys.datasets.root }),
-      ),
+        expect.objectContaining({ queryKey: influencerAIQueryKeys.datasets.root })
+      )
     );
     expect(mutation.result.current.data?.id).toBe('dataset-created');
 

@@ -86,7 +86,7 @@ describe('createComfyClient', () => {
 
     expect(fetchMock).toHaveBeenCalledTimes(4);
     const assetRequestUrl = fetchMock.mock.calls.at(-1)?.[0] as string | undefined;
-    expect(assetRequestUrl).toContain("/view?filename=result.mp4");
+    expect(assetRequestUrl).toContain('/view?filename=result.mp4');
     const promptRequest = requestBodies[0] as any;
     expect(promptRequest.client_id).toBe('worker');
     expect(promptRequest.prompt.inputs).toMatchObject({

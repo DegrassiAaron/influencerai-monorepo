@@ -6,7 +6,10 @@ declare module '@influencerai/sdk' {
 
   export class InfluencerAIClient {
     constructor(baseUrl?: string);
-    updateJob(id: string, update: { status?: string; result?: unknown; costTok?: number }): Promise<void>;
+    updateJob(
+      id: string,
+      update: { status?: string; result?: unknown; costTok?: number }
+    ): Promise<void>;
     createJob(spec: unknown): Promise<JobResponse>;
   }
 }

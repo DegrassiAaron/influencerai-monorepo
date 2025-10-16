@@ -13,8 +13,13 @@ describe('ContentPlansService', () => {
 
   beforeEach(() => {
     // Configure prisma mocks
-    prismaMock.influencer.findUnique.mockImplementation(async ({ where: { id } }: any) => (id === 'inf_1' ? { id, tenantId: 'ten_1', persona: { name: 'A' } } : null));
-    prismaMock.job.create.mockImplementation(async ({ data }: any) => ({ id: 'job_cp_1', ...data }));
+    prismaMock.influencer.findUnique.mockImplementation(async ({ where: { id } }: any) =>
+      id === 'inf_1' ? { id, tenantId: 'ten_1', persona: { name: 'A' } } : null
+    );
+    prismaMock.job.create.mockImplementation(async ({ data }: any) => ({
+      id: 'job_cp_1',
+      ...data,
+    }));
     configValues = {
       ...validateEnv({
         DATABASE_URL: 'postgresql://user:pass@localhost:5432/db',
@@ -33,7 +38,11 @@ describe('ContentPlansService', () => {
       ok: true,
       status: 200,
       headers: { get: () => null },
-      json: async () => ({ choices: [{ message: { content: JSON.stringify([{ caption: 'post1', hashtags: ['x'] }]) } }] }),
+      json: async () => ({
+        choices: [
+          { message: { content: JSON.stringify([{ caption: 'post1', hashtags: ['x'] }]) } },
+        ],
+      }),
     })) as any;
   });
 
@@ -62,7 +71,9 @@ describe('ContentPlansService', () => {
         ok: true,
         status: 200,
         headers: { get: () => null },
-        json: async () => ({ choices: [{ message: { content: JSON.stringify([{ caption: 'ok', hashtags: ['h'] }]) } }] }),
+        json: async () => ({
+          choices: [{ message: { content: JSON.stringify([{ caption: 'ok', hashtags: ['h'] }]) } }],
+        }),
       }));
 
     const svc = new ContentPlansService(prismaMock, config);
@@ -97,7 +108,11 @@ describe('ContentPlansService', () => {
         ok: true,
         status: 200,
         headers: { get: () => null },
-        json: async () => ({ choices: [{ message: { content: JSON.stringify([{ caption: 'ok2', hashtags: ['h2'] }]) } }] }),
+        json: async () => ({
+          choices: [
+            { message: { content: JSON.stringify([{ caption: 'ok2', hashtags: ['h2'] }]) } },
+          ],
+        }),
       }));
     const svc = new ContentPlansService(prismaMock, config);
     const posts = await svc.generatePlanPosts('{}', 't');
@@ -115,15 +130,13 @@ describe('ContentPlansService', () => {
 
     const svc = new ContentPlansService(prismaMock, config);
     expect.assertions(2);
-    await svc
-      .generatePlanPosts('{}', 't')
-      .catch((err) => {
-        expect(err).toBeInstanceOf(HTTPError);
-        expect(err).toMatchObject({
-          status: 503,
-          message: 'OpenRouter request network error',
-          body: { name: 'Error', message: 'ECONNRESET', code: 'ECONNRESET' },
-        });
+    await svc.generatePlanPosts('{}', 't').catch((err) => {
+      expect(err).toBeInstanceOf(HTTPError);
+      expect(err).toMatchObject({
+        status: 503,
+        message: 'OpenRouter request network error',
+        body: { name: 'Error', message: 'ECONNRESET', code: 'ECONNRESET' },
       });
+    });
   });
 });

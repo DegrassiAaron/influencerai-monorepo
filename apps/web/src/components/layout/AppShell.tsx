@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import type { ReactNode } from "react";
+import type { ReactNode } from 'react';
 
-import { AppBreadcrumbs } from "./app-breadcrumbs";
-import { AppHeader } from "./app-header";
-import { AppSidebar } from "./app-sidebar";
+import { AppBreadcrumbs } from './app-breadcrumbs';
+import { AppHeader } from './app-header';
+import { AppSidebar } from './app-sidebar';
 
 type AppShellProps = {
   children: ReactNode;

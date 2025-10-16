@@ -1,9 +1,4 @@
-import type {
-  BacklogIssue,
-  GithubGateway,
-  GithubIssueReference,
-  SyncResult
-} from './types.js';
+import type { BacklogIssue, GithubGateway, GithubIssueReference, SyncResult } from './types.js';
 
 interface SyncOptions {
   readonly issues: readonly BacklogIssue[];
@@ -44,7 +39,7 @@ export async function syncBacklog(options: SyncOptions): Promise<SyncResult> {
   return {
     updated,
     unchanged,
-    missing
+    missing,
   };
 }
 

@@ -17,4 +17,3 @@ export function setRequestContext(ctx: Ctx) {
 export function getRequestContext(): Ctx {
   return requestContext.getStore() || {};
 }
-

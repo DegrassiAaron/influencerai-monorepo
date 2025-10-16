@@ -1,7 +1,7 @@
 ---
 name: Feature
 about: Richiesta o miglioramento
-labels: ["type: feature","status: todo","priority: P2"]
+labels: ['type: feature', 'status: todo', 'priority: P2']
 ---
 
 ## Contesto
@@ -9,6 +9,7 @@ labels: ["type: feature","status: todo","priority: P2"]
 ## Obiettivo (Given/When/Then)
 
 ## DoD
+
 - [ ] Lint/format ok
 - [ ] Test locali passano
 - [ ] E2E/UX aggiornati (se serve)

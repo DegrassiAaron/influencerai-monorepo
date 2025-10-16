@@ -1,16 +1,16 @@
-"use client";
+'use client';
 
-import { usePathname } from "next/navigation";
-import { Bell, Menu } from "lucide-react";
+import { usePathname } from 'next/navigation';
+import { Bell, Menu } from 'lucide-react';
 
-import { ThemeToggle } from "@/components/theme-toggle";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
+import { ThemeToggle } from '@/components/theme-toggle';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
 
-import { mainNav, supportNav } from "./nav-config";
-import { iconMap } from "./icon-map";
-import { MobileNavigation } from "./mobile-navigation";
+import { mainNav, supportNav } from './nav-config';
+import { iconMap } from './icon-map';
+import { MobileNavigation } from './mobile-navigation';
 
 export function AppHeader() {
   const pathname = usePathname();

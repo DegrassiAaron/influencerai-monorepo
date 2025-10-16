@@ -62,7 +62,7 @@ export class GithubClient implements GithubGateway {
       state: issue.state,
       body: issue.body ?? '',
       labels,
-      htmlUrl: issue.html_url
+      htmlUrl: issue.html_url,
     };
   }
 
@@ -102,11 +102,13 @@ export class GithubClient implements GithubGateway {
 
     const response = await this.request(`/repos/${this.owner}/${this.repo}/issues/${issueNumber}`, {
       method: 'PATCH',
-      body: JSON.stringify(payload)
+      body: JSON.stringify(payload),
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to update issue #${issueNumber}: ${response.status} ${await response.text()}`);
+      throw new Error(
+        `Failed to update issue #${issueNumber}: ${response.status} ${await response.text()}`
+      );
     }
   }
 
@@ -131,7 +133,9 @@ export class GithubClient implements GithubGateway {
     );
 
     if (!issueResponse.ok) {
-      throw new Error(`Failed to load issue #${match.number}: ${issueResponse.status} ${await issueResponse.text()}`);
+      throw new Error(
+        `Failed to load issue #${match.number}: ${issueResponse.status} ${await issueResponse.text()}`
+      );
     }
 
     return (await issueResponse.json()) as GithubIssueResponse;
@@ -174,16 +178,18 @@ export class GithubClient implements GithubGateway {
   private async createLabel(name: string): Promise<void> {
     const payload = {
       name,
-      color: this.defaultLabelColor
+      color: this.defaultLabelColor,
     };
 
     const response = await this.request(`/repos/${this.owner}/${this.repo}/labels`, {
       method: 'POST',
-      body: JSON.stringify(payload)
+      body: JSON.stringify(payload),
     });
 
     if (!response.ok && response.status !== 422) {
-      throw new Error(`Failed to create label ${name}: ${response.status} ${await response.text()}`);
+      throw new Error(
+        `Failed to create label ${name}: ${response.status} ${await response.text()}`
+      );
     }
   }
 
@@ -191,7 +197,7 @@ export class GithubClient implements GithubGateway {
     const headers: Record<string, string> = {
       Accept: 'application/vnd.github+json',
       'Content-Type': 'application/json',
-      'User-Agent': 'influencerai-backlog-tools'
+      'User-Agent': 'influencerai-backlog-tools',
     };
 
     if (this.token) {
@@ -202,8 +208,8 @@ export class GithubClient implements GithubGateway {
       ...init,
       headers: {
         ...headers,
-        ...(init?.headers ?? {})
-      }
+        ...(init?.headers ?? {}),
+      },
     });
 
     return response;

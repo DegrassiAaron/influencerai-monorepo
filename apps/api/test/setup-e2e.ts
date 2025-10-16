@@ -1,4 +1,10 @@
-import { loadE2eEnv, hasDbResetCompleted, markDbResetCompleted, resetTestDb, shouldSkipDbReset } from './utils/reset-db';
+import {
+  loadE2eEnv,
+  hasDbResetCompleted,
+  markDbResetCompleted,
+  resetTestDb,
+  shouldSkipDbReset,
+} from './utils/reset-db';
 
 // Default e2e environment knobs
 // - Disable BullMQ queues unless a test explicitly enables them
@@ -11,7 +17,8 @@ if (!process.env.DISABLE_BULL) {
 loadE2eEnv();
 
 if (!process.env.DATABASE_URL) {
-  process.env.DATABASE_URL = 'postgresql://postgres:postgres@localhost:5432/influencerai?schema=public';
+  process.env.DATABASE_URL =
+    'postgresql://postgres:postgres@localhost:5432/influencerai?schema=public';
 }
 
 // Avoid triggering DB resets multiple times when Jest spins up several workers.
@@ -48,8 +55,8 @@ const customSetTimeout = ((handler: TimeoutHandler, timeout?: TimeoutMs, ...args
   return t;
 }) as typeof setTimeout;
 
-(
-  customSetTimeout as typeof setTimeout & { __promisify__?: unknown }
-).__promisify__ = (_setTimeout as typeof setTimeout & { __promisify__?: unknown }).__promisify__;
+(customSetTimeout as typeof setTimeout & { __promisify__?: unknown }).__promisify__ = (
+  _setTimeout as typeof setTimeout & { __promisify__?: unknown }
+).__promisify__;
 
 (global as unknown as { setTimeout: typeof setTimeout }).setTimeout = customSetTimeout;

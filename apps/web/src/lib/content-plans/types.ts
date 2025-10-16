@@ -1,4 +1,4 @@
-export type ContentPlanStatus = "DRAFT" | "APPROVED" | "REJECTED";
+export type ContentPlanStatus = 'DRAFT' | 'APPROVED' | 'REJECTED';
 
 export type ContentPlanPersona = {
   name: string;
@@ -17,7 +17,7 @@ export type ContentPlanPost = {
 export type ContentPlan = {
   id: string;
   status: ContentPlanStatus;
-  persona: Pick<ContentPlanPersona, "name" | "audience">;
+  persona: Pick<ContentPlanPersona, 'name' | 'audience'>;
   prompt: string;
   posts: ContentPlanPost[];
 };
@@ -32,5 +32,5 @@ export type ContentPlanGenerateInput = {
 
 export type UpdateContentPlanStatusInput = {
   planId: string;
-  status: Exclude<ContentPlanStatus, "DRAFT">;
+  status: Exclude<ContentPlanStatus, 'DRAFT'>;
 };

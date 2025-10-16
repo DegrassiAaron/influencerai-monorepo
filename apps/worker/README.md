@@ -3,6 +3,7 @@ Worker (BullMQ)
 - Purpose: process queues `content-generation`, `video-generation` and `lora-training` and sync job status to the API.
 
 Env variables
+
 - `API_BASE_URL` or `WORKER_API_URL`: base URL of API (default `http://localhost:3001`).
 - `REDIS_HOST` (default `localhost`), `REDIS_PORT` (default `6379`).
 - `BULL_PREFIX`: optional Redis key prefix to isolate queues per env/test.
@@ -31,6 +32,7 @@ Env variables
 - `ALERT_FAILURE_THRESHOLD`: number of consecutive failures before triggering the webhook (default `3`).
 
 Behavior
+
 - On job start: PATCH `/jobs/:id` with `status=running`.
 - On success: PATCH with `status=succeeded` and a result payload.
 - On failure: PATCH with `status=failed` and error info.
@@ -38,12 +40,12 @@ Behavior
 - Video jobs submit prompts to ComfyUI, poll `/history/:promptId`, post-process the output with FFmpeg and upload the final MP4 to MinIO (signed URLs are attached to the job result).
 
 Run locally
+
 - Ensure Redis is running.
 - Build SDK if not built: `pnpm --filter @influencerai/sdk build`.
 - Dev: `pnpm --filter @influencerai/worker dev`.
 
-Monitoring & metrics
---------------------
+## Monitoring & metrics
 
 - The worker exposes Bull Board and a Prometheus `/metrics` endpoint on `http://<BULL_BOARD_HOST>:<BULL_BOARD_PORT>`.
 - Configure basic auth by setting `BULL_BOARD_USER` and `BULL_BOARD_PASSWORD`.
@@ -51,14 +53,14 @@ Monitoring & metrics
 - Set `ALERT_WEBHOOK_URL` (e.g. an n8n or Slack webhook) to receive JSON payloads when `ALERT_FAILURE_THRESHOLD` consecutive failures occur on a queue.
 
 Manual test with ComfyUI
+
 1. Export the ComfyUI workflow graph you want to use and serialize it as JSON. Set the env var `COMFYUI_VIDEO_WORKFLOW_JSON` with that JSON string (or tailor the processor to inject node inputs downstream).
 2. Start ComfyUI with the REST server enabled (default `http://127.0.0.1:8188`).
 3. Run `pnpm --filter @influencerai/worker dev` and enqueue a `video-generation` job via the API (payload requires `caption`, `script`, optional persona/context/duration).
 4. The worker logs the ComfyUI prompt id, polls until completion, then runs FFmpeg with the configured aspect ratio/audio filter.
 5. Verify the processed video is uploaded to MinIO under `video-generation/<jobId>/final.mp4` and that the signed URL appears in the job result.
 
-Manual test for LoRA training
------------------------------
+## Manual test for LoRA training
 
 1. Prepare a minimal dataset directory with a couple of sample images and note its absolute path.
 2. Configure the worker with `LORA_TRAINING_DRY_RUN=1` (or enqueue a job with `{ dryRun: true }`) to validate the command without executing kohya_ss.
@@ -66,8 +68,7 @@ Manual test for LoRA training
 4. Tail the worker logs: you should see the rendered kohya_ss command preview together with throttled progress updates.
 5. Inspect the job via the API: the result payload includes the command preview, the resolved output directory and the streamed log excerpts, confirming the orchestration is wired correctly.
 
-Monitoring & alerting
----------------------
+## Monitoring & alerting
 
 - Provide `WORKER_BULL_BOARD_USER` and `WORKER_BULL_BOARD_PASSWORD` to start the embedded monitoring server automatically.
 - The Bull Board UI is available at `http://<WORKER_MONITOR_HOST>:<WORKER_MONITOR_PORT>/bull-board` and requires HTTP basic auth.

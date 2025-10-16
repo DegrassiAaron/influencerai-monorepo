@@ -1,6 +1,5 @@
 ﻿# API (NestJS) — Prisma e Migrazioni
 
- 
 - Schema Prisma: `apps/api/prisma/schema.prisma`
 - Client: `@prisma/client` (generato da `prisma generate`)
 
@@ -17,25 +16,25 @@ Richiede `DATABASE_URL` configurata (in `apps/api/.env` o nella root `.env`).
 
 La configurazione viene validata all'avvio tramite Zod. In assenza delle variabili richieste (`DATABASE_URL`, `OPENROUTER_API_KEY` fuori dai test, credenziali S3) il bootstrap fallisce immediatamente.
 
-| Variabile | Default | Descrizione |
-| --- | --- | --- |
-| `DATABASE_URL` | – (obbligatoria) | Connessione PostgreSQL usata da Prisma. |
-| `OPENROUTER_API_KEY` | `''` | Necessaria per generare i content plan (non richiesta nei test). |
-| `PORT` | `3001` | Porta HTTP dell'API. |
-| `NODE_ENV` | `development` | Influenza log e flag automatici. |
-| `LOG_LEVEL` | `debug` (`info` in produzione) | Livello log Pino. |
-| `LOGGER_PRETTY` | `true` se non in produzione | Abilita output leggibile in locale. |
-| `REDIS_URL` | `redis://localhost:6379` | Connessione BullMQ/health check. |
-| `BULL_PREFIX` | `bull` | Prefisso code BullMQ. |
-| `DISABLE_BULL` | `false` (coerce `1/true` → `true`) | Se impostato disattiva Bull e usa stub in memoria. |
-| `WORKER_JOB_ATTEMPTS` | `3` | Tentativi di retry per i job enqueued. |
-| `WORKER_JOB_BACKOFF_DELAY_MS` | `5000` | Delay base (ms) per backoff esponenziale. |
-| `S3_ENDPOINT` | `http://localhost:9000` | Endpoint MinIO/S3. |
-| `S3_KEY` / `S3_SECRET` | `minio` / `minio12345` | Credenziali MinIO di sviluppo. |
-| `S3_BUCKET` | `assets` | Bucket usato per gli upload. |
-| `AWS_REGION` | `us-east-1` | Regione client S3. |
-| `SKIP_S3_INIT` | `false` | Salta il check/creazione bucket (utile in CI). |
-| `JWT_SECRET` | `dev_jwt_secret_change_me` | Secret per i token firmati dall'API. |
+| Variabile                     | Default                            | Descrizione                                                      |
+| ----------------------------- | ---------------------------------- | ---------------------------------------------------------------- |
+| `DATABASE_URL`                | – (obbligatoria)                   | Connessione PostgreSQL usata da Prisma.                          |
+| `OPENROUTER_API_KEY`          | `''`                               | Necessaria per generare i content plan (non richiesta nei test). |
+| `PORT`                        | `3001`                             | Porta HTTP dell'API.                                             |
+| `NODE_ENV`                    | `development`                      | Influenza log e flag automatici.                                 |
+| `LOG_LEVEL`                   | `debug` (`info` in produzione)     | Livello log Pino.                                                |
+| `LOGGER_PRETTY`               | `true` se non in produzione        | Abilita output leggibile in locale.                              |
+| `REDIS_URL`                   | `redis://localhost:6379`           | Connessione BullMQ/health check.                                 |
+| `BULL_PREFIX`                 | `bull`                             | Prefisso code BullMQ.                                            |
+| `DISABLE_BULL`                | `false` (coerce `1/true` → `true`) | Se impostato disattiva Bull e usa stub in memoria.               |
+| `WORKER_JOB_ATTEMPTS`         | `3`                                | Tentativi di retry per i job enqueued.                           |
+| `WORKER_JOB_BACKOFF_DELAY_MS` | `5000`                             | Delay base (ms) per backoff esponenziale.                        |
+| `S3_ENDPOINT`                 | `http://localhost:9000`            | Endpoint MinIO/S3.                                               |
+| `S3_KEY` / `S3_SECRET`        | `minio` / `minio12345`             | Credenziali MinIO di sviluppo.                                   |
+| `S3_BUCKET`                   | `assets`                           | Bucket usato per gli upload.                                     |
+| `AWS_REGION`                  | `us-east-1`                        | Regione client S3.                                               |
+| `SKIP_S3_INIT`                | `false`                            | Salta il check/creazione bucket (utile in CI).                   |
+| `JWT_SECRET`                  | `dev_jwt_secret_change_me`         | Secret per i token firmati dall'API.                             |
 
 Altre variabili (retry OpenRouter, ecc.) hanno fallback documentati in `.env.example`.
 
@@ -64,7 +63,6 @@ Altre variabili (retry OpenRouter, ecc.) hanno fallback documentati in `.env.exa
 - Verifica che Postgres sia attivo (Docker) e che `DATABASE_URL` punti all'istanza corretta.
 - Rigenera il client dopo modifiche allo schema: `pnpm --filter @influencerai/api prisma:generate`.
 
-
 ## Esempi cURL Jobs
 
 - Crea job (content-generation):
@@ -90,7 +88,6 @@ curl "http://localhost:3001/jobs?type=content-generation&status=pending&take=10&
 ```
 curl http://localhost:3001/jobs/<JOB_ID>
 ```
-
 
 ## OpenRouter: Timeout/Retry e Variabili d’Ambiente
 
@@ -121,6 +118,7 @@ OPENROUTER_BACKOFF_JITTER_MS=100
 - Altri status non-OK → `HttpException` con lo status originario (fallback 502).
 
 Note:
+
 - Il servizio registra eventuali `usage`/token restituiti da OpenRouter a scopo di tracciamento costi.
 - La logica di retry si applica a 429 e 5xx (backoff esponenziale + jitter, rispetto di `Retry-After`).
 
@@ -154,6 +152,7 @@ Note:
   - `PUT /storage/test-object?key=connectivity.txt&content=hello` — roundtrip upload/download
 
 Con Docker Compose dello stack (`infra/docker-compose.yml`):
+
 - `minio` espone S3 su `http://localhost:9000` e console su `http://localhost:9001`
 - `minio-init` crea automaticamente il bucket `assets` se assente
 
@@ -187,7 +186,6 @@ curl "http://localhost:3001/jobs?type=content-generation&status=pending&take=10&
 curl http://localhost:3001/jobs/<JOB_ID>
 ```
 
-
 ## OpenRouter: Timeout/Retry e Variabili d’Ambiente
 
 - Richiede `OPENROUTER_API_KEY` impostata (skippata solo in `NODE_ENV=test`).
@@ -217,6 +215,7 @@ OPENROUTER_BACKOFF_JITTER_MS=100
 - Altri status non-OK → `HttpException` con lo status originario (fallback 502).
 
 Note:
+
 - Il servizio registra eventuali `usage`/token restituiti da OpenRouter a scopo di tracciamento costi.
 - La logica di retry si applica a 429 e 5xx (backoff esponenziale + jitter, rispetto di `Retry-After`).
 
@@ -250,6 +249,7 @@ Note:
   - `PUT /storage/test-object?key=connectivity.txt&content=hello` — roundtrip upload/download
 
 Con Docker Compose dello stack (`infra/docker-compose.yml`):
+
 - `minio` espone S3 su `http://localhost:9000` e console su `http://localhost:9001`
 - `minio-init` crea automaticamente il bucket `assets` se assente
 

@@ -21,25 +21,37 @@ describe('Content Plans with OpenRouter (fetch mock) (e2e)', () => {
     (global as any).fetch = jest.fn(async () => ({
       ok: true,
       status: 200,
-      headers: { get: (k: string) => (k.toLowerCase() === 'content-type' ? 'application/json' : null) },
+      headers: {
+        get: (k: string) => (k.toLowerCase() === 'content-type' ? 'application/json' : null),
+      },
       json: async () => ({
-        choices: [{ message: { content: JSON.stringify([{ caption: 'nock-post', hashtags: ['h'] }]) } }],
+        choices: [
+          { message: { content: JSON.stringify([{ caption: 'nock-post', hashtags: ['h'] }]) } },
+        ],
         usage: { total_tokens: 42 },
       }),
     })) as any;
 
     const prismaStub: Partial<PrismaService> = {
-      influencer: { findUnique: jest.fn(async ({ where: { id } }: any) => (id === 'inf_1' ? { id, tenantId: 'ten_1', persona: { name: 'A' } } : null)) } as any,
+      influencer: {
+        findUnique: jest.fn(async ({ where: { id } }: any) =>
+          id === 'inf_1' ? { id, tenantId: 'ten_1', persona: { name: 'A' } } : null
+        ),
+      } as any,
       job: { create: jest.fn(async ({ data }: any) => ({ id: 'job_nock_1', ...data })) } as any,
     } as any;
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     })
-      .overrideProvider(getQueueToken('content-generation')).useValue({ add: jest.fn(async () => null) })
-      .overrideProvider(getQueueToken('lora-training')).useValue({ add: jest.fn(async () => null) })
-      .overrideProvider(getQueueToken('video-generation')).useValue({ add: jest.fn(async () => null) })
-      .overrideProvider(PrismaService).useValue(prismaStub)
+      .overrideProvider(getQueueToken('content-generation'))
+      .useValue({ add: jest.fn(async () => null) })
+      .overrideProvider(getQueueToken('lora-training'))
+      .useValue({ add: jest.fn(async () => null) })
+      .overrideProvider(getQueueToken('video-generation'))
+      .useValue({ add: jest.fn(async () => null) })
+      .overrideProvider(PrismaService)
+      .useValue(prismaStub)
       .compile();
 
     app = moduleFixture.createNestApplication(new FastifyAdapter());
@@ -90,23 +102,37 @@ describe('Content Plans with OpenRouter retry 429→200 (fetch mock) (e2e)', () 
       return {
         ok: true,
         status: 200,
-        headers: { get: (k: string) => (k.toLowerCase() === 'content-type' ? 'application/json' : null) },
-        json: async () => ({ choices: [{ message: { content: JSON.stringify([{ caption: 'nock-ok', hashtags: ['ok'] }]) } }] }),
+        headers: {
+          get: (k: string) => (k.toLowerCase() === 'content-type' ? 'application/json' : null),
+        },
+        json: async () => ({
+          choices: [
+            { message: { content: JSON.stringify([{ caption: 'nock-ok', hashtags: ['ok'] }]) } },
+          ],
+        }),
       } as any;
     }) as any;
 
     const prismaStub: Partial<PrismaService> = {
-      influencer: { findUnique: jest.fn(async ({ where: { id } }: any) => (id === 'inf_1' ? { id, tenantId: 'ten_1', persona: { name: 'A' } } : null)) } as any,
+      influencer: {
+        findUnique: jest.fn(async ({ where: { id } }: any) =>
+          id === 'inf_1' ? { id, tenantId: 'ten_1', persona: { name: 'A' } } : null
+        ),
+      } as any,
       job: { create: jest.fn(async ({ data }: any) => ({ id: 'job_nock_2', ...data })) } as any,
     } as any;
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     })
-      .overrideProvider(getQueueToken('content-generation')).useValue({ add: jest.fn(async () => null) })
-      .overrideProvider(getQueueToken('lora-training')).useValue({ add: jest.fn(async () => null) })
-      .overrideProvider(getQueueToken('video-generation')).useValue({ add: jest.fn(async () => null) })
-      .overrideProvider(PrismaService).useValue(prismaStub)
+      .overrideProvider(getQueueToken('content-generation'))
+      .useValue({ add: jest.fn(async () => null) })
+      .overrideProvider(getQueueToken('lora-training'))
+      .useValue({ add: jest.fn(async () => null) })
+      .overrideProvider(getQueueToken('video-generation'))
+      .useValue({ add: jest.fn(async () => null) })
+      .overrideProvider(PrismaService)
+      .useValue(prismaStub)
       .compile();
 
     app = moduleFixture.createNestApplication(new FastifyAdapter());

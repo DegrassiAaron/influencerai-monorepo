@@ -1,7 +1,14 @@
 import { Injectable, NotFoundException, Optional, type LoggerService } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateContentPlanDto, ContentPlanResponse, ContentPlanResponseSchema } from './dto';
-import { fetchWithTimeout, HTTPError, parseRetryAfter, shouldRetry, backoffDelay, sleep } from '../lib/http-utils';
+import {
+  fetchWithTimeout,
+  HTTPError,
+  parseRetryAfter,
+  shouldRetry,
+  backoffDelay,
+  sleep,
+} from '../lib/http-utils';
 import { OpenRouterResponseSchema } from '../types/openrouter';
 import { ContentPlanDataSchema } from '../types/content';
 import { ConfigService } from '@nestjs/config';
@@ -18,11 +25,14 @@ export class ContentPlansService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly config: ConfigService<AppConfig, true>,
-    @Optional() private readonly logger?: LoggerService,
+    @Optional() private readonly logger?: LoggerService
   ) {}
 
   // Extracted so tests can mock only this part
-  async generatePlanPosts(persona: string, theme: string): Promise<{ caption: string; hashtags: string[] }[]> {
+  async generatePlanPosts(
+    persona: string,
+    theme: string
+  ): Promise<{ caption: string; hashtags: string[] }[]> {
     const prompt = contentPlanPrompt(persona, theme);
     const apiKey = this.config.get('OPENROUTER_API_KEY', { infer: true });
     const url = 'https://openrouter.ai/api/v1/chat/completions';
@@ -36,21 +46,28 @@ export class ContentPlansService {
     while (attempt < maxAttempts) {
       attempt += 1;
       try {
-        const res = await fetchWithTimeout(url, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${apiKey}`,
+        const res = await fetchWithTimeout(
+          url,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${apiKey}`,
+            },
+            body: JSON.stringify({
+              model: 'openrouter/auto',
+              messages: [
+                {
+                  role: 'system',
+                  content: 'You are a helpful assistant that returns strict JSON.',
+                },
+                { role: 'user', content: prompt },
+              ],
+              response_format: { type: 'json_object' },
+            }),
           },
-          body: JSON.stringify({
-            model: 'openrouter/auto',
-            messages: [
-              { role: 'system', content: 'You are a helpful assistant that returns strict JSON.' },
-              { role: 'user', content: prompt },
-            ],
-            response_format: { type: 'json_object' },
-          }),
-        }, timeoutMs);
+          timeoutMs
+        );
 
         if (!res.ok) {
           const status = res.status ?? 500;
@@ -67,7 +84,12 @@ export class ContentPlansService {
         const raw = await res.json();
         const parsed = OpenRouterResponseSchema.safeParse(raw);
         if (!parsed.success) {
-          throw new HTTPError('OpenRouter invalid response shape', { status: 502, body: raw, url, method: 'POST' });
+          throw new HTTPError('OpenRouter invalid response shape', {
+            status: 502,
+            body: raw,
+            url,
+            method: 'POST',
+          });
         }
         const data = parsed.data;
         const usage = data.usage;
@@ -87,7 +109,9 @@ export class ContentPlansService {
             normalized = [];
           }
         } catch {
-          this.logger?.warn?.('OpenRouter response content is not valid JSON array, defaulting to empty array');
+          this.logger?.warn?.(
+            'OpenRouter response content is not valid JSON array, defaulting to empty array'
+          );
           normalized = [];
         }
         return normalized;
@@ -107,10 +131,12 @@ export class ContentPlansService {
     return [];
   }
 
-  async createPlan(input: CreateContentPlanDto): Promise<{ id: string; plan: ContentPlanResponse }> {
-    const infl = (await this.prisma.influencer.findUnique({ where: { id: input.influencerId } })) as
-      | { tenantId: string; persona?: unknown }
-      | null;
+  async createPlan(
+    input: CreateContentPlanDto
+  ): Promise<{ id: string; plan: ContentPlanResponse }> {
+    const infl = (await this.prisma.influencer.findUnique({
+      where: { id: input.influencerId },
+    })) as { tenantId: string; persona?: unknown } | null;
     if (!infl) throw new NotFoundException('Influencer not found');
 
     const posts = await this.generatePlanPosts(JSON.stringify(infl.persona ?? {}), input.theme);
@@ -142,15 +168,21 @@ export class ContentPlansService {
   }
 
   async getPlan(id: string): Promise<{ id: string; plan: ContentPlanResponse } | null> {
-    const job = (await this.prisma.job.findUnique({ where: { id } })) as
-      | { id: string; type?: string; result: unknown }
-      | null;
+    const job = (await this.prisma.job.findUnique({ where: { id } })) as {
+      id: string;
+      type?: string;
+      result: unknown;
+    } | null;
     if (!job || job.type !== 'content-plan') return null;
     const plan = parsePlan(job.result);
     return { id: job.id, plan };
   }
 
-  async listPlans(params: { influencerId?: string; take?: number; skip?: number }): Promise<{ id: string; plan: ContentPlanResponse }[]> {
+  async listPlans(params: {
+    influencerId?: string;
+    take?: number;
+    skip?: number;
+  }): Promise<{ id: string; plan: ContentPlanResponse }[]> {
     const where: Record<string, unknown> = { type: 'content-plan' };
     if (params.influencerId) {
       where.payload = { path: ['influencerId'], equals: params.influencerId };
@@ -179,8 +211,9 @@ function parsePlan(result: unknown): ContentPlanResponse {
   const influencerId = typeof fallback.influencerId === 'string' ? fallback.influencerId : '';
   const theme = typeof fallback.theme === 'string' ? fallback.theme : '';
   const targetPlatforms = Array.isArray(fallback.targetPlatforms)
-    ? fallback.targetPlatforms.filter((item): item is 'instagram' | 'tiktok' | 'youtube' =>
-        item === 'instagram' || item === 'tiktok' || item === 'youtube'
+    ? fallback.targetPlatforms.filter(
+        (item): item is 'instagram' | 'tiktok' | 'youtube' =>
+          item === 'instagram' || item === 'tiktok' || item === 'youtube'
       )
     : [];
   const posts = Array.isArray(fallback.posts)
@@ -196,7 +229,8 @@ function parsePlan(result: unknown): ContentPlanResponse {
         return [{ caption, hashtags }];
       })
     : [];
-  const createdAt = typeof fallback.createdAt === 'string' ? fallback.createdAt : new Date(0).toISOString();
+  const createdAt =
+    typeof fallback.createdAt === 'string' ? fallback.createdAt : new Date(0).toISOString();
 
   return { influencerId, theme, targetPlatforms, posts, createdAt };
 }

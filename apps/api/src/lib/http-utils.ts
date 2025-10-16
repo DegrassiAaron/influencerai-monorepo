@@ -3,7 +3,10 @@ export class HTTPError extends Error {
   body?: unknown;
   url?: string;
   method?: string;
-  constructor(message: string, opts: { status: number; body?: unknown; url?: string; method?: string }) {
+  constructor(
+    message: string,
+    opts: { status: number; body?: unknown; url?: string; method?: string }
+  ) {
     super(message);
     this.name = 'HTTPError';
     this.status = opts.status;
@@ -13,7 +16,11 @@ export class HTTPError extends Error {
   }
 }
 
-export async function fetchWithTimeout(url: string, init: RequestInit = {}, timeoutMs = 60000): Promise<Response> {
+export async function fetchWithTimeout(
+  url: string,
+  init: RequestInit = {},
+  timeoutMs = 60000
+): Promise<Response> {
   const controller = new AbortController();
   const t = setTimeout(() => controller.abort(), timeoutMs);
   try {

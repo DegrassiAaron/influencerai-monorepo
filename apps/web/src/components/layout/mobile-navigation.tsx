@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import * as React from "react";
-import { ChevronRight } from "lucide-react";
+import Link from 'next/link';
+import * as React from 'react';
+import { ChevronRight } from 'lucide-react';
 
-import { Button } from "@/components/ui/button";
+import { Button } from '@/components/ui/button';
 import {
   Sheet,
   SheetClose,
@@ -13,10 +13,10 @@ import {
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-} from "@/components/ui/sheet";
-import { cn } from "@/lib/utils";
+} from '@/components/ui/sheet';
+import { cn } from '@/lib/utils';
 
-import type { NavItem } from "./nav-config";
+import type { NavItem } from './nav-config';
 
 type MobileNavigationProps = {
   trigger: React.ReactNode;
@@ -26,7 +26,13 @@ type MobileNavigationProps = {
   activePath: string;
 };
 
-export function MobileNavigation({ trigger, mainNav, supportNav, iconMap, activePath }: MobileNavigationProps) {
+export function MobileNavigation({
+  trigger,
+  mainNav,
+  supportNav,
+  iconMap,
+  activePath,
+}: MobileNavigationProps) {
   return (
     <Sheet>
       <SheetTrigger asChild>{trigger}</SheetTrigger>
@@ -46,10 +52,10 @@ export function MobileNavigation({ trigger, mainNav, supportNav, iconMap, active
                   <Link
                     href={item.href}
                     className={cn(
-                      "flex items-center justify-between rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                      'flex items-center justify-between rounded-lg px-3 py-2 text-sm font-medium transition-colors',
                       activePath === item.href
-                        ? "bg-brand-50 text-brand-700"
-                        : "hover:bg-muted/60 hover:text-foreground",
+                        ? 'bg-brand-50 text-brand-700'
+                        : 'hover:bg-muted/60 hover:text-foreground'
                     )}
                   >
                     <span className="flex items-center gap-3">
@@ -63,7 +69,9 @@ export function MobileNavigation({ trigger, mainNav, supportNav, iconMap, active
             })}
           </nav>
           <div className="space-y-2">
-            <p className="px-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Supporto</p>
+            <p className="px-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Supporto
+            </p>
             <div className="space-y-1">
               {supportNav.map((item) => {
                 const Icon = item.icon ? iconMap[item.icon] : undefined;

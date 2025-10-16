@@ -8,7 +8,10 @@ describe('InfluencerAIClient error handling', () => {
   const realFetch = globalThis.fetch;
   const client = new InfluencerAIClient('https://api.test.example');
   const jsonResponse = (body: unknown) =>
-    new Response(JSON.stringify(body), { status: 200, headers: { 'content-type': 'application/json' } });
+    new Response(JSON.stringify(body), {
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+    });
 
   let fetchWithTimeoutSpy: ReturnType<typeof vi.spyOn<typeof fetchUtils, 'fetchWithTimeout'>>;
   let handleResponseSpy: ReturnType<typeof vi.spyOn<typeof fetchUtils, 'handleResponse'>>;
@@ -78,11 +81,15 @@ describe('InfluencerAIClient error handling', () => {
     fetchWithTimeoutSpy.mockResolvedValue(response);
     handleResponseSpy.mockResolvedValue({ id: 'job-42', status: 'done' } as any);
     const result = await client.updateJob('job-42', update);
-    expect(fetchWithTimeoutSpy).toHaveBeenCalledWith('https://api.test.example/jobs/job-42', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(update),
-    }, undefined);
+    expect(fetchWithTimeoutSpy).toHaveBeenCalledWith(
+      'https://api.test.example/jobs/job-42',
+      {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(update),
+      },
+      undefined
+    );
     expect(handleResponseSpy).toHaveBeenCalledWith(response);
     expect(result).toEqual({ id: 'job-42', status: 'done' });
   });
@@ -153,4 +160,3 @@ describe('InfluencerAIClient error handling', () => {
     expect(result).toEqual({ status: 'ok' });
   });
 });
-

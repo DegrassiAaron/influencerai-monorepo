@@ -61,7 +61,7 @@ describe('JobsService', () => {
       expect.objectContaining({
         attempts: 3,
         backoff: expect.objectContaining({ delay: 5000 }),
-      }),
+      })
     );
   });
 
@@ -84,7 +84,9 @@ describe('JobsService', () => {
   });
 
   it('rejects invalid window format', async () => {
-    await expect(service.getJobSeries({ window: 'abc' as any })).rejects.toThrow('Invalid window format');
+    await expect(service.getJobSeries({ window: 'abc' as any })).rejects.toThrow(
+      'Invalid window format'
+    );
   });
 });
 

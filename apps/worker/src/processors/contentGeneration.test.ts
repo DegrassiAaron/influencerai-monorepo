@@ -35,7 +35,10 @@ describe('content generation processor', () => {
       },
       uploadTextAssets: async (input) => {
         uploadCalls.push(input);
-        return { captionUrl: 'https://example.com/caption', scriptUrl: 'https://example.com/script' };
+        return {
+          captionUrl: 'https://example.com/caption',
+          scriptUrl: 'https://example.com/script',
+        };
       },
       prompts: {
         imageCaptionPrompt: (value) => `CAPTION_PROMPT:${value}`,
@@ -204,7 +207,10 @@ describe('content generation processor', () => {
       },
       uploadTextAssets: async (input) => {
         uploadCalls.push(input);
-        return { captionUrl: 'https://example.com/caption', scriptUrl: 'https://example.com/script' };
+        return {
+          captionUrl: 'https://example.com/caption',
+          scriptUrl: 'https://example.com/script',
+        };
       },
       createChildJob: async (input) => {
         childJobCalls.push(input);

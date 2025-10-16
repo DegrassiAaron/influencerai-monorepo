@@ -1,12 +1,12 @@
-import React from "react";
-import { render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
-import { describe, expect, it, beforeEach, vi } from "vitest";
+import React from 'react';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { describe, expect, it, beforeEach, vi } from 'vitest';
 
-import { ModeToggle } from "@/components/mode-toggle";
-import { ThemeProvider } from "@/components/theme-provider";
+import { ModeToggle } from '@/components/mode-toggle';
+import { ThemeProvider } from '@/components/theme-provider';
 
-const STORAGE_KEY = "influencerai:theme";
+const STORAGE_KEY = 'influencerai:theme';
 
 function mockMatchMedia(prefersDark: boolean) {
   // eslint-disable-next-line no-unused-vars
@@ -14,7 +14,7 @@ function mockMatchMedia(prefersDark: boolean) {
 
   const mediaQueryList: MediaQueryList = {
     matches: prefersDark,
-    media: "(prefers-color-scheme: dark)",
+    media: '(prefers-color-scheme: dark)',
     onchange: null,
     addEventListener: (_event, listener) => {
       listeners.add(listener as any);
@@ -31,15 +31,15 @@ function mockMatchMedia(prefersDark: boolean) {
     dispatchEvent: () => false,
   };
 
-  vi.stubGlobal("matchMedia", () => mediaQueryList);
+  vi.stubGlobal('matchMedia', () => mediaQueryList);
 
   return {
     update(matches: boolean) {
       mediaQueryList.matches = matches;
-      const changeEvent = new Event("change") as MediaQueryListEvent;
-      Object.defineProperty(changeEvent, "matches", { value: matches });
+      const changeEvent = new Event('change') as MediaQueryListEvent;
+      Object.defineProperty(changeEvent, 'matches', { value: matches });
       listeners.forEach((listener) => {
-        if (typeof listener === "function") {
+        if (typeof listener === 'function') {
           listener(changeEvent);
         }
       });
@@ -47,14 +47,14 @@ function mockMatchMedia(prefersDark: boolean) {
   };
 }
 
-describe("ModeToggle", () => {
+describe('ModeToggle', () => {
   beforeEach(() => {
-    document.documentElement.className = "";
+    document.documentElement.className = '';
     window.localStorage.clear();
     vi.restoreAllMocks();
   });
 
-  it("toggles from light to dark mode", async () => {
+  it('toggles from light to dark mode', async () => {
     mockMatchMedia(false);
     const user = userEvent.setup();
 
@@ -64,17 +64,15 @@ describe("ModeToggle", () => {
       </ThemeProvider>
     );
 
-    expect(document.documentElement.classList.contains("light")).toBe(true);
+    expect(document.documentElement.classList.contains('light')).toBe(true);
 
-    await user.click(
-      screen.getByRole("button", { name: /activate dark mode/i })
-    );
+    await user.click(screen.getByRole('button', { name: /activate dark mode/i }));
 
-    expect(document.documentElement.classList.contains("dark")).toBe(true);
-    expect(window.localStorage.getItem(STORAGE_KEY)).toBe("dark");
+    expect(document.documentElement.classList.contains('dark')).toBe(true);
+    expect(window.localStorage.getItem(STORAGE_KEY)).toBe('dark');
   });
 
-  it("toggles from dark to light mode", async () => {
+  it('toggles from dark to light mode', async () => {
     mockMatchMedia(true);
     const user = userEvent.setup();
 
@@ -84,13 +82,11 @@ describe("ModeToggle", () => {
       </ThemeProvider>
     );
 
-    expect(document.documentElement.classList.contains("dark")).toBe(true);
+    expect(document.documentElement.classList.contains('dark')).toBe(true);
 
-    await user.click(
-      screen.getByRole("button", { name: /activate light mode/i })
-    );
+    await user.click(screen.getByRole('button', { name: /activate light mode/i }));
 
-    expect(document.documentElement.classList.contains("light")).toBe(true);
-    expect(window.localStorage.getItem(STORAGE_KEY)).toBe("light");
+    expect(document.documentElement.classList.contains('light')).toBe(true);
+    expect(window.localStorage.getItem(STORAGE_KEY)).toBe('light');
   });
 });

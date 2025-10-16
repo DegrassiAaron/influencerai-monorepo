@@ -28,7 +28,9 @@ async function main(): Promise<void> {
 
   console.error('Detected backlog / GitHub mismatches:');
   for (const mismatch of result.mismatches) {
-    console.error(`- ${mismatch.code}: ${mismatch.reason}${mismatch.issueUrl ? ` (${mismatch.issueUrl})` : ''}`);
+    console.error(
+      `- ${mismatch.code}: ${mismatch.reason}${mismatch.issueUrl ? ` (${mismatch.issueUrl})` : ''}`
+    );
   }
 
   throw new Error(`${result.mismatches.length} completed issues are not closed on GitHub.`);

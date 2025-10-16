@@ -1,13 +1,13 @@
-import React from "react";
+import React from 'react';
 
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
-import { Badge } from "../ui/badge";
-import { Button } from "../ui/button";
-import type { ContentPlanJob } from "../../lib/content-plans";
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import { Badge } from '../ui/badge';
+import { Button } from '../ui/button';
+import type { ContentPlanJob } from '../../lib/content-plans';
 
 export type PlanPreviewProps = {
   job: ContentPlanJob;
-  approvalStatus: "approved" | "rejected" | null;
+  approvalStatus: 'approved' | 'rejected' | null;
   onRegenerate: () => void;
   onApprove: () => void;
   onReject: () => void;
@@ -16,9 +16,9 @@ export type PlanPreviewProps = {
 };
 
 const platformLabels: Record<string, string> = {
-  instagram: "Instagram",
-  tiktok: "TikTok",
-  youtube: "YouTube Shorts",
+  instagram: 'Instagram',
+  tiktok: 'TikTok',
+  youtube: 'YouTube Shorts',
 };
 
 export function PlanPreview({
@@ -36,13 +36,13 @@ export function PlanPreview({
         <div>
           <h2 className="text-xl font-semibold text-foreground">Generated content plan</h2>
           <p className="text-sm text-muted-foreground">
-            Piano creato il {new Date(job.plan.createdAt).toLocaleString()}. Usa le azioni per approvare o richiedere una nuova
-            generazione.
+            Piano creato il {new Date(job.plan.createdAt).toLocaleString()}. Usa le azioni per
+            approvare o richiedere una nuova generazione.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" onClick={onRegenerate} disabled={isRegenerating}>
-            {isRegenerating ? "Rigenerazione..." : "Regenerate plan"}
+            {isRegenerating ? 'Rigenerazione...' : 'Regenerate plan'}
           </Button>
           <Button
             variant="default"
@@ -50,10 +50,12 @@ export function PlanPreview({
             onClick={onApprove}
             disabled={isUpdatingApproval}
           >
-            {isUpdatingApproval && approvalStatus !== "approved" ? "Salvataggio..." : "Approve plan"}
+            {isUpdatingApproval && approvalStatus !== 'approved'
+              ? 'Salvataggio...'
+              : 'Approve plan'}
           </Button>
           <Button variant="destructive" onClick={onReject} disabled={isUpdatingApproval}>
-            {isUpdatingApproval && approvalStatus !== "rejected" ? "Salvataggio..." : "Reject plan"}
+            {isUpdatingApproval && approvalStatus !== 'rejected' ? 'Salvataggio...' : 'Reject plan'}
           </Button>
         </div>
       </header>
@@ -68,7 +70,8 @@ export function PlanPreview({
             <CardHeader>
               <CardTitle className="text-base font-semibold">Post {index + 1}</CardTitle>
               <p className="text-xs text-muted-foreground">
-                Piattaforme: {job.plan.targetPlatforms.map((p) => platformLabels[p] ?? p).join(", ")}
+                Piattaforme:{' '}
+                {job.plan.targetPlatforms.map((p) => platformLabels[p] ?? p).join(', ')}
               </p>
             </CardHeader>
             <CardContent className="space-y-3">

@@ -18,7 +18,12 @@ export type S3Helper = {
     contentType?: string
   ) => Promise<void>;
   putTextObject: (client: S3Client, bucket: string, key: string, content: string) => Promise<void>;
-  getSignedGetUrl: (client: S3Client, bucket: string, key: string, expiresInSeconds?: number) => Promise<string>;
+  getSignedGetUrl: (
+    client: S3Client,
+    bucket: string,
+    key: string,
+    expiresInSeconds?: number
+  ) => Promise<string>;
 };
 
 export type VideoGenerationDependencies = {
@@ -37,7 +42,13 @@ export type VideoGenerationDependencies = {
     aspectRatio: string;
     audioFilter: string;
     preset: string;
-    run: (input: { inputPath: string; outputPath: string; aspectRatio: string; audioFilter: string; preset: string }) => Promise<void>;
+    run: (input: {
+      inputPath: string;
+      outputPath: string;
+      aspectRatio: string;
+      audioFilter: string;
+      preset: string;
+    }) => Promise<void>;
   };
 };
 
@@ -66,4 +77,8 @@ export type VideoGenerationResult = {
   videoUrl?: string;
 };
 
-export type VideoGenerationJob = Job<VideoGenerationJobData, VideoGenerationResult, 'video-generation'>;
+export type VideoGenerationJob = Job<
+  VideoGenerationJobData,
+  VideoGenerationResult,
+  'video-generation'
+>;

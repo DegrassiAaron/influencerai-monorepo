@@ -1,17 +1,17 @@
-import { ContentPlanSchema } from "@influencerai/core-schemas";
-import { z } from "zod";
+import { ContentPlanSchema } from '@influencerai/core-schemas';
+import { z } from 'zod';
 
-import { apiPatch, apiPost } from "./api";
+import { apiPatch, apiPost } from './api';
 
-const PlatformEnum = z.enum(["instagram", "tiktok", "youtube"]);
+const PlatformEnum = z.enum(['instagram', 'tiktok', 'youtube']);
 
 const CreateContentPlanInputSchema = z.object({
-  influencerId: z.string().min(1, "Influencer ID is required"),
-  theme: z.string().min(1, "Theme is required"),
-  targetPlatforms: z.array(PlatformEnum).min(1, "Select at least one platform"),
+  influencerId: z.string().min(1, 'Influencer ID is required'),
+  theme: z.string().min(1, 'Theme is required'),
+  targetPlatforms: z.array(PlatformEnum).min(1, 'Select at least one platform'),
 });
 
-const ApprovalStatusSchema = z.enum(["approved", "rejected"]);
+const ApprovalStatusSchema = z.enum(['approved', 'rejected']);
 
 const ContentPlanWithApprovalSchema = ContentPlanSchema.extend({
   approvalStatus: ApprovalStatusSchema.optional(),
@@ -35,10 +35,10 @@ export type UpdateContentPlanApprovalInput = z.infer<typeof UpdateContentPlanApp
 
 export async function createContentPlan(input: CreateContentPlanInput): Promise<ContentPlanJob> {
   const payload = CreateContentPlanInputSchema.parse(input);
-  const response = await apiPost<CreateContentPlanInput, unknown>("/content-plans", payload);
+  const response = await apiPost<CreateContentPlanInput, unknown>('/content-plans', payload);
   const parsed = ContentPlanJobSchema.safeParse(response);
   if (!parsed.success) {
-    throw new Error("Invalid response format from content plan API");
+    throw new Error('Invalid response format from content plan API');
   }
   return parsed.data;
 }

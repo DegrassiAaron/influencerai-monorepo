@@ -5,27 +5,27 @@ import type { CallOpenRouter } from '../httpClient';
 
 export type PatchJobStatus = (
   jobId: string,
-  data: { status?: 'running' | 'succeeded' | 'failed' | 'completed'; result?: unknown; costTok?: number }
+  data: {
+    status?: 'running' | 'succeeded' | 'failed' | 'completed';
+    result?: unknown;
+    costTok?: number;
+  }
 ) => Promise<void>;
 
-export type UploadTextAssets = (
-  input: {
-    jobIdentifier: string;
-    caption: string;
-    script: string;
-  }
-) => Promise<{ captionUrl?: string; scriptUrl?: string }>;
+export type UploadTextAssets = (input: {
+  jobIdentifier: string;
+  caption: string;
+  script: string;
+}) => Promise<{ captionUrl?: string; scriptUrl?: string }>;
 
-export type CreateChildJob = (
-  input: {
-    parentJobId?: string;
-    caption: string;
-    script: string;
-    persona: unknown;
-    context: string;
-    durationSec: number;
-  }
-) => Promise<JobResponse>;
+export type CreateChildJob = (input: {
+  parentJobId?: string;
+  caption: string;
+  script: string;
+  persona: unknown;
+  context: string;
+  durationSec: number;
+}) => Promise<JobResponse>;
 
 export type PromptHelpers = {
   imageCaptionPrompt: (input: string) => string;
@@ -55,14 +55,24 @@ export type ContentGenerationResult = {
   childJobId?: string;
 };
 
-export type ContentGenerationJob = Job<ContentGenerationJobData, ContentGenerationResult, 'content-generation'>;
+export type ContentGenerationJob = Job<
+  ContentGenerationJobData,
+  ContentGenerationResult,
+  'content-generation'
+>;
 
 export function createContentGenerationProcessor(deps: ContentGenerationDependencies) {
-  const processor: Processor<ContentGenerationJobData, ContentGenerationResult, 'content-generation'> = async function process(
-    job: ContentGenerationJob
-  ) {
-    const { logger, callOpenRouter, patchJobStatus, uploadTextAssets, createChildJob, prompts } = deps;
-    logger.info({ id: job.id, name: job.name, data: job.data }, 'Processing content-generation job');
+  const processor: Processor<
+    ContentGenerationJobData,
+    ContentGenerationResult,
+    'content-generation'
+  > = async function process(job: ContentGenerationJob) {
+    const { logger, callOpenRouter, patchJobStatus, uploadTextAssets, createChildJob, prompts } =
+      deps;
+    logger.info(
+      { id: job.id, name: job.name, data: job.data },
+      'Processing content-generation job'
+    );
 
     const jobData = job.data ?? {};
     const jobId = typeof jobData.jobId === 'string' ? jobData.jobId : undefined;
@@ -75,13 +85,20 @@ export function createContentGenerationProcessor(deps: ContentGenerationDependen
     try {
       const personaValue = payload.persona;
       const personaText = payload.personaText;
-      const persona = personaValue ? JSON.stringify(personaValue) : typeof personaText === 'string' ? personaText : '{}';
+      const persona = personaValue
+        ? JSON.stringify(personaValue)
+        : typeof personaText === 'string'
+          ? personaText
+          : '{}';
       const contextSource = payload.context ?? payload.theme ?? 'general social post';
       const context = typeof contextSource === 'string' ? contextSource : 'general social post';
       const durationSource = payload.durationSec;
-      const durationSec = typeof durationSource === 'number' ? durationSource : Number(durationSource ?? 15);
+      const durationSec =
+        typeof durationSource === 'number' ? durationSource : Number(durationSource ?? 15);
 
-      const captionPrompt = prompts.imageCaptionPrompt(`Persona: ${persona}\nContext/Theme: ${context}`);
+      const captionPrompt = prompts.imageCaptionPrompt(
+        `Persona: ${persona}\nContext/Theme: ${context}`
+      );
       const captionResult = await callOpenRouter(
         [
           { role: 'system', content: 'You generate concise, vivid social captions.' },
@@ -109,7 +126,8 @@ export function createContentGenerationProcessor(deps: ContentGenerationDependen
         throw new Error('Script generation returned empty content');
       }
 
-      const totalTokens = (captionResult.usage?.total_tokens || 0) + (scriptResult.usage?.total_tokens || 0);
+      const totalTokens =
+        (captionResult.usage?.total_tokens || 0) + (scriptResult.usage?.total_tokens || 0);
 
       let childJobId: string | undefined;
       if (createChildJob) {

@@ -22,8 +22,14 @@ describe('Content Plans Errors (e2e)', () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     })
-      .overrideProvider(ContentPlansService).useValue(svcMock)
-      .overrideProvider(PrismaService).useValue({ onModuleInit: jest.fn(), onModuleDestroy: jest.fn(), enableShutdownHooks: jest.fn() })
+      .overrideProvider(ContentPlansService)
+      .useValue(svcMock)
+      .overrideProvider(PrismaService)
+      .useValue({
+        onModuleInit: jest.fn(),
+        onModuleDestroy: jest.fn(),
+        enableShutdownHooks: jest.fn(),
+      })
       .compile();
 
     app = moduleFixture.createNestApplication(new FastifyAdapter());
@@ -58,8 +64,14 @@ describe('Content Plans Errors 5xx (e2e)', () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     })
-      .overrideProvider(ContentPlansService).useValue(svcMock)
-      .overrideProvider(PrismaService).useValue({ onModuleInit: jest.fn(), onModuleDestroy: jest.fn(), enableShutdownHooks: jest.fn() })
+      .overrideProvider(ContentPlansService)
+      .useValue(svcMock)
+      .overrideProvider(PrismaService)
+      .useValue({
+        onModuleInit: jest.fn(),
+        onModuleDestroy: jest.fn(),
+        enableShutdownHooks: jest.fn(),
+      })
       .compile();
 
     app = moduleFixture.createNestApplication(new FastifyAdapter());
@@ -96,8 +108,14 @@ describe('Content Plans Errors timeout (e2e)', () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     })
-      .overrideProvider(ContentPlansService).useValue(svcMock)
-      .overrideProvider(PrismaService).useValue({ onModuleInit: jest.fn(), onModuleDestroy: jest.fn(), enableShutdownHooks: jest.fn() })
+      .overrideProvider(ContentPlansService)
+      .useValue(svcMock)
+      .overrideProvider(PrismaService)
+      .useValue({
+        onModuleInit: jest.fn(),
+        onModuleDestroy: jest.fn(),
+        enableShutdownHooks: jest.fn(),
+      })
       .compile();
 
     app = moduleFixture.createNestApplication(new FastifyAdapter());

@@ -26,17 +26,26 @@ describe('AuthService - magic login', () => {
     prisma.user.findFirst.mockResolvedValue(user);
     jwt.signAsync.mockResolvedValue('signed');
 
-    await expect(service.loginWithMagicToken('tenant-1:test@example.com')).resolves.toEqual({ access_token: 'signed' });
+    await expect(service.loginWithMagicToken('tenant-1:test@example.com')).resolves.toEqual({
+      access_token: 'signed',
+    });
 
-    expect(prisma.user.findFirst).toHaveBeenCalledWith({ where: { tenantId: 'tenant-1', email: 'test@example.com' } });
-    expect(jwt.signAsync).toHaveBeenCalledWith({ sub: 'user-1', tenantId: 'tenant-1', email: 'test@example.com', role: 'admin' });
+    expect(prisma.user.findFirst).toHaveBeenCalledWith({
+      where: { tenantId: 'tenant-1', email: 'test@example.com' },
+    });
+    expect(jwt.signAsync).toHaveBeenCalledWith({
+      sub: 'user-1',
+      tenantId: 'tenant-1',
+      email: 'test@example.com',
+      role: 'admin',
+    });
   });
 
   it('blocks magic login in production', async () => {
     process.env.NODE_ENV = 'production';
 
     await expect(service.loginWithMagicToken('tenant-1:test@example.com')).rejects.toThrow(
-      'Magic login is disabled in production',
+      'Magic login is disabled in production'
     );
 
     expect(prisma.user.findFirst).not.toHaveBeenCalled();

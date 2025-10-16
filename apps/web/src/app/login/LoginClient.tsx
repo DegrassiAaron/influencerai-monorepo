@@ -1,14 +1,14 @@
-"use client";
-import React from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { FormEvent, useState } from "react";
+'use client';
+import React from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { FormEvent, useState } from 'react';
 
 export default function LoginClient() {
   const router = useRouter();
   const sp = useSearchParams();
-  const next = sp.get("next") || "/";
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const next = sp.get('next') || '/';
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -17,19 +17,19 @@ export default function LoginClient() {
     setError(null);
     setLoading(true);
     try {
-      const res = await fetch("/api/session/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const res = await fetch('/api/session/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       });
       if (!res.ok) {
         const text = await res.text();
-        throw new Error(text || "Login failed");
+        throw new Error(text || 'Login failed');
       }
       router.push(next);
       router.refresh();
     } catch (err: any) {
-      setError(err?.message || "Login failed");
+      setError(err?.message || 'Login failed');
     } finally {
       setLoading(false);
     }
@@ -41,7 +41,9 @@ export default function LoginClient() {
         <h1 className="text-2xl font-bold">Sign in</h1>
         {error ? <p className="text-red-600 text-sm">{error}</p> : null}
         <div className="space-y-1">
-          <label htmlFor="email" className="block text-sm font-medium">Email</label>
+          <label htmlFor="email" className="block text-sm font-medium">
+            Email
+          </label>
           <input
             id="email"
             name="email"
@@ -54,7 +56,9 @@ export default function LoginClient() {
           />
         </div>
         <div className="space-y-1">
-          <label htmlFor="password" className="block text-sm font-medium">Password</label>
+          <label htmlFor="password" className="block text-sm font-medium">
+            Password
+          </label>
           <input
             id="password"
             name="password"
@@ -71,7 +75,7 @@ export default function LoginClient() {
           className="w-full bg-black text-white rounded py-2 disabled:opacity-60"
           disabled={loading}
         >
-          {loading ? "Signing in..." : "Sign in"}
+          {loading ? 'Signing in...' : 'Sign in'}
         </button>
       </form>
     </main>

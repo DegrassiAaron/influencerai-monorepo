@@ -87,7 +87,7 @@ describe('Jobs Roundtrip with Real Worker (e2e)', () => {
       baseUrl = `http://127.0.0.1:${port}`;
       await (app.getHttpAdapter().getInstance() as any).ready();
     } catch (error) {
-      console.warn('Impossibile avviare l\'app; salto suite Real Worker Roundtrip (e2e)', error);
+      console.warn("Impossibile avviare l'app; salto suite Real Worker Roundtrip (e2e)", error);
       skipSuite = true;
       return;
     }
@@ -146,13 +146,23 @@ describe('Jobs Roundtrip with Real Worker (e2e)', () => {
   });
 
   afterAll(async () => {
-    try { if (appVideoQ) await appVideoQ.close(); } catch {}
-    try { if (appLoraQ) await appLoraQ.close(); } catch {}
-    try { if (appContentQ) await appContentQ.close(); } catch {}
+    try {
+      if (appVideoQ) await appVideoQ.close();
+    } catch {}
+    try {
+      if (appLoraQ) await appLoraQ.close();
+    } catch {}
+    try {
+      if (appContentQ) await appContentQ.close();
+    } catch {}
     if (workerProc && !workerProc.killed) {
-      try { workerProc.kill('SIGTERM'); } catch {}
+      try {
+        workerProc.kill('SIGTERM');
+      } catch {}
     }
-    if (app) { await app.close(); }
+    if (app) {
+      await app.close();
+    }
   });
 
   it('Real worker processes job and updates status to succeeded', async () => {

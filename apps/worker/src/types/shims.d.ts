@@ -20,5 +20,9 @@ declare module '@aws-sdk/client-s3' {
 }
 
 declare module '@aws-sdk/s3-request-presigner' {
-  export function getSignedUrl(client: any, command: any, opts?: { expiresIn?: number } | { expiresInSeconds?: number } | any): Promise<string>;
+  export function getSignedUrl(
+    client: any,
+    command: any,
+    opts?: { expiresIn?: number } | { expiresInSeconds?: number } | any
+  ): Promise<string>;
 }

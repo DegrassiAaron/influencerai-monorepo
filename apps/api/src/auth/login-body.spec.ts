@@ -29,7 +29,12 @@ describe('normalizeLoginBody', () => {
   });
 
   it('ignores extra properties to keep DTO focused', () => {
-    const normalized = normalizeLoginBody({ email: 'a@b', password: 'pw', magic: 'm', extra: 'field' });
+    const normalized = normalizeLoginBody({
+      email: 'a@b',
+      password: 'pw',
+      magic: 'm',
+      extra: 'field',
+    });
     expect(normalized).toEqual({ email: 'a@b', password: 'pw', magic: 'm' });
   });
 });

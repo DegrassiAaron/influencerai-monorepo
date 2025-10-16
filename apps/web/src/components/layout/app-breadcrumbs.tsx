@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { usePathname } from "next/navigation";
+import { usePathname } from 'next/navigation';
 
 import {
   Breadcrumb,
@@ -9,14 +9,14 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
+} from '@/components/ui/breadcrumb';
 
-import { mainNav } from "./nav-config";
+import { mainNav } from './nav-config';
 
-const LABEL_OVERRIDES = new Map<string, string>([["/login", "Login"]]);
+const LABEL_OVERRIDES = new Map<string, string>([['/login', 'Login']]);
 
 const NAV_LABELS = mainNav.reduce((registry, item) => {
-  if (!item.href.startsWith("http")) {
+  if (!item.href.startsWith('http')) {
     registry.set(item.href, item.title);
   }
   return registry;
@@ -28,7 +28,7 @@ function toTitleCase(segment: string) {
     .split(/[-_\s]+/)
     .filter(Boolean)
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ");
+    .join(' ');
 }
 
 function resolveLabel(href: string, segment: string) {
@@ -37,10 +37,10 @@ function resolveLabel(href: string, segment: string) {
 
 export function AppBreadcrumbs() {
   const pathname = usePathname();
-  const segments = pathname.split("/").filter(Boolean);
+  const segments = pathname.split('/').filter(Boolean);
 
   const crumbs = segments.map((segment, index) => {
-    const href = `/${segments.slice(0, index + 1).join("/")}`;
+    const href = `/${segments.slice(0, index + 1).join('/')}`;
     const label = resolveLabel(href, segment);
     const isLast = index === segments.length - 1;
     return {

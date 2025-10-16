@@ -79,17 +79,28 @@ Aggiungi al file di configurazione (`claude_desktop_config.json`):
     "github": {
       "command": "docker",
       "args": [
-        "run", "-i", "--rm",
+        "run",
+        "-i",
+        "--rm",
         "--read-only",
-        "--tmpfs", "/tmp:rw,size=64m",
-        "--cap-drop", "ALL",
-        "--security-opt", "no-new-privileges",
-        "--pids-limit", "128",
-        "--memory", "512m",
-        "--user", "1000:1000",
-        "-e", "GITHUB_TOKEN",
-        "-e", "GITHUB_OWNER",
-        "-e", "GITHUB_REPO",
+        "--tmpfs",
+        "/tmp:rw,size=64m",
+        "--cap-drop",
+        "ALL",
+        "--security-opt",
+        "no-new-privileges",
+        "--pids-limit",
+        "128",
+        "--memory",
+        "512m",
+        "--user",
+        "1000:1000",
+        "-e",
+        "GITHUB_TOKEN",
+        "-e",
+        "GITHUB_OWNER",
+        "-e",
+        "GITHUB_REPO",
         "meepleai/mcp-github:latest"
       ],
       "env": {
@@ -105,9 +116,11 @@ Aggiungi al file di configurazione (`claude_desktop_config.json`):
 ## Tools Disponibili
 
 ### `github_create_issue`
+
 Crea una nuova issue nel repository.
 
 **Parametri:**
+
 ```json
 {
   "title": "Titolo dell'issue",
@@ -119,17 +132,20 @@ Crea una nuova issue nel repository.
 ```
 
 **Esempio d'uso:**
+
 ```
 Crea un'issue per il bug di autenticazione con label "bug" e "security"
 ```
 
 ### `github_list_issues`
+
 Elenca le issues del repository.
 
 **Parametri:**
+
 ```json
 {
-  "state": "open",  // "open", "closed", "all"
+  "state": "open", // "open", "closed", "all"
   "labels": ["bug"],
   "assignee": "username",
   "limit": 10
@@ -137,14 +153,17 @@ Elenca le issues del repository.
 ```
 
 **Esempio d'uso:**
+
 ```
 Mostrami tutte le issues aperte con label "bug"
 ```
 
 ### `github_create_pr`
+
 Crea una nuova pull request.
 
 **Parametri:**
+
 ```json
 {
   "title": "Titolo della PR",
@@ -156,18 +175,21 @@ Crea una nuova pull request.
 ```
 
 **Esempio d'uso:**
+
 ```
 Crea una pull request dal branch feature/authentication al main
 ```
 
 ### `github_review_pr`
+
 Effettua review di una pull request.
 
 **Parametri:**
+
 ```json
 {
   "pr_number": 123,
-  "event": "APPROVE",  // "APPROVE", "REQUEST_CHANGES", "COMMENT"
+  "event": "APPROVE", // "APPROVE", "REQUEST_CHANGES", "COMMENT"
   "body": "Commenti della review",
   "comments": [
     {
@@ -180,9 +202,11 @@ Effettua review di una pull request.
 ```
 
 ### `github_search_code`
+
 Cerca codice nel repository.
 
 **Parametri:**
+
 ```json
 {
   "query": "function authenticate",
@@ -192,23 +216,27 @@ Cerca codice nel repository.
 ```
 
 ### `github_get_stats`
+
 Ottieni statistiche del repository.
 
 **Parametri:**
+
 ```json
 {
-  "type": "issues",  // "issues", "prs", "contributors", "commits"
-  "period": "week"   // "day", "week", "month", "year"
+  "type": "issues", // "issues", "prs", "contributors", "commits"
+  "period": "week" // "day", "week", "month", "year"
 }
 ```
 
 ### `github_manage_labels`
+
 Gestisci le labels del repository.
 
 **Parametri:**
+
 ```json
 {
-  "action": "create",  // "create", "update", "delete", "list"
+  "action": "create", // "create", "update", "delete", "list"
   "name": "bug",
   "color": "d73a4a",
   "description": "Something isn't working"
@@ -216,9 +244,11 @@ Gestisci le labels del repository.
 ```
 
 ### `github_manage_milestones`
+
 Gestisci i milestones.
 
 **Parametri:**
+
 ```json
 {
   "action": "create",
@@ -373,6 +403,7 @@ Il server implementa caching per ridurre le chiamate API:
 ### Resource Usage
 
 Utilizzo tipico:
+
 - **Memory**: 100-200 MB
 - **CPU**: < 5% (idle), 20-30% (active)
 - **Network**: Dipende dall'uso (principalmente API calls)
