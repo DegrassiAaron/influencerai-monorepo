@@ -13,7 +13,19 @@
       "Bash(gh label list:*)",
       "Bash(gh label create:*)",
       "Bash(grep:*)",
-      "Bash(gh issue close 27 --comment \"$(cat <<''EOF''\n## ✅ Verifica completata\n\n### Risultati\n- ✅ File `.env` **NON è tracciato** da git\n- ✅ `.env` contiene **solo placeholder e credenziali di sviluppo locale** (nessuna credenziale reale esposta)\n- ✅ `.gitignore` già contiene `.env`\n- ✅ Nessuna rotazione credenziali necessaria\n\n### Modifiche applicate\n\n1. **`.env.example` aggiornato** con commenti esplicativi:\n   - Documentato che OPENROUTER_API_KEY è l''unico servizio a pagamento\n   - Aggiunto link per ottenere la chiave\n   - Aggiunti commenti per ogni sezione (Database, Redis, MinIO, etc.)\n   - Aggiunta variabile opzionale LOG_LEVEL\n\n2. **README.md aggiornato** con sezione completa su setup `.env`:\n   - Step-by-step per creare `.env` da `.env.example`\n   - Istruzioni per ottenere OpenRouter API key\n   - Warning sulla sicurezza (non committare .env, non condividere API key)\n   - Lista completa variabili disponibili\n\n### Conclusione\nIl repository è **sicuro**. Nessuna credenziale reale esposta.\nEOF\n)\")"
+      "Bash(gh issue close 27 --comment \"$(cat <<''EOF''\n## ✅ Verifica completata\n\n### Risultati\n- ✅ File `.env` **NON è tracciato** da git\n- ✅ `.env` contiene **solo placeholder e credenziali di sviluppo locale** (nessuna credenziale reale esposta)\n- ✅ `.gitignore` già contiene `.env`\n- ✅ Nessuna rotazione credenziali necessaria\n\n### Modifiche applicate\n\n1. **`.env.example` aggiornato** con commenti esplicativi:\n   - Documentato che OPENROUTER_API_KEY è l''unico servizio a pagamento\n   - Aggiunto link per ottenere la chiave\n   - Aggiunti commenti per ogni sezione (Database, Redis, MinIO, etc.)\n   - Aggiunta variabile opzionale LOG_LEVEL\n\n2. **README.md aggiornato** con sezione completa su setup `.env`:\n   - Step-by-step per creare `.env` da `.env.example`\n   - Istruzioni per ottenere OpenRouter API key\n   - Warning sulla sicurezza (non committare .env, non condividere API key)\n   - Lista completa variabili disponibili\n\n### Conclusione\nIl repository è **sicuro**. Nessuna credenziale reale esposta.\nEOF\n)\")",
+      "Bash(pnpm outdated:*)",
+      "Bash(pnpm list:*)",
+      "WebSearch",
+      "WebFetch(domain:docs.nestjs.com)",
+      "Bash(gh issue edit:*)",
+      "Bash(gh issue close:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\ndocs(api): add NestJS 11 migration spike analysis\n\nComplete spike analysis for migrating from NestJS 10.x to 11.x:\n- Analyzed 23 major dependency updates\n- Identified 6 critical breaking changes (Zod v4, ConfigService, Reflector)\n- Created 4-phase migration plan with 16-24h effort estimate\n- Documented 10 risks with mitigation strategies\n- Defined rollback procedures for each phase\n- Provided testing strategy and success metrics\n\nKey findings:\n- Migration complexity: MEDIUM\n- Highest risk: Zod v4 error handling API changes\n- Recommendation: GO with phased approach\n- Can be split into independent phases for safety\n\nDocument: apps/api/docs/MIGRATION_SPIKE_NESTJS11.md (1282 lines)\n\nCloses #125\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git checkout:*)",
+      "Bash(git merge:*)",
+      "Bash(git push:*)",
+      "Bash(git branch:*)"
     ],
     "deny": [],
     "ask": []
