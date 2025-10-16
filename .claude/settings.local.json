@@ -7,7 +7,8 @@
       "Bash(git commit -m \"$(cat <<''EOF''\ndocs: add Zod v4 migration spike analysis\n\nComplete spike analysis for migrating from Zod 3.25.76 to v4:\n- Analyzed 27 files using Zod across 5 packages\n- Identified 10 critical breaking changes\n- Created 6-phase migration plan with 5-8h effort estimate\n- Documented risk assessment with mitigation strategies\n- Provided comprehensive testing strategy (unit, integration, E2E)\n- Defined rollback procedures and success criteria\n- Included benchmark scripts and codemod automation\n\nKey findings:\n- Migration complexity: LOW-MODERATE\n- Highest impact: String validators, error handling, ZodError structure\n- Performance benefits: 6-14x faster validation\n- Recommendation: GO with phased approach\n- Can be executed in single day to minimize context switching\n\nDocument: docs/spikes/ZOD_V4_MIGRATION_SPIKE.md (1958 lines)\n\nCloses #127\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
       "Bash(git pull:*)",
       "Bash(gh issue comment:*)",
-      "Bash(dir:*)"
+      "Bash(dir:*)",
+      "Bash(powershell:*)"
     ],
     "deny": [],
     "ask": []

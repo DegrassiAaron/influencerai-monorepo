@@ -84,3 +84,15 @@ args = [
 command = "npx"
 args = ["-y", "@allpepper/memory-bank-mcp@latest"]
 env = { MEMORY_BANK_ROOT = "${workspaceFolder}/mcp/memory-bank/storage" }
+
+# === MCP Kit Wrappers (Simple STDIO approach) ===
+# These use PowerShell wrappers from tools/mcp-kit/wrappers/
+# Lightweight, portable, ideal for quick start and cross-repo replication
+
+[mcp_servers.github]
+command = "powershell"
+args = [
+  "-NoProfile",
+  "-ExecutionPolicy", "Bypass",
+  "-File", "${workspaceFolder}/tools/mcp-kit/wrappers/github-mcp.ps1"
+]
