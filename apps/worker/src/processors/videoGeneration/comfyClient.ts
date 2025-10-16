@@ -105,6 +105,34 @@ function extractVideoAsset(history: any): ComfyOutputAsset | null {
   }
   return null;
 }
+function resolveHistoryEntry(historyJson: any, comfyJobId: string) {
+  if (!historyJson || typeof historyJson !== 'object') {
+    return historyJson;
+  }
+
+  const directMatch = (historyJson as Record<string, unknown>)[comfyJobId];
+  if (directMatch && typeof directMatch === 'object') {
+    return directMatch;
+  }
+
+  const containers = ['history', 'histories', 'jobs', 'prompts'] as const;
+  for (const key of containers) {
+    const container = (historyJson as Record<string, unknown>)[key];
+    if (container && typeof container === 'object') {
+      const nested = (container as Record<string, unknown>)[comfyJobId];
+      if (nested && typeof nested === 'object') {
+        return nested;
+      }
+    }
+  }
+
+  const singleJob = (historyJson as Record<string, unknown>).job;
+  if (singleJob && typeof singleJob === 'object') {
+    return singleJob;
+  }
+
+  return historyJson;
+}
 
 function buildAssetUrl(baseUrl: string, asset: ComfyOutputAsset): string {
   if (asset.url) {
@@ -158,7 +186,7 @@ async function pollForCompletion(
       continue;
     }
 
-    const historyEntry = historyJson?.[comfyJobId] ?? historyJson;
+    const historyEntry = resolveHistoryEntry(historyJson, comfyJobId);
     finalHistory = historyEntry;
     const state = parseHistoryState(historyEntry);
 
@@ -254,4 +282,5 @@ export const __testUtils = {
   parseHistoryState,
   extractVideoAsset,
   buildAssetUrl,
+  resolveHistoryEntry,
 };
