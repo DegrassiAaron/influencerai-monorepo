@@ -490,13 +490,13 @@ issues:
 
     ### DoD
 
-    - [ ] Setup Bull Board accessibile via autenticazione basic.
+    - [x] Setup Bull Board accessibile via autenticazione basic.
 
-    - [ ] Metriche chiave (job in attesa, falliti, durata media) esportate.
+    - [x] Metriche chiave (job in attesa, falliti, durata media) esportate.
 
-    - [ ] Alert su failure consecutive inviati a webhook n8n o Slack.
+    - [x] Alert su failure consecutive inviati a webhook n8n o Slack.
 
-    - [ ] Documentazione su come avviare la dashboard.
+    - [x] Documentazione su come avviare la dashboard.
 
     '
   labels:
