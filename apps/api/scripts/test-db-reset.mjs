@@ -24,13 +24,13 @@ if (!url) {
 
 try {
   console.log('Reset DB di test con Prisma (migrate reset)...');
-  execSync('pnpm exec prisma migrate reset --force --skip-seed', {
+  execSync('npx prisma migrate reset --force --skip-seed', {
     cwd: apiDir,
     stdio: 'inherit',
     env: { ...process.env, DATABASE_URL: url },
   });
   console.log('Applico migrazioni (migrate deploy) sul DB di test...');
-  execSync('pnpm exec prisma migrate deploy', {
+  execSync('npx prisma migrate deploy', {
     cwd: apiDir,
     stdio: 'inherit',
     env: { ...process.env, DATABASE_URL: url },
