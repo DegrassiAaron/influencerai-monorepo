@@ -147,7 +147,7 @@ describe('PipelinesService', () => {
       );
     });
 
-    it('should prefer input tenantId over request context', async () => {
+    it('should prefer request context tenantId over input (security)', async () => {
       const input = {
         executionId: 'exec_12345',
         workflowId: 'workflow_lora_pipeline',
@@ -155,17 +155,19 @@ describe('PipelinesService', () => {
         payload: {},
       };
 
-      const pipelineWithInputTenant = { ...mockPipeline, tenantId: 'tenant_from_input' };
+      // Request context has tenantId = 'tenant_test_1' (from beforeEach)
+      // Input has tenantId = 'tenant_from_input'
+      // Implementation should use context tenantId for security
       jest
         .spyOn(prisma.pipelineExecution, 'create')
-        .mockResolvedValue(pipelineWithInputTenant);
+        .mockResolvedValue(mockPipeline);
 
       await service.create(input);
 
       expect(prisma.pipelineExecution.create).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
-            tenantId: 'tenant_from_input',
+            tenantId: mockTenantId, // Uses context tenantId, not input
           }),
         })
       );
