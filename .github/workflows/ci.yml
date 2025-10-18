@@ -111,18 +111,31 @@ jobs:
           set -euo pipefail
           echo "Verifying critical package node_modules..."
 
-          # Check that packages have node_modules (at least .pnpm virtual store)
+          # Check that packages with dependencies have node_modules
           for pkg_dir in apps/* packages/*; do
             if [ -f "$pkg_dir/package.json" ]; then
               pkg_name=$(basename "$pkg_dir")
-              if [ ! -d "$pkg_dir/node_modules" ]; then
-                echo "ERROR: $pkg_dir/node_modules not found after pnpm install"
+
+              # Check if package.json has dependencies or devDependencies
+              has_deps=$(node -e "
+                const pkg = require('./$pkg_dir/package.json');
+                const hasDeps = (pkg.dependencies && Object.keys(pkg.dependencies).length > 0) ||
+                               (pkg.devDependencies && Object.keys(pkg.devDependencies).length > 0);
+                console.log(hasDeps ? 'yes' : 'no');
+              ")
+
+              if [ "$has_deps" = "yes" ] && [ ! -d "$pkg_dir/node_modules" ]; then
+                echo "ERROR: $pkg_dir/node_modules not found after pnpm install (package has dependencies)"
                 exit 1
+              elif [ "$has_deps" = "no" ]; then
+                echo "⊘ Skipping $pkg_dir (no dependencies)"
+              else
+                echo "✓ $pkg_dir has node_modules"
               fi
             fi
           done
 
-          echo "✓ All workspace packages have node_modules"
+          echo "✓ All workspace packages with dependencies have node_modules"
 
       - name: Prepare turbo cache
         run: mkdir -p "${TURBO_CACHE_DIR}"
@@ -204,18 +217,31 @@ jobs:
           set -euo pipefail
           echo "Verifying critical package node_modules..."
 
-          # Check that packages have node_modules (at least .pnpm virtual store)
+          # Check that packages with dependencies have node_modules
           for pkg_dir in apps/* packages/*; do
             if [ -f "$pkg_dir/package.json" ]; then
               pkg_name=$(basename "$pkg_dir")
-              if [ ! -d "$pkg_dir/node_modules" ]; then
-                echo "ERROR: $pkg_dir/node_modules not found after pnpm install"
+
+              # Check if package.json has dependencies or devDependencies
+              has_deps=$(node -e "
+                const pkg = require('./$pkg_dir/package.json');
+                const hasDeps = (pkg.dependencies && Object.keys(pkg.dependencies).length > 0) ||
+                               (pkg.devDependencies && Object.keys(pkg.devDependencies).length > 0);
+                console.log(hasDeps ? 'yes' : 'no');
+              ")
+
+              if [ "$has_deps" = "yes" ] && [ ! -d "$pkg_dir/node_modules" ]; then
+                echo "ERROR: $pkg_dir/node_modules not found after pnpm install (package has dependencies)"
                 exit 1
+              elif [ "$has_deps" = "no" ]; then
+                echo "⊘ Skipping $pkg_dir (no dependencies)"
+              else
+                echo "✓ $pkg_dir has node_modules"
               fi
             fi
           done
 
-          echo "✓ All workspace packages have node_modules"
+          echo "✓ All workspace packages with dependencies have node_modules"
 
       - name: Prepare turbo cache
         run: mkdir -p "${TURBO_CACHE_DIR}"
@@ -334,18 +360,31 @@ jobs:
           set -euo pipefail
           echo "Verifying critical package node_modules..."
 
-          # Check that packages have node_modules (at least .pnpm virtual store)
+          # Check that packages with dependencies have node_modules
           for pkg_dir in apps/* packages/*; do
             if [ -f "$pkg_dir/package.json" ]; then
               pkg_name=$(basename "$pkg_dir")
-              if [ ! -d "$pkg_dir/node_modules" ]; then
-                echo "ERROR: $pkg_dir/node_modules not found after pnpm install"
+
+              # Check if package.json has dependencies or devDependencies
+              has_deps=$(node -e "
+                const pkg = require('./$pkg_dir/package.json');
+                const hasDeps = (pkg.dependencies && Object.keys(pkg.dependencies).length > 0) ||
+                               (pkg.devDependencies && Object.keys(pkg.devDependencies).length > 0);
+                console.log(hasDeps ? 'yes' : 'no');
+              ")
+
+              if [ "$has_deps" = "yes" ] && [ ! -d "$pkg_dir/node_modules" ]; then
+                echo "ERROR: $pkg_dir/node_modules not found after pnpm install (package has dependencies)"
                 exit 1
+              elif [ "$has_deps" = "no" ]; then
+                echo "⊘ Skipping $pkg_dir (no dependencies)"
+              else
+                echo "✓ $pkg_dir has node_modules"
               fi
             fi
           done
 
-          echo "✓ All workspace packages have node_modules"
+          echo "✓ All workspace packages with dependencies have node_modules"
 
       - name: Prepare turbo cache
         run: mkdir -p "${TURBO_CACHE_DIR}"
