@@ -1,4 +1,4 @@
-import { Prisma } from '@prisma/client';
+import type { JsonArray, JsonObject, JsonValue } from '@prisma/client/runtime/library';
 
 function assertSupportedPrimitive(value: unknown): void {
   if (typeof value === 'bigint') {
@@ -16,7 +16,7 @@ function shouldOmitObjectEntry(value: unknown): boolean {
   return typeof value === 'undefined' || typeof value === 'function' || typeof value === 'symbol';
 }
 
-export function toInputJson(value: unknown): Prisma.InputJsonValue {
+export function toInputJson(value: unknown): JsonValue {
   if (
     value === null ||
     typeof value === 'string' ||
@@ -33,7 +33,7 @@ export function toInputJson(value: unknown): Prisma.InputJsonValue {
   }
 
   if (Array.isArray(value)) {
-    return value.map((item) => toInputJson(item)) as Prisma.JsonArray;
+    return value.map((item) => toInputJson(item)) as JsonArray;
   }
 
   if (typeof value === 'object' && value !== null) {
@@ -43,8 +43,8 @@ export function toInputJson(value: unknown): Prisma.InputJsonValue {
   return null;
 }
 
-export function toInputJsonObject(value: Record<string, unknown>): Prisma.JsonObject {
-  return Object.entries(value).reduce<Prisma.JsonObject>((acc, [key, entry]) => {
+export function toInputJsonObject(value: Record<string, unknown>): JsonObject {
+  return Object.entries(value).reduce<JsonObject>((acc, [key, entry]) => {
     if (shouldOmitObjectEntry(entry)) {
       return acc;
     }

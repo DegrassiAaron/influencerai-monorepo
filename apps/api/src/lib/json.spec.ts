@@ -1,4 +1,4 @@
-import { Prisma } from '@prisma/client';
+import type { JsonObject, JsonValue } from '@prisma/client/runtime/library';
 import { toInputJson, toInputJsonObject } from './json';
 
 type IsAny<T> = 0 extends 1 & T ? true : false;
@@ -42,7 +42,7 @@ describe('toInputJson helpers', () => {
 
   it('enforces Prisma.InputJsonValue typings', () => {
     const value = toInputJson({ count: 1 });
-    const ensureAssignable: Prisma.InputJsonValue = value;
+    const ensureAssignable: JsonValue = value;
     void ensureAssignable;
     type ValueIsAny = IsAny<typeof value>;
     const ensureNotAny: ValueIsAny extends true ? never : true = true;
@@ -51,7 +51,7 @@ describe('toInputJson helpers', () => {
 
   it('builds JsonObject structures', () => {
     const obj = toInputJsonObject({ name: 'demo', flag: false });
-    const ensureAssignable: Prisma.JsonObject = obj;
+    const ensureAssignable: JsonObject = obj;
     void ensureAssignable;
     expect(obj).toEqual({ name: 'demo', flag: false });
   });

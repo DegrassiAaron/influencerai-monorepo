@@ -243,3 +243,54 @@ export function createMonitoringServer(input: CreateMonitoringServerInput): Moni
     recordFailure,
   };
 }
+
+export type StartMonitoringOptions = {
+  logger: MonitoringLogger;
+  queues: (MonitoringQueue & { worker?: unknown })[];
+  metricsPrefix?: string;
+  bullBoard?: {
+    host?: string;
+    port?: number;
+    basicAuth: { username: string; password: string } | null;
+  };
+  alerts?: {
+    threshold?: number;
+    webhookUrl?: string | URL | null;
+    fetchImpl?: typeof fetch;
+  };
+};
+
+export async function startMonitoring({
+  logger,
+  queues,
+  metricsPrefix: _metricsPrefix,
+  bullBoard,
+  alerts,
+}: StartMonitoringOptions): Promise<MonitoringServer | null> {
+  void _metricsPrefix;
+
+  if (!bullBoard?.basicAuth) {
+    return null;
+  }
+
+  const normalizedWebhookUrl =
+    alerts?.webhookUrl != null ? String(alerts.webhookUrl) : undefined;
+
+  const monitoringServer = createMonitoringServer({
+    logger,
+    queues: queues.map(({ name, queue }) => ({ name, queue })),
+    host: bullBoard.host,
+    port: bullBoard.port,
+    auth: bullBoard.basicAuth,
+    webhook: normalizedWebhookUrl
+      ? {
+          url: normalizedWebhookUrl,
+          consecutiveFailuresThreshold: alerts?.threshold,
+          fetch: alerts?.fetchImpl,
+        }
+      : undefined,
+  });
+
+  await monitoringServer.start();
+  return monitoringServer;
+}

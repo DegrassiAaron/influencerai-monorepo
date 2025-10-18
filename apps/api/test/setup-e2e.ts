@@ -40,13 +40,8 @@ if (!globalSetupState.__E2E_DB_RESET_INITIALIZED__) {
 // Jest sometimes hangs due to unref'ed timers; ensure long timers don't block exit
 const _setTimeout: typeof setTimeout = global.setTimeout.bind(global);
 
-type TimeoutArgs = Parameters<typeof setTimeout>;
-type TimeoutHandler = TimeoutArgs[0];
-type TimeoutMs = TimeoutArgs[1];
-type TimeoutRest = TimeoutArgs extends [unknown, unknown, ...infer R] ? R : never;
-
-const customSetTimeout = ((handler: TimeoutHandler, timeout?: TimeoutMs, ...args: TimeoutRest) => {
-  const t = _setTimeout(handler, timeout, ...args);
+const customSetTimeout = ((...args: Parameters<typeof setTimeout>) => {
+  const t = _setTimeout(...args);
   const maybeTimer = t as unknown as { unref?: () => void };
   if (typeof maybeTimer?.unref === 'function') {
     // Avoid keeping event loop alive

@@ -222,7 +222,7 @@ export function createWorkers(deps: WorkerDependencies) {
         : undefined,
     });
 
-    monitoring.start().catch((err) => {
+    monitoring.start().catch((err: unknown) => {
       depLogger.error({ err }, 'Failed to start monitoring server');
     });
   } else {
@@ -332,7 +332,7 @@ export function createWorkers(deps: WorkerDependencies) {
       threshold: failureThreshold,
       webhookUrl: process.env.ALERT_WEBHOOK_URL,
     },
-  }).catch((err) => {
+  }).catch((err: unknown) => {
     depLogger.error({ err }, 'Unable to start monitoring server');
   });
 

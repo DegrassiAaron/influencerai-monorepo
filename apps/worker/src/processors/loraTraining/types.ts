@@ -19,7 +19,7 @@ export type LoraTrainingResult = {
 export type CommandPreview = {
   command: string;
   args: string[];
-  cwd?: string;
+  cwd?: string | URL;
 };
 
 export type PatchJobStatusFn = (

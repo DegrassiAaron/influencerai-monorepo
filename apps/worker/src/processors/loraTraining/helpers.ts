@@ -230,13 +230,17 @@ export async function uploadSafetensors(
       key,
       createReadStream(absolute)
     );
-    const url = await s3Deps.getSignedGetUrl(
+    const signedUrl = await s3Deps.getSignedGetUrl(
       clientInfo.client,
       clientInfo.bucket,
       key,
       SIGNED_URL_EXPIRY_SECONDS
     );
-    uploads.push({ key, url, filename });
+    if (!signedUrl) {
+      throw new Error('Unable to generate signed URL for LoRA artifact upload');
+    }
+    const normalizedUrl = String(signedUrl);
+    uploads.push({ key, url: normalizedUrl, filename });
   }
 
   return uploads;
