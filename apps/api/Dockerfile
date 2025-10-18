@@ -2,25 +2,12 @@ FROM node:20-alpine AS base
 RUN corepack enable pnpm
 ENV CI=true
 
-FROM base AS deps
-WORKDIR /app
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-COPY apps/api/package.json ./apps/api/
-COPY packages/core-schemas/package.json ./packages/core-schemas/
-# Copy Prisma schema before install to allow prepare script to run
-COPY apps/api/prisma ./apps/api/prisma
-RUN pnpm install --frozen-lockfile
-
 FROM base AS builder
 WORKDIR /app
-# Use deps' node_modules as the base for building
-COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-# Ensure local node_modules symlinks for workspace packages that need devDeps (tsc)
-RUN pnpm -C packages/core-schemas install --frozen-lockfile --prod=false
-# Regenerate Prisma client after copying full source (in case schema changed)
-# Uses pnpm workspace resolution instead of hardcoded path
-RUN cd apps/api && pnpm exec prisma generate
+# Install all dependencies including devDeps for building
+# This ensures Prisma client is generated with correct workspace structure
+RUN pnpm install --frozen-lockfile
 RUN pnpm --filter @influencerai/api build
 
 FROM base AS runner
