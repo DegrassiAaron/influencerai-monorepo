@@ -103,7 +103,7 @@ jobs:
             ${{ runner.os }}-workspace-modules-
 
       - name: Install dependencies
-        run: pnpm -w install --frozen-lockfile
+        run: pnpm install --frozen-lockfile
 
       - name: Verify dependencies installed
         shell: bash
@@ -196,7 +196,7 @@ jobs:
             ${{ runner.os }}-workspace-modules-
 
       - name: Install dependencies
-        run: pnpm -w install --frozen-lockfile
+        run: pnpm install --frozen-lockfile
 
       - name: Verify dependencies installed
         shell: bash
@@ -326,7 +326,7 @@ jobs:
             ${{ runner.os }}-workspace-modules-
 
       - name: Install dependencies
-        run: pnpm -w install --frozen-lockfile
+        run: pnpm install --frozen-lockfile
 
       - name: Verify dependencies installed
         shell: bash
