@@ -3,6 +3,7 @@ import {
   BarChart3,
   BookOpen,
   Briefcase,
+  Database,
   LayoutDashboard,
   Library,
   ListChecks,
@@ -17,4 +18,5 @@ export const iconMap: Record<string, LucideIcon> = {
   activity: Activity,
   'book-open': BookOpen,
   'list-checks': ListChecks,
+  database: Database,
 };

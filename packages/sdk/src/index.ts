@@ -3,6 +3,7 @@ import { fetchWithTimeout, handleResponse, APIError } from './fetch-utils';
 import {
   JobResponseSchema,
   JobListSchema,
+  DatasetSchema,
   DatasetListSchema,
   DatasetCreationSchema,
   ContentPlanEnvelopeSchema,
@@ -15,6 +16,7 @@ import type {
   CreateDatasetInput,
   CreateDatasetResponse,
   ContentPlanEnvelope,
+  ListDatasetsParams,
 } from './types';
 import { QueueSummarySchema, JobSpec, ContentPlan, DatasetSpec, LoRAConfig } from './core-schemas';
 
@@ -161,8 +163,70 @@ export class InfluencerAIClient {
     return this.request({ path: '/health' });
   }
 
-  async listDatasets(): Promise<Dataset[]> {
-    return this.request({ path: '/datasets', schema: DatasetListSchema });
+  /**
+   * List datasets with optional filtering and pagination
+   *
+   * @param params - Query parameters for filtering, pagination, and sorting
+   * @returns Array of datasets matching the criteria
+   *
+   * @example
+   * ```typescript
+   * // List all datasets
+   * const datasets = await client.listDatasets();
+   *
+   * // List with pagination and filters
+   * const readyDatasets = await client.listDatasets({
+   *   status: 'ready',
+   *   take: 20,
+   *   skip: 0,
+   *   sortBy: 'createdAt',
+   *   sortOrder: 'desc'
+   * });
+   * ```
+   */
+  async listDatasets(params: ListDatasetsParams = {}): Promise<Dataset[]> {
+    const query: Record<string, QueryValue> = {
+      status: params.status,
+      kind: params.kind,
+      take: params.take,
+      skip: params.skip,
+      sortBy: params.sortBy,
+      sortOrder: params.sortOrder,
+    };
+    return this.request({ path: '/datasets', query, schema: DatasetListSchema });
+  }
+
+  /**
+   * Get a single dataset by ID
+   *
+   * @param id - Dataset ID
+   * @returns Dataset record
+   * @throws APIError if dataset is not found or unauthorized
+   *
+   * @example
+   * ```typescript
+   * const dataset = await client.getDataset('ds_123');
+   * console.log(dataset.status); // 'ready'
+   * ```
+   */
+  async getDataset(id: string): Promise<Dataset> {
+    return this.request({ path: `/datasets/${id}`, schema: DatasetSchema });
+  }
+
+  /**
+   * Delete a dataset by ID
+   *
+   * @param id - Dataset ID to delete
+   * @returns void
+   * @throws APIError if dataset is not found or unauthorized
+   *
+   * @example
+   * ```typescript
+   * await client.deleteDataset('ds_123');
+   * ```
+   */
+  async deleteDataset(id: string): Promise<void> {
+    await this.request({ path: `/datasets/${id}`, method: 'DELETE' });
   }
 
   async createDataset(input: CreateDatasetInput): Promise<CreateDatasetResponse> {
@@ -194,5 +258,6 @@ export type {
   CreateDatasetInput,
   CreateDatasetResponse,
   ContentPlanEnvelope,
+  ListDatasetsParams,
 } from './types';
 export { APIError as InfluencerAIAPIError } from './fetch-utils';

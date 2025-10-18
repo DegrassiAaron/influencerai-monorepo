@@ -41,6 +41,20 @@ export type Dataset = z.infer<typeof DatasetSchema>;
 
 export const DatasetListSchema = z.array(DatasetSchema);
 
+/**
+ * Query parameters for listing datasets
+ */
+export const ListDatasetsParamsSchema = z.object({
+  status: z.string().optional(),
+  kind: z.string().optional(),
+  take: z.number().int().min(1).max(100).optional(),
+  skip: z.number().int().min(0).optional(),
+  sortBy: z.enum(['createdAt', 'updatedAt', 'kind', 'status']).optional(),
+  sortOrder: z.enum(['asc', 'desc']).optional(),
+});
+
+export type ListDatasetsParams = z.infer<typeof ListDatasetsParamsSchema>;
+
 export const CreateDatasetInputSchema = z.object({
   kind: z.string().min(1),
   filename: z.string().min(1),
