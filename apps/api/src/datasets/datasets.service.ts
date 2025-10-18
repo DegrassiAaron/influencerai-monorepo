@@ -133,24 +133,10 @@ export class DatasetsService {
     }
 
     // Defensive security check: Verify tenant ownership
-    // In production with middleware, this is redundant but harmless
-    // In tests without middleware, this provides necessary security validation
-    const datasetTenantId = dataset.tenantId?.toLowerCase().replace(/[_-]/g, '') || '';
-    const contextTenantId = tenantId?.toLowerCase().replace(/[_-]/g, '') || '';
-
-    // Both refer to tenant "1" (e.g., tenant_1 and tenant_test_1) - allow for test compatibility
-    // Check if both start with "tenant" and refer to tenant 1
-    const datasetIsTenant1 = datasetTenantId.startsWith('tenant') &&
-      (datasetTenantId === 'tenant1' || datasetTenantId.includes('test1'));
-    const contextIsTenant1 = contextTenantId.startsWith('tenant') &&
-      (contextTenantId === 'tenant1' || contextTenantId.includes('test1'));
-    const bothTenant1 = datasetIsTenant1 && contextIsTenant1;
-
-    // Exact match after normalization
-    const exactMatch = datasetTenantId === contextTenantId;
-
-    // Reject if neither condition is met (clearly different tenants)
-    if (!bothTenant1 && !exactMatch) {
+    // In production: Prisma middleware already filters by tenantId, so this is redundant but harmless
+    // In tests: Middleware is mocked, so we need explicit validation
+    // Return 404 instead of 403 to avoid information disclosure (OWASP best practice)
+    if (dataset.tenantId !== tenantId) {
       throw new NotFoundException(`Dataset ${id} not found`);
     }
 

@@ -114,7 +114,7 @@ describe('Datasets (e2e)', () => {
       const mockDatasets = [
         {
           id: 'ds_1',
-          tenantId: 'tenant_1',
+          tenantId: 'tenant_test_1',
           kind: 'lora-training',
           path: 'datasets/tenant_1/ds_1',
           status: 'ready',
@@ -124,7 +124,7 @@ describe('Datasets (e2e)', () => {
         },
         {
           id: 'ds_2',
-          tenantId: 'tenant_1',
+          tenantId: 'tenant_test_1',
           kind: 'reference',
           path: 'datasets/tenant_1/ds_2',
           status: 'pending',
@@ -166,7 +166,7 @@ describe('Datasets (e2e)', () => {
       const mockDatasets = [
         {
           id: 'ds_1',
-          tenantId: 'tenant_1',
+          tenantId: 'tenant_test_1',
           kind: 'lora-training',
           status: 'ready',
           path: 'datasets/tenant_1/ds_1',
@@ -176,7 +176,7 @@ describe('Datasets (e2e)', () => {
         },
         {
           id: 'ds_3',
-          tenantId: 'tenant_1',
+          tenantId: 'tenant_test_1',
           kind: 'reference',
           status: 'ready',
           path: 'datasets/tenant_1/ds_3',
@@ -214,7 +214,7 @@ describe('Datasets (e2e)', () => {
       const mockDatasets = [
         {
           id: 'ds_1',
-          tenantId: 'tenant_1',
+          tenantId: 'tenant_test_1',
           kind: 'lora-training',
           status: 'ready',
           path: 'datasets/tenant_1/ds_1',
@@ -224,7 +224,7 @@ describe('Datasets (e2e)', () => {
         },
         {
           id: 'ds_3',
-          tenantId: 'tenant_1',
+          tenantId: 'tenant_test_1',
           kind: 'lora-training',
           status: 'pending',
           path: 'datasets/tenant_1/ds_3',
@@ -262,7 +262,7 @@ describe('Datasets (e2e)', () => {
     it('should paginate datasets with take=10 and skip=20', async () => {
       const mockDatasets = Array.from({ length: 10 }, (_, i) => ({
         id: `ds_${21 + i}`,
-        tenantId: 'tenant_1',
+        tenantId: 'tenant_test_1',
         kind: 'lora-training',
         status: 'ready',
         path: `datasets/tenant_1/ds_${21 + i}`,
@@ -337,7 +337,7 @@ describe('Datasets (e2e)', () => {
       const mockDatasets = [
         {
           id: 'ds_3',
-          tenantId: 'tenant_1',
+          tenantId: 'tenant_test_1',
           kind: 'lora-training',
           status: 'ready',
           path: 'datasets/tenant_1/ds_3',
@@ -347,7 +347,7 @@ describe('Datasets (e2e)', () => {
         },
         {
           id: 'ds_1',
-          tenantId: 'tenant_1',
+          tenantId: 'tenant_test_1',
           kind: 'lora-training',
           status: 'ready',
           path: 'datasets/tenant_1/ds_1',
@@ -357,7 +357,7 @@ describe('Datasets (e2e)', () => {
         },
         {
           id: 'ds_2',
-          tenantId: 'tenant_1',
+          tenantId: 'tenant_test_1',
           kind: 'lora-training',
           status: 'ready',
           path: 'datasets/tenant_1/ds_2',
@@ -390,7 +390,7 @@ describe('Datasets (e2e)', () => {
       const mockDatasets = [
         {
           id: 'ds_3',
-          tenantId: 'tenant_1',
+          tenantId: 'tenant_test_1',
           kind: 'lora-training',
           status: 'ready',
           path: 'datasets/tenant_1/ds_3',
@@ -400,7 +400,7 @@ describe('Datasets (e2e)', () => {
         },
         {
           id: 'ds_1',
-          tenantId: 'tenant_1',
+          tenantId: 'tenant_test_1',
           kind: 'lora-training',
           status: 'ready',
           path: 'datasets/tenant_1/ds_1',
@@ -448,7 +448,7 @@ describe('Datasets (e2e)', () => {
     it('should return dataset by id with all fields', async () => {
       const mockDataset = {
         id: 'ds_123',
-        tenantId: 'tenant_1',
+        tenantId: 'tenant_test_1',
         kind: 'lora-training',
         path: 'datasets/tenant_1/my-lora-dataset',
         status: 'ready',
@@ -470,7 +470,7 @@ describe('Datasets (e2e)', () => {
 
       expect(res.body).toMatchObject({
         id: 'ds_123',
-        tenantId: 'tenant_1',
+        tenantId: 'tenant_test_1',
         kind: 'lora-training',
         path: 'datasets/tenant_1/my-lora-dataset',
         status: 'ready',
