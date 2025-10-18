@@ -147,6 +147,16 @@ function runJest(args, options = {}) {
     finalArgs.push(`--shard=${shardIndex}/${totalShards}`);
   }
 
+  // Convert --config path to absolute if it's relative
+  // pnpm -w exec runs from workspace root, but config files are in package dir
+  const configIndex = finalArgs.findIndex(arg => arg === '--config');
+  if (configIndex !== -1 && finalArgs[configIndex + 1]) {
+    const configPath = finalArgs[configIndex + 1];
+    if (!path.isAbsolute(configPath)) {
+      finalArgs[configIndex + 1] = path.resolve(packageDir, configPath);
+    }
+  }
+
   // Use pnpm -w exec to run jest from workspace root
   // -w flag ensures we use workspace-level dependencies (Jest is in root devDependencies)
   const result = spawnSync('pnpm', ['-w', 'exec', 'jest', ...finalArgs], {
