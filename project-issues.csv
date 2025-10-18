@@ -1,0 +1,20 @@
+Issue,Title,Area,Type,Priority,Status,Owner,Effort (days),Start Day,End Day,Depends On,Blocks,Sprint,Milestone
+174,Dataset GET endpoints,api,feat,P0,Todo,Dev A,0.5,D1,D1,,177,Sprint 1,Foundation
+175,LoRA Config API,api,feat,P0,Todo,Dev A,2,D2,D3,,166,Sprint 1,Foundation
+176,ComfyUI workflow templates,worker,feat,P0,Todo,Dev E,0.5,D2,D4,,163,Sprint 1,Foundation
+177,Dataset Management UI,web,feat,P1,Todo,Dev C,2,D3,D4,174,,Sprint 1,Foundation
+179,Demo documentation,docs,chore,P0,Todo,Dev E,2,D5,D15,,,Sprint 1-2,Foundation
+163,Image generation processor,worker,feat,P0,Todo,Dev B,2,D6,D7,176,"167,178",Sprint 2,Core Workers
+180,Auto-captioning processor,worker,feat,P1,Todo,Dev B,2,D7,D8,,,Sprint 2,Core Workers
+172,Asset management API,api,feat,P1,Todo,Dev A,2,D9,D10,,,Sprint 2,Core Workers
+166,LoRA training UI wizard,web,feat,P0,Todo,Dev C,5,D12,D15,175,,Sprint 2,MVP
+167,Image generation UI,web,feat,P0,Todo,Dev C,2,D15,D16,163,,Sprint 2,MVP
+168,Job logs streaming API,api,feat,P1,Todo,Dev A,2,D13,D14,,173,Sprint 2,MVP
+170,Content Plan calendar UI,web,feat,P1,Todo,Dev D,2,D14,D15,,,Sprint 2,MVP
+178,n8n LoRA pipeline,n8n,feat,P0,Todo,Dev E,5,D17,D20,"163,166,167",,Sprint 3,Automation
+169,OAuth integration,api+web,feat,P1,Todo,Dev A,4,D16,D19,,164,Sprint 3,Automation
+171,Video generation enhancements,worker,feat,P1,Todo,Dev B,3,D17,D19,,,Sprint 3,Automation
+173,Real-time monitoring dashboard,web,feat,P1,Todo,Dev C,2,D19,D20,168,,Sprint 3,Automation
+164,Autoposting processor,worker,feat,P0,Todo,Dev B,5,D23,D25,169,165,Sprint 3,Social Media
+165,Complete n8n workflow orchestration,n8n,feat,P0,Todo,Dev E,5,D26,D28,"164,178",,Sprint 3,Social Media
+129,Upgrade logging & queue libs,api+worker,chore,P2,Todo,Dev E,1,D26,D27,,,Sprint 3,Production
