@@ -54,6 +54,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
             Dataset: true,
             User: true,
             Job: true,
+            LoraConfig: true,
           };
           if (!modelsWithTenant[params.model || '']) {
             return next(params);
@@ -194,7 +195,7 @@ export const tenantScopedOperations = {
     const tenantId = ctx.tenantId;
     const normalizedArgs = ensureRecord(args);
     const where = ensureRecord(normalizedArgs.where);
-    if (tenantId && ['Influencer', 'Dataset', 'User', 'Job'].includes(model)) {
+    if (tenantId && ['Influencer', 'Dataset', 'User', 'Job', 'LoraConfig'].includes(model)) {
       where.tenantId = tenantId;
     }
     normalizedArgs.where = where;
@@ -205,7 +206,7 @@ export const tenantScopedOperations = {
     const tenantId = ctx.tenantId;
     const normalizedArgs = ensureRecord(args);
     const where = ensureRecord(normalizedArgs.where);
-    if (tenantId && ['Influencer', 'Dataset', 'User', 'Job'].includes(model)) {
+    if (tenantId && ['Influencer', 'Dataset', 'User', 'Job', 'LoraConfig'].includes(model)) {
       if (typeof where.tenantId === 'undefined') {
         where.tenantId = tenantId;
       }
@@ -218,7 +219,7 @@ export const tenantScopedOperations = {
     const tenantId = ctx.tenantId;
     const normalizedArgs = ensureRecord(args);
     const data = ensureRecord(normalizedArgs.data);
-    if (tenantId && ['Influencer', 'Dataset', 'User', 'Job'].includes(model)) {
+    if (tenantId && ['Influencer', 'Dataset', 'User', 'Job', 'LoraConfig'].includes(model)) {
       data.tenantId = tenantId;
     }
     normalizedArgs.data = data;
@@ -229,7 +230,7 @@ export const tenantScopedOperations = {
     const tenantId = ctx.tenantId;
     const normalizedArgs = ensureRecord(args);
     const where = ensureRecord(normalizedArgs.where);
-    if (tenantId && ['Influencer', 'Dataset', 'User', 'Job'].includes(model)) {
+    if (tenantId && ['Influencer', 'Dataset', 'User', 'Job', 'LoraConfig'].includes(model)) {
       if (typeof where.tenantId === 'undefined') {
         where.tenantId = tenantId;
       }

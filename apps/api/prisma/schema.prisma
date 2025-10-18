@@ -22,6 +22,7 @@ model Tenant {
   datasets    Dataset[]
   users       User[]
   jobs        Job[]
+  loraConfigs LoraConfig[]
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 }
@@ -100,4 +101,30 @@ model User {
   updatedAt    DateTime @updatedAt
 
   @@index([tenantId])
+}
+
+model LoraConfig {
+  id           String   @id @default(cuid())
+  tenantId     String
+  name         String
+  description  String?
+  modelName    String
+  epochs       Int      @default(10)
+  learningRate Float    @default(0.0001)
+  batchSize    Int      @default(1)
+  resolution   Int      @default(512)
+  networkDim   Int      @default(32)
+  networkAlpha Int      @default(16)
+  outputPath   String?
+  meta         Json     @default("{}")
+  isDefault    Boolean  @default(false)
+  Tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([tenantId, name])
+  @@index([tenantId])
+  @@index([tenantId, isDefault])
+  @@index([tenantId, modelName])
+  @@index([tenantId, createdAt])
 }
