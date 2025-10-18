@@ -10,7 +10,7 @@ module.exports = {
   testRegex: 'test/.*\\.e2e-spec\\.ts$',
   transform: {
     '^.+\\.ts$': [
-      require.resolve('ts-jest'),
+      'ts-jest',
       {
         diagnostics: false,
         tsconfig: path.join(__dirname, 'tsconfig.jest.json'),
