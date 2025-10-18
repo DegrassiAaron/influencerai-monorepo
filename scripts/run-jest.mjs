@@ -147,7 +147,7 @@ function runJest(args, options = {}) {
     finalArgs.push(`--shard=${shardIndex}/${totalShards}`);
   }
 
-  const result = spawnSync('npx', ['jest', ...finalArgs], {
+  const result = spawnSync('./node_modules/.bin/jest', finalArgs, {
     cwd: packageDir,
     stdio: 'inherit',
     env: {
@@ -155,6 +155,7 @@ function runJest(args, options = {}) {
       // Avoid watch mode even if inherited from env
       CI: 'true',
     },
+    shell: true,
   });
 
   return result.status ?? 1;
