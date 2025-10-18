@@ -211,20 +211,6 @@ jobs:
           --health-interval 5s
           --health-timeout 3s
           --health-retries 10
-      minio:
-        image: minio/minio:latest
-        env:
-          MINIO_ROOT_USER: minio
-          MINIO_ROOT_PASSWORD: minio12345
-        ports:
-          - 9000:9000
-          - 9001:9001
-        options: >-
-          --health-cmd "mc ready local || curl -f http://localhost:9000/minio/health/live"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 10
-          --health-start-period 30s
     env:
       CI: 'true'
       CI_BASE_SHA: ${{ needs.prepare.outputs.base_sha }}
@@ -282,8 +268,45 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-turbo-integration-
 
+      - name: Start MinIO
+        run: |
+          docker run -d \
+            --name minio \
+            -p 9000:9000 \
+            -p 9001:9001 \
+            -e "MINIO_ROOT_USER=minio" \
+            -e "MINIO_ROOT_PASSWORD=minio12345" \
+            --health-cmd "curl -f http://localhost:9000/minio/health/live" \
+            --health-interval=10s \
+            --health-timeout=5s \
+            --health-retries=10 \
+            minio/minio:latest \
+            server /data --console-address ":9001"
+
       - name: Wait for dependent services
-        run: pnpm exec wait-on --timeout 180000 --interval 1000 tcp:127.0.0.1:5432 tcp:127.0.0.1:6379 http://127.0.0.1:9000/minio/health/live
+        run: |
+          echo "Waiting for PostgreSQL..."
+          pnpm exec wait-on --timeout 60000 --interval 1000 tcp:127.0.0.1:5432
+
+          echo "Waiting for Redis..."
+          pnpm exec wait-on --timeout 60000 --interval 1000 tcp:127.0.0.1:6379
+
+          echo "Waiting for MinIO..."
+          for i in {1..30}; do
+            if curl -sf http://127.0.0.1:9000/minio/health/live > /dev/null; then
+              echo "MinIO is ready"
+              break
+            fi
+            if [ $i -eq 30 ]; then
+              echo "MinIO failed to start within 60 seconds"
+              docker logs minio
+              exit 1
+            fi
+            echo "Waiting for MinIO... ($i/30)"
+            sleep 2
+          done
+
+          echo "All services are ready"
 
       - name: Setup MinIO bucket
         run: |
