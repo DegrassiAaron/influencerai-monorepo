@@ -7,6 +7,9 @@ module.exports = {
   transform: {
     '^.+\\.ts$': [require.resolve('ts-jest'), { diagnostics: false }],
   },
+  moduleNameMapper: {
+    '^@influencerai/core-schemas$': '<rootDir>/../../packages/core-schemas/src',
+  },
   collectCoverageFrom: ['test/**/*.(t|j)s'],
   coverageDirectory: './coverage-e2e',
   testEnvironment: 'node',
