@@ -15,16 +15,31 @@ enum JobStatus {
   completed
 }
 
+enum PipelineStatus {
+  STARTED
+  VALIDATING
+  TRAINING
+  TRAINING_COMPLETE
+  GENERATING_IMAGES
+  IMAGES_COMPLETE
+  GENERATING_VIDEOS
+  VIDEOS_COMPLETE
+  AGGREGATING
+  COMPLETED
+  FAILED
+}
+
 model Tenant {
-  id          String       @id @default(cuid())
-  name        String
-  influencers Influencer[]
-  datasets    Dataset[]
-  users       User[]
-  jobs        Job[]
-  loraConfigs LoraConfig[]
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  id                 String              @id @default(cuid())
+  name               String
+  influencers        Influencer[]
+  datasets           Dataset[]
+  users              User[]
+  jobs               Job[]
+  loraConfigs        LoraConfig[]
+  pipelineExecutions PipelineExecution[]
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
 }
 
 model Influencer {
@@ -127,4 +142,34 @@ model LoraConfig {
   @@index([tenantId, isDefault])
   @@index([tenantId, modelName])
   @@index([tenantId, createdAt])
+}
+
+model PipelineExecution {
+  id             String         @id @default(cuid())
+  executionId    String         @unique
+  workflowId     String
+  tenantId       String
+  status         PipelineStatus @default(STARTED)
+  currentStage   String?
+  payload        Json
+  trainingJobId  String?
+  imageJobIds    String[]       @default([])
+  videoJobIds    String[]       @default([])
+  assetIds       String[]       @default([])
+  loraPath       String?
+  stagesCompleted Int           @default(0)
+  totalStages    Int            @default(6)
+  progressPercent Int           @default(0)
+  totalCostTok   Int            @default(0)
+  startedAt      DateTime       @default(now())
+  completedAt    DateTime?
+  errorMessage   String?
+  errorStage     String?
+  Tenant         Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([executionId])
+  @@index([tenantId])
+  @@index([tenantId, status])
+  @@index([tenantId, startedAt])
+  @@index([status])
 }

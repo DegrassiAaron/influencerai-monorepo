@@ -54,6 +54,18 @@ Best practices per sviluppare API backend:
 
 ---
 
+### n8n Workflow Orchestration
+
+Patterns e best practices per workflow automation:
+
+- **[n8n Multi-Stage Pipeline Research](./tecnic/research-n8n-multi-stage-pipeline-orchestration.md)** ⭐ - Deep research su orchestrazione complessa
+- **[n8n Workflows Guide](../apps/n8n/README.md)** - Setup, testing, workflow esistenti
+- **[n8n Implementation Details](../apps/n8n/IMPLEMENTATION.md)** - Dettagli implementazione tecnica
+
+**Focus**: Long-running jobs, error handling, state management, notifications
+
+---
+
 ### Testing
 
 Strategie di test e QA:

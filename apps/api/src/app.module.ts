@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PrismaModule } from './prisma/prisma.module';
@@ -14,6 +15,7 @@ import { HealthModule } from './health/health.module';
 import { AuthModule } from './auth/auth.module';
 import { DatasetsModule } from './datasets/datasets.module';
 import { LoraConfigsModule } from './lora-configs/lora-configs.module';
+import { PipelinesModule } from './pipelines/pipelines.module';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { AppConfig, computeBullEnabled, validateEnv } from './config/env.validation';
 
@@ -34,6 +36,14 @@ const extraImports = enableBull
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true, validate: validateEnv }),
+    // Rate limiting: 10 requests per 60 seconds per IP (protects against DoS attacks)
+    // Applied per-controller via @UseGuards(ThrottlerGuard) to allow granular control
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60000, // Time window in milliseconds (60 seconds)
+        limit: 10,  // Max requests per window
+      },
+    ]),
     LoggerModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -61,6 +71,7 @@ const extraImports = enableBull
     AuthModule,
     DatasetsModule,
     LoraConfigsModule,
+    PipelinesModule,
   ],
   controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: JwtAuthGuard }],
