@@ -147,9 +147,9 @@ function runJest(args, options = {}) {
     finalArgs.push(`--shard=${shardIndex}/${totalShards}`);
   }
 
-  // Use path relative to package directory to reach workspace root node_modules
-  const jestBin = resolve(packageDir, '../../node_modules/.bin/jest');
-  const result = spawnSync(jestBin, finalArgs, {
+  // Use node to run jest CLI directly from workspace root node_modules
+  const jestCli = resolve(packageDir, '../../node_modules/jest/bin/jest.js');
+  const result = spawnSync('node', [jestCli, ...finalArgs], {
     cwd: packageDir,
     stdio: 'inherit',
     env: {
@@ -157,7 +157,6 @@ function runJest(args, options = {}) {
       // Avoid watch mode even if inherited from env
       CI: 'true',
     },
-    shell: true,
   });
 
   return result.status ?? 1;
