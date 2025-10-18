@@ -91,8 +91,38 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pnpm-store-
 
+      - name: Cache workspace node_modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules/.pnpm
+            apps/*/node_modules/.pnpm
+            packages/*/node_modules/.pnpm
+          key: ${{ runner.os }}-workspace-modules-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-workspace-modules-
+
       - name: Install dependencies
-        run: pnpm -w install --frozen-lockfile --prefer-offline
+        run: pnpm -w install --frozen-lockfile
+
+      - name: Verify dependencies installed
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "Verifying critical package node_modules..."
+
+          # Check that packages have node_modules (at least .pnpm virtual store)
+          for pkg_dir in apps/* packages/*; do
+            if [ -f "$pkg_dir/package.json" ]; then
+              pkg_name=$(basename "$pkg_dir")
+              if [ ! -d "$pkg_dir/node_modules" ]; then
+                echo "ERROR: $pkg_dir/node_modules not found after pnpm install"
+                exit 1
+              fi
+            fi
+          done
+
+          echo "✓ All workspace packages have node_modules"
 
       - name: Prepare turbo cache
         run: mkdir -p "${TURBO_CACHE_DIR}"
@@ -154,8 +184,38 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pnpm-store-
 
+      - name: Cache workspace node_modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules/.pnpm
+            apps/*/node_modules/.pnpm
+            packages/*/node_modules/.pnpm
+          key: ${{ runner.os }}-workspace-modules-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-workspace-modules-
+
       - name: Install dependencies
-        run: pnpm -w install --frozen-lockfile --prefer-offline
+        run: pnpm -w install --frozen-lockfile
+
+      - name: Verify dependencies installed
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "Verifying critical package node_modules..."
+
+          # Check that packages have node_modules (at least .pnpm virtual store)
+          for pkg_dir in apps/* packages/*; do
+            if [ -f "$pkg_dir/package.json" ]; then
+              pkg_name=$(basename "$pkg_dir")
+              if [ ! -d "$pkg_dir/node_modules" ]; then
+                echo "ERROR: $pkg_dir/node_modules not found after pnpm install"
+                exit 1
+              fi
+            fi
+          done
+
+          echo "✓ All workspace packages have node_modules"
 
       - name: Prepare turbo cache
         run: mkdir -p "${TURBO_CACHE_DIR}"
@@ -254,8 +314,38 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pnpm-store-
 
+      - name: Cache workspace node_modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules/.pnpm
+            apps/*/node_modules/.pnpm
+            packages/*/node_modules/.pnpm
+          key: ${{ runner.os }}-workspace-modules-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-workspace-modules-
+
       - name: Install dependencies
-        run: pnpm -w install --frozen-lockfile --prefer-offline
+        run: pnpm -w install --frozen-lockfile
+
+      - name: Verify dependencies installed
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "Verifying critical package node_modules..."
+
+          # Check that packages have node_modules (at least .pnpm virtual store)
+          for pkg_dir in apps/* packages/*; do
+            if [ -f "$pkg_dir/package.json" ]; then
+              pkg_name=$(basename "$pkg_dir")
+              if [ ! -d "$pkg_dir/node_modules" ]; then
+                echo "ERROR: $pkg_dir/node_modules not found after pnpm install"
+                exit 1
+              fi
+            fi
+          done
+
+          echo "✓ All workspace packages have node_modules"
 
       - name: Prepare turbo cache
         run: mkdir -p "${TURBO_CACHE_DIR}"
