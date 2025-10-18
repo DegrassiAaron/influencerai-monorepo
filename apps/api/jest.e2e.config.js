@@ -1,3 +1,5 @@
+// Configure ts-node BEFORE requiring it
+process.env.TS_NODE_PROJECT = require('path').join(__dirname, 'tsconfig.jest.json');
 require('ts-node/register/transpile-only');
 
 module.exports = {
@@ -9,21 +11,9 @@ module.exports = {
       require.resolve('ts-jest'),
       {
         diagnostics: false,
-        tsconfig: {
-          module: 'Node16',
-          moduleResolution: 'node16',
-        },
+        tsconfig: './tsconfig.jest.json',
       },
     ],
-  },
-  globals: {
-    'ts-node': {
-      transpileOnly: true,
-      compilerOptions: {
-        module: 'Node16',
-        moduleResolution: 'node16',
-      },
-    },
   },
   moduleNameMapper: {
     '^@influencerai/core-schemas$': '<rootDir>/../../packages/core-schemas/src',
