@@ -2,6 +2,22 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## 📚 Documentation Navigation
+
+**Nuova documentazione organizzata disponibile!**
+
+- **[Indice Completo Documentazione](docs/README.md)** - Punto di ingresso principale
+- **[Avvio Rapido (5 min)](docs/getting-started/avvio-rapido.md)** - Setup Docker veloce
+- **[Panoramica Architettura](docs/architecture/panoramica.md)** - Diagramma sistema, componenti, tech stack
+- **[Flusso Dati](docs/architecture/flusso-dati.md)** - Lifecycle richieste, pattern elaborazione
+- **[Deployment](docs/architecture/deployment.md)** - Docker Compose, infrastruttura
+- **[Risoluzione Problemi](docs/getting-started/risoluzione-problemi.md)** - Troubleshooting comune
+- **[Stato Progetto](docs/stato-progetto.md)** - Progress corrente, roadmap, metriche
+
+**Per guide specifiche**: Consulta [docs/README.md](docs/README.md) per la mappa completa.
+
+---
+
 ## Project Overview
 
 InfluencerAI is a local TypeScript monorepo system for generating content (text, images, video) for virtual influencers. The architecture uses n8n orchestration, LoRA training, and local video generation with ComfyUI. The only external cost is OpenRouter API for text generation.
