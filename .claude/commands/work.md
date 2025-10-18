@@ -65,12 +65,21 @@ Workflow end-to-end automatizzato per issue con approccio BDD, testing, code rev
 
 - Fetch issue details, validare DoD checklist
 
-### Phase 8: PR Creation
+### Phase 8: Update Issue DoD (NEW)
+**Tools:** `gh issue edit`
+**MCP:** `github_*`
+
+- Aggiorna i checkbox DoD nella issue description
+- Marca criteri completati con [x]
+- Documenta technical debt con [x] o [ ] + nota "⚠️"
+- Aggiungi sezione "Implementation Status" con link PR
+
+### Phase 9: PR Creation
 **MCP:** `github_create_pr`
 
 - Push branch, creare PR con review inclusa
 
-### Phase 9: CI Monitoring (--wait only)
+### Phase 10: CI Monitoring (--wait only)
 **Agents:** `data-analyst-deep-think`, `deep-think-developer`
 **MCP:** `github_*` (CI status), `sequential_start/step` (plan fix)
 
@@ -162,7 +171,32 @@ pnpm test:e2e                   # E2E
 ✅ No breaking changes
 ```
 
-### 8️⃣ PR CREATION
+### 8️⃣ UPDATE ISSUE DOD
+**Tools:** gh issue edit
+
+```bash
+# Aggiorna issue body con DoD completati
+gh issue edit <issue-id> --body "$(cat <<'EOF'
+## Acceptance Criteria
+- [x] Export button added ✅
+- [x] Modal component ✅
+- [ ] Unit tests (⚠️ Technical Debt)
+...
+
+## Definition of Done
+- [x] Code implemented ✅
+- [x] Build passes ✅
+- [ ] Tests written (⚠️ Follow-up needed)
+...
+
+## ✅ Implementation Status
+Merged: PR #XXX
+Status: COMPLETED with documented technical debt
+EOF
+)"
+```
+
+### 9️⃣ PR CREATION
 **MCP:** github_create_pr
 
 ```bash
@@ -170,7 +204,7 @@ git push -u origin feature/<issue-id>
 gh pr create --title "<issue-id>: <title>" --body "..."
 ```
 
-### 9️⃣ CI MONITORING (--wait only)
+### 🔟 CI MONITORING (--wait only)
 **Agents:** data-analyst-deep-think, deep-think-developer
 **MCP:** github_*, sequential_*
 
@@ -319,6 +353,38 @@ Failed: [details]
 
 ## Best Practices
 
+### DoD Update (Phase 8)
+✅ **DO:**
+- Mark ALL completed acceptance criteria with [x]
+- Document technical debt with [ ] + "⚠️ Technical Debt" note
+- Add "Implementation Status" section with PR link
+- Include merge status and commit hash
+- List known limitations clearly
+- Suggest follow-up issues for deferred work
+
+❌ **DON'T:**
+- Skip DoD update (users need visibility)
+- Mark incomplete items as complete
+- Hide technical debt (be transparent)
+- Forget to update after merge
+
+**Example DoD Update:**
+```markdown
+### Frontend
+- [x] Export button added ✅
+- [x] Modal component ✅
+- [ ] Unit tests (⚠️ Technical Debt - Follow-up #XXX)
+
+## ✅ Implementation Status
+**Merged:** PR #466 (commit: be00353)
+**Status:** COMPLETED with documented technical debt
+
+### Known Technical Debt
+- [ ] Unit tests for formatters (High Priority)
+- [ ] Integration tests (High Priority)
+- [ ] Performance testing 100+ messages (Medium Priority)
+```
+
 ### MCP Usage
 ✅ **DO:**
 - Use Context7 per docs framework up-to-date
@@ -418,9 +484,15 @@ Result: PR #458 created, CI passed on attempt 2/3
 
 ---
 
-**Version:** 1.1 (corrected MCP usage)
+**Version:** 1.2 (DoD auto-update)
 **Author:** MeepleAI Development Team
 **Last Updated:** 2025-10-18
+
+**Key Changes from v1.1:**
+- ✅ Added Phase 8: Update Issue DoD (automatic checkbox marking)
+- ✅ Auto-marks completed acceptance criteria with [x]
+- ✅ Documents technical debt with ⚠️ warnings
+- ✅ Adds Implementation Status section to issue
 
 **Key Changes from v1.0:**
 - ✅ Removed magic_analyze from generic code analysis
