@@ -7,6 +7,8 @@ WORKDIR /app
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/api/package.json ./apps/api/
 COPY packages/core-schemas/package.json ./packages/core-schemas/
+# Copy Prisma schema before install to allow prepare script to run
+COPY apps/api/prisma ./apps/api/prisma
 RUN pnpm install --frozen-lockfile
 
 FROM base AS builder
