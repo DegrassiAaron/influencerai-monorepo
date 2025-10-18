@@ -1,5 +1,7 @@
 // Configure ts-node BEFORE requiring it
-process.env.TS_NODE_PROJECT = require('path').join(__dirname, 'tsconfig.jest.json');
+const path = require('path');
+const tsconfigPath = path.join(__dirname, 'tsconfig.jest.json');
+process.env.TS_NODE_PROJECT = tsconfigPath;
 require('ts-node/register/transpile-only');
 
 module.exports = {
@@ -11,7 +13,7 @@ module.exports = {
       require.resolve('ts-jest'),
       {
         diagnostics: false,
-        tsconfig: './tsconfig.jest.json',
+        tsconfig: path.join(__dirname, 'tsconfig.jest.json'),
       },
     ],
   },
