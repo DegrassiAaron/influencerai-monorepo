@@ -34,6 +34,12 @@ const totalShards = totalShardsRaw ? Number(totalShardsRaw) : NaN;
 const shouldShard =
   Number.isInteger(shardIndex) && Number.isInteger(totalShards) && totalShards > 1;
 
+// Determine test type from config argument
+const configIndex = forwardArgs.findIndex(arg => arg === '--config');
+const configFile = configIndex !== -1 ? forwardArgs[configIndex + 1] : '';
+const isE2E = configFile.includes('e2e') || configFile.includes('integration');
+const isUnit = !isE2E;
+
 if (!forceAll && shouldShard && shardIndex > 1) {
   console.log(
     `[jest-runner] Skipping targeted run on shard ${shardIndex}/${totalShards}; shard 1 handles selective execution.`
@@ -111,7 +117,12 @@ function getChangedFiles() {
     .filter(Boolean)
     .map(normalizePath);
 
-  return lines.filter((file) => isInPackage(file) && file.endsWith('.ts'));
+  // Exclude e2e test files (test/*.e2e-spec.ts) from changed files for unit tests
+  return lines.filter((file) =>
+    isInPackage(file) &&
+    file.endsWith('.ts') &&
+    !file.match(/\/test\/.*\.e2e-spec\.ts$/)
+  );
 }
 
 function partitionFiles(files) {
@@ -178,7 +189,15 @@ function isInPackage(file) {
 }
 
 function isTestFile(file) {
-  return /\.(spec|test)\.[cm]?[tj]sx?$/.test(file);
+  // For unit tests: match .spec.ts or .test.ts files in src/ directory
+  // For e2e/integration tests: match .e2e-spec.ts files in test/ directory
+  if (isUnit) {
+    // Unit tests: src/**/*.spec.ts or src/**/*.test.ts (but NOT e2e files)
+    return /src\/.*\.(spec|test)\.[cm]?[tj]sx?$/.test(file) && !file.includes('.e2e-spec.');
+  } else {
+    // E2E/Integration tests: test/**/*.e2e-spec.ts
+    return /test\/.*\.e2e-spec\.[cm]?[tj]sx?$/.test(file);
+  }
 }
 
 function normalizePath(inputPath) {
