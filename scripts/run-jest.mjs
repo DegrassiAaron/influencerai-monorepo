@@ -147,7 +147,7 @@ function runJest(args, options = {}) {
     finalArgs.push(`--shard=${shardIndex}/${totalShards}`);
   }
 
-  const result = spawnSync('pnpm', ['exec', 'jest', ...finalArgs], {
+  const result = spawnSync('npx', ['jest', ...finalArgs], {
     cwd: packageDir,
     stdio: 'inherit',
     env: {
