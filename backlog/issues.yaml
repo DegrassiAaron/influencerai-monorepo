@@ -1,0 +1,28 @@
+issues:
+  - code: WEB-03
+    title: 'WEB-03: Deprecate legacy backlog sync'
+    body: |-
+      ### Definition of Done
+      - [x] migration scripts removed
+      - [x] documentation updated
+      - [x] release notes prepared
+    labels:
+      - status:done
+      - team:web
+    assignees:
+      - alex.maintainer
+      - devon.contributor
+    milestone: Q4-2025
+  - code: SDK-01
+    title: 'SDK-01: Add authentication helpers'
+    body: |-
+      ### Definition of Done
+      - [x] SDK methods implemented
+      - [x] unit tests added
+      - [x] docs updated
+    labels:
+      - status:done
+      - team:sdk
+    assignees:
+      - robin.integrations
+    milestone: Q4-2025
