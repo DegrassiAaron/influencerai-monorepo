@@ -1,8 +1,10 @@
 module.exports = {
-  preset: 'ts-jest',
   moduleFileExtensions: ['js', 'json', 'ts'],
   rootDir: '.',
   testRegex: 'src/.*\\.spec\\.ts$',
+  transform: {
+    '^.+\\.(t|j)s$': ['ts-jest', { diagnostics: false }],
+  },
   moduleNameMapper: {
     '^@influencerai/core-schemas$': '<rootDir>/../../packages/core-schemas/src',
   },
