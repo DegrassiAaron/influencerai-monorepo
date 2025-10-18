@@ -147,9 +147,9 @@ function runJest(args, options = {}) {
     finalArgs.push(`--shard=${shardIndex}/${totalShards}`);
   }
 
-  // Use pnpm exec to run jest with proper pnpm workspace resolution
-  // This handles pnpm's virtual store and symlink structure correctly
-  const result = spawnSync('pnpm', ['exec', 'jest', ...finalArgs], {
+  // Use pnpm -w exec to run jest from workspace root
+  // -w flag ensures we use workspace-level dependencies (Jest is in root devDependencies)
+  const result = spawnSync('pnpm', ['-w', 'exec', 'jest', ...finalArgs], {
     cwd: packageDir,
     stdio: 'inherit',
     env: {
