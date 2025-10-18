@@ -10,7 +10,7 @@
 
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { dirname, resolve, relative, sep } from 'node:path';
+import { dirname, resolve, relative, sep, isAbsolute } from 'node:path';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -152,8 +152,8 @@ function runJest(args, options = {}) {
   const configIndex = finalArgs.findIndex(arg => arg === '--config');
   if (configIndex !== -1 && finalArgs[configIndex + 1]) {
     const configPath = finalArgs[configIndex + 1];
-    if (!path.isAbsolute(configPath)) {
-      finalArgs[configIndex + 1] = path.resolve(packageDir, configPath);
+    if (!isAbsolute(configPath)) {
+      finalArgs[configIndex + 1] = resolve(packageDir, configPath);
     }
   }
 
