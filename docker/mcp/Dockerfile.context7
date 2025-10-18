@@ -1,0 +1,16 @@
+# Dockerfile for Context7 (Upstash) MCP Server
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Install the Context7 MCP server
+RUN npm install -g @upstash/context7-mcp
+
+# Use existing node user (UID/GID 1000)
+RUN mkdir -p /tmp && \
+    chown -R node:node /tmp
+
+USER node
+
+# The server will be started via docker-compose command
+CMD ["npx", "-y", "@upstash/context7-mcp"]

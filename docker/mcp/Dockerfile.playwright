@@ -1,0 +1,28 @@
+# Dockerfile for Playwright MCP Server
+FROM mcr.microsoft.com/playwright:v1.49.1-noble
+
+# Install Node.js 20 (Playwright base image might have a different version)
+RUN apt-get update && apt-get install -y \
+    curl \
+    && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+    && apt-get install -y nodejs \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Install the Playwright MCP server
+RUN npm install -g @playwright/mcp
+
+# Create non-root user (use existing pwuser if available, otherwise create)
+RUN if ! id -u 1000 > /dev/null 2>&1; then \
+        groupadd -g 1000 mcpuser && \
+        useradd -u 1000 -g mcpuser -m mcpuser; \
+    fi && \
+    mkdir -p /tmp && \
+    chown -R 1000:1000 /tmp
+
+USER 1000
+
+# The server will be started via docker-compose command
+CMD ["npx", "-y", "@playwright/mcp"]

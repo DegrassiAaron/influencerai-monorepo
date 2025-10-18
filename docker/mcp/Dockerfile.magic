@@ -1,0 +1,19 @@
+# Dockerfile for Magic (21st.dev) MCP Server
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Install build dependencies for native modules
+RUN apk add --no-cache python3 make g++
+
+# Install the Magic MCP server
+RUN npm install -g @21st-dev/magic
+
+# Use existing node user (UID/GID 1000)
+RUN mkdir -p /tmp && \
+    chown -R node:node /tmp
+
+USER node
+
+# The server will be started via docker-compose command
+CMD ["npx", "-y", "@21st-dev/magic"]

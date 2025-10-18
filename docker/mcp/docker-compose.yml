@@ -1,0 +1,240 @@
+version: '3.8'
+
+services:
+  # GitHub Project Manager
+  github:
+    build:
+      context: .
+      dockerfile: Dockerfile.github
+    image: influencerai/mcp-github:latest
+    container_name: mcp-github
+    # read_only: true # Temporarily disabled
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 128
+    mem_limit: 512m
+    memswap_limit: 512m
+    cpus: '0.5'
+    tmpfs:
+      - /tmp:rw,size=64m
+    user: "1000:1000"
+    environment:
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - GITHUB_OWNER=${GITHUB_OWNER}
+      - GITHUB_REPO=${GITHUB_REPO}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "--eval", "process.exit(0)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # n8n Workflow Manager
+  n8n-mcp:
+    build:
+      context: .
+      dockerfile: Dockerfile.n8n
+    image: influencerai/mcp-n8n:latest
+    container_name: mcp-n8n
+    # read_only: true # Temporarily disabled
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 128
+    mem_limit: 512m
+    memswap_limit: 512m
+    cpus: '0.5'
+    tmpfs:
+      - /tmp:rw,size=64m
+    user: "1000:1000"
+    environment:
+      - N8N_API_URL=${N8N_API_URL:-http://localhost:5678}
+      - N8N_API_KEY=${N8N_API_KEY}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "--eval", "process.exit(0)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # Memory Bank
+  memory:
+    build:
+      context: .
+      dockerfile: Dockerfile.memory
+    image: influencerai/mcp-memory:latest
+    container_name: mcp-memory
+    # read_only: true # Temporarily disabled
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 128
+    mem_limit: 512m
+    memswap_limit: 512m
+    cpus: '0.5'
+    tmpfs:
+      - /tmp:rw,size=64m
+    user: "1000:1000"
+    volumes:
+      - mcp-memory:/data:rw
+    environment:
+      - MEMORY_PATH=/data/memory
+      - MEMORY_MAX_SIZE=${MEMORY_MAX_SIZE:-100MB}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "--eval", "process.exit(0)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # Sequential Thinking
+  sequential:
+    build:
+      context: .
+      dockerfile: Dockerfile.sequential
+    image: influencerai/mcp-sequential:latest
+    container_name: mcp-sequential
+    # read_only: true # Temporarily disabled
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 128
+    mem_limit: 512m
+    memswap_limit: 512m
+    cpus: '0.5'
+    tmpfs:
+      - /tmp:rw,size=64m
+    user: "1000:1000"
+    environment:
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+    restart: unless-stopped
+
+  # Playwright Browser Automation
+  playwright:
+    build:
+      context: .
+      dockerfile: Dockerfile.playwright
+    image: influencerai/mcp-playwright:latest
+    container_name: mcp-playwright
+    # read_only: true # Temporarily disabled
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 256
+    mem_limit: 1024m
+    memswap_limit: 1024m
+    cpus: '1.0'
+    tmpfs:
+      - /tmp:rw,size=128m
+    user: "1000:1000"
+    shm_size: 512m
+    restart: unless-stopped
+
+  # Magic UI Generation (21st.dev)
+  magic:
+    build:
+      context: .
+      dockerfile: Dockerfile.magic
+    image: influencerai/mcp-magic:latest
+    container_name: mcp-magic
+    # read_only: true # Temporarily disabled
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 128
+    mem_limit: 512m
+    memswap_limit: 512m
+    cpus: '0.5'
+    tmpfs:
+      - /tmp:rw,size=64m
+    user: "1000:1000"
+    environment:
+      - MAGIC_API_KEY=${MAGIC_API_KEY}
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+    restart: unless-stopped
+
+  # Context7 Documentation (Upstash)
+  context7:
+    build:
+      context: .
+      dockerfile: Dockerfile.context7
+    image: influencerai/mcp-context7:latest
+    container_name: mcp-context7
+    # read_only: true # Temporarily disabled
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 128
+    mem_limit: 512m
+    memswap_limit: 512m
+    cpus: '0.5'
+    tmpfs:
+      - /tmp:rw,size=64m
+    user: "1000:1000"
+    environment:
+      - CONTEXT7_API_KEY=${CONTEXT7_API_KEY}
+    restart: unless-stopped
+
+  # Knowledge Graph
+  knowledge-graph:
+    build:
+      context: .
+      dockerfile: Dockerfile.knowledge-graph
+    image: influencerai/mcp-knowledge-graph:latest
+    container_name: mcp-knowledge-graph
+    # read_only: true # Temporarily disabled
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 128
+    mem_limit: 512m
+    memswap_limit: 512m
+    cpus: '0.5'
+    tmpfs:
+      - /tmp:rw,size=64m
+    user: "1000:1000"
+    volumes:
+      - mcp-knowledge:/data:rw
+    environment:
+      - KG_DATA_PATH=/data
+      - KG_QDRANT_URL=${KG_QDRANT_URL:-http://qdrant:6333}
+      - KG_COLLECTION=${KG_COLLECTION:-knowledge_graph}
+    restart: unless-stopped
+
+  # Optional: Qdrant vector database for knowledge graph
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: mcp-qdrant
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant-data:/qdrant/storage
+    environment:
+      - QDRANT__SERVICE__GRPC_PORT=6334
+    restart: unless-stopped
+
+volumes:
+  mcp-memory:
+    driver: local
+  mcp-knowledge:
+    driver: local
+  qdrant-data:
+    driver: local
+
+networks:
+  default:
+    name: mcp-network
+    driver: bridge

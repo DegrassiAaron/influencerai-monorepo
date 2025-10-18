@@ -1,0 +1,16 @@
+# Dockerfile for GitHub MCP Server
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Install the GitHub MCP server
+RUN npm install -g @modelcontextprotocol/server-github
+
+# Use existing node user (UID/GID 1000)
+RUN mkdir -p /tmp && \
+    chown -R node:node /tmp
+
+USER node
+
+# The server will be started via docker-compose command
+CMD ["npx", "-y", "@modelcontextprotocol/server-github"]

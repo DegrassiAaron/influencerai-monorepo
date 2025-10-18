@@ -1,0 +1,36 @@
+# Base Dockerfile for MCP servers
+# This is a generic Dockerfile that can be used for most npm-based MCP servers
+# Use ARG to specify which package to install
+
+FROM node:20-alpine
+
+# Accept build arguments for package name and version
+ARG MCP_PACKAGE
+ARG MCP_VERSION=latest
+
+# Install dependencies for building native modules if needed
+RUN apk add --no-cache \
+    python3 \
+    make \
+    g++ \
+    git
+
+# Create app directory
+WORKDIR /app
+
+# Install the MCP server package globally
+RUN npm install -g ${MCP_PACKAGE}@${MCP_VERSION}
+
+# Create non-root user
+RUN addgroup -g 1000 mcpuser && \
+    adduser -D -u 1000 -G mcpuser mcpuser
+
+# Create necessary directories
+RUN mkdir -p /tmp && \
+    chown -R mcpuser:mcpuser /tmp
+
+# Switch to non-root user
+USER mcpuser
+
+# The command will be specified in docker-compose.yml for each service
+# as different MCP servers have different entry points

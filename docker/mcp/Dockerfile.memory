@@ -1,0 +1,16 @@
+# Dockerfile for Memory MCP Server
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Install the Memory MCP server
+RUN npm install -g @modelcontextprotocol/server-memory
+
+# Use existing node user (UID/GID 1000)
+RUN mkdir -p /data /tmp && \
+    chown -R node:node /data /tmp
+
+USER node
+
+# The server will be started via docker-compose command
+CMD ["npx", "-y", "@modelcontextprotocol/server-memory"]
