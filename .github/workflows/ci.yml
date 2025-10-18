@@ -212,13 +212,20 @@ jobs:
           --health-timeout 3s
           --health-retries 10
       minio:
-        image: minio/minio:latest
+        image: bitnami/minio:2024
         env:
           MINIO_ROOT_USER: minio
           MINIO_ROOT_PASSWORD: minio12345
+          MINIO_DEFAULT_BUCKETS: assets
         ports:
           - 9000:9000
           - 9001:9001
+        options: >-
+          --health-cmd "curl -f http://localhost:9000/minio/health/live || exit 1"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+          --health-start-period 30s
     env:
       CI: 'true'
       CI_BASE_SHA: ${{ needs.prepare.outputs.base_sha }}
