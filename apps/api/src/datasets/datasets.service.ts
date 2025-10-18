@@ -7,7 +7,6 @@ import {
   UpdateDatasetStatusDto,
   ListDatasetsQuery,
 } from './dto';
-import type { Dataset } from '@prisma/client';
 
 @Injectable()
 export class DatasetsService {
@@ -63,7 +62,7 @@ export class DatasetsService {
    * Returns datasets for current tenant only
    */
   async list(query: ListDatasetsQuery): Promise<{
-    data: Dataset[];
+    data: Awaited<ReturnType<typeof this.prisma.dataset.findMany>>;
     total: number;
     take: number;
     skip: number;
@@ -116,7 +115,7 @@ export class DatasetsService {
    * Note: In production, Prisma middleware handles tenant filtering automatically.
    * In tests (without middleware), we perform manual validation for security.
    */
-  async getById(id: string): Promise<Dataset> {
+  async getById(id: string): Promise<Awaited<ReturnType<typeof this.prisma.dataset.findUnique>>> {
     const ctx = getRequestContext();
     const tenantId = ctx.tenantId;
     if (!tenantId) {

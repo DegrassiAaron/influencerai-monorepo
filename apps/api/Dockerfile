@@ -6,7 +6,7 @@ FROM base AS builder
 WORKDIR /app
 COPY . .
 # Install all dependencies including devDeps for building
-# This ensures Prisma client is generated with correct workspace structure
+# Prisma client is generated via prepare script during install
 RUN pnpm install --frozen-lockfile
 RUN pnpm --filter @influencerai/api build
 
