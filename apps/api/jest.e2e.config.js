@@ -5,7 +5,25 @@ module.exports = {
   rootDir: '.',
   testRegex: 'test/.*\\.e2e-spec\\.ts$',
   transform: {
-    '^.+\\.ts$': [require.resolve('ts-jest'), { diagnostics: false }],
+    '^.+\\.ts$': [
+      require.resolve('ts-jest'),
+      {
+        diagnostics: false,
+        tsconfig: {
+          module: 'Node16',
+          moduleResolution: 'node16',
+        },
+      },
+    ],
+  },
+  globals: {
+    'ts-node': {
+      transpileOnly: true,
+      compilerOptions: {
+        module: 'Node16',
+        moduleResolution: 'node16',
+      },
+    },
   },
   moduleNameMapper: {
     '^@influencerai/core-schemas$': '<rootDir>/../../packages/core-schemas/src',
