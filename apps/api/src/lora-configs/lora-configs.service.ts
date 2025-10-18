@@ -113,9 +113,9 @@ export class LoraConfigsService {
       ...(modelName && { modelName }),
     };
 
-    // Build ORDER BY clause
+    // Build ORDER BY clause with defaults (sortBy and sortOrder have Zod defaults but TypeScript sees them as potentially undefined)
     const orderBy = {
-      [sortBy as string]: sortOrder as 'asc' | 'desc',
+      [sortBy ?? 'createdAt']: sortOrder ?? 'desc',
     };
 
     // Execute count and data queries in parallel for performance
