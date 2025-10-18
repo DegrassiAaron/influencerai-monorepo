@@ -144,7 +144,7 @@ describe('LoraConfigsService', () => {
     it('should throw BadRequestException if tenant context is missing', async () => {
       jest
         .spyOn(requestContext, 'getRequestContext')
-        .mockReturnValue({ tenantId: null });
+        .mockReturnValue({ tenantId: undefined });
 
       const input = {
         name: 'New Config',

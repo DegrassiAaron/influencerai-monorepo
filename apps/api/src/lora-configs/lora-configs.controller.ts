@@ -20,7 +20,7 @@ import {
   ApiQuery,
   ApiParam,
 } from '@nestjs/swagger';
-import { FastifyReply } from 'fastify';
+import type { FastifyReply } from 'fastify';
 import { LoraConfigsService } from './lora-configs.service';
 import {
   CreateLoraConfigSchema,

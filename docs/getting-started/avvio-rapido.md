@@ -46,11 +46,17 @@ docker compose -f infra/docker-compose.yml up -d
 docker ps
 ```
 
-Dovresti vedere 4 container running:
-- `influencerai-postgres`
-- `influencerai-redis`
-- `influencerai-minio`
-- `influencerai-n8n`
+Dovresti vedere container running con prefix `influencerai-`:
+- `influencerai-postgres` (porta 5433)
+- `influencerai-redis` (porta 6380)
+- `influencerai-minio` (porte 9000, 9001)
+- `influencerai-n8n` (porta 5678)
+
+**NOTA**: InfluencerAI usa **porte custom** per evitare conflitti con altri progetti:
+- Postgres: **5433** invece di 5432
+- Redis: **6380** invece di 6379
+
+Vedi: [Isolamento Docker Multi-Project](../tecnic/docker-isolation-multiple-projects.md)
 
 ### 4. Setup Database e Avvia Applicazioni
 
@@ -149,25 +155,30 @@ pnpm dlx prisma migrate reset
 
 ## Troubleshooting
 
-### Problema: "Port 5432 already in use"
+### Problema: "Port 5433 already in use"
 
-PostgreSQL già in esecuzione sul sistema.
+**NOTA**: InfluencerAI usa porta **5433** (non 5432) per evitare conflitti.
 
-**Soluzione**:
+Se la porta 5433 è occupata:
+
+**Soluzione A**: Trova e termina il processo
 ```bash
 # Windows
-net stop postgresql-x64-15
+netstat -ano | findstr :5433
+taskkill /PID <PID> /F
 
 # Linux/Mac
-sudo systemctl stop postgresql
+lsof -i :5433
+kill -9 <PID>
 ```
 
-Oppure cambia la porta in `infra/docker-compose.yml`:
+**Soluzione B**: Cambia porta in `infra/docker-compose.yml`:
 ```yaml
 postgres:
   ports:
-    - "5433:5432"  # Usa porta 5433 invece di 5432
+    - "5434:5432"  # Usa porta 5434 invece
 ```
+Poi aggiorna `.env`: `DATABASE_URL=postgresql://...@localhost:5434/...`
 
 ### Problema: "Docker: Cannot connect to the Docker daemon"
 

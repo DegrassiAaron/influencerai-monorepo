@@ -114,7 +114,7 @@ export class LoraConfigsService {
     };
 
     // Build ORDER BY clause
-    const orderBy: any = {
+    const orderBy: Record<string, 'asc' | 'desc'> = {
       [sortBy]: sortOrder,
     };
 

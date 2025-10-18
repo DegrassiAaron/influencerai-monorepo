@@ -10,7 +10,7 @@ import {
   Res,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { FastifyReply } from 'fastify';
+import type { FastifyReply } from 'fastify';
 import { DatasetsService } from './datasets.service';
 import {
   CreateDatasetSchema,

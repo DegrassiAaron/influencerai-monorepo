@@ -23,9 +23,13 @@ docker inspect influencerai-postgres | grep -A 5 "Health"
 
 1. **Porta già in uso**:
 ```bash
-# Trova processo che usa porta 5432
-lsof -i :5432  # Mac/Linux
-netstat -ano | findstr :5432  # Windows
+# NOTA: InfluencerAI usa porte CUSTOM per evitare conflitti:
+# - Postgres: 5433 (invece di 5432)
+# - Redis: 6380 (invece di 6379)
+
+# Trova processo che usa porta 5433
+lsof -i :5433  # Mac/Linux
+netstat -ano | findstr :5433  # Windows
 
 # Termina processo
 kill -9 <PID>  # Mac/Linux
@@ -34,7 +38,7 @@ taskkill /PID <PID> /F  # Windows
 
 2. **Volume corrotto**:
 ```bash
-# Rimuovi volume e ricrea
+# Rimuovi volume e ricrea (⚠️ dati persi)
 docker compose -f infra/docker-compose.yml down -v
 docker compose -f infra/docker-compose.yml up -d
 ```
@@ -42,6 +46,38 @@ docker compose -f infra/docker-compose.yml up -d
 3. **Memoria insufficiente**:
    - Docker Desktop → Settings → Resources
    - Aumenta memoria a minimo 8GB
+
+### Conflitti con Altri Progetti Docker
+
+**Sintomo**: Errori di conflitto con container/volumi di altri progetti (es. MeepleAI)
+
+**Causa**: InfluencerAI è configurato con isolamento completo:
+- Project name: `influencerai`
+- Network: `influencerai-network`
+- Volumi: `influencerai_*`
+- Container: `influencerai-*`
+
+**Riferimento**: Vedi [Isolamento Docker Multi-Project](../tecnic/docker-isolation-multiple-projects.md)
+
+**Soluzioni**:
+
+1. **Verifica nomi risorse isolati**:
+```bash
+docker ps --filter "name=influencerai"
+docker volume ls --filter "name=influencerai"
+docker network ls --filter "name=influencerai"
+```
+
+2. **Se hai volumi dalla vecchia configurazione, migra**:
+```bash
+# Script di migrazione disponibile
+./scripts/migrate-docker-volumes.sh    # Linux/Mac
+.\scripts\migrate-docker-volumes.ps1   # Windows PowerShell
+```
+
+3. **Conflitto porta n8n (5678) con MeepleAI**:
+   - Non eseguire entrambi i progetti contemporaneamente
+   - Oppure cambia porta n8n in uno dei progetti
 
 ### MinIO non accetta upload
 
@@ -84,9 +120,14 @@ docker exec influencerai-postgres pg_isready -U postgres
 
 3. **Verifica CONNECTION_STRING**:
 ```bash
-# Nel file .env
-DATABASE_URL=postgresql://postgres:postgres@localhost:5432/influencerai
+# Nel file .env (per accesso da host)
+# NOTA: Usa porta 5433 (custom di InfluencerAI)
+DATABASE_URL=postgresql://postgres:postgres@localhost:5433/influencerai
 #                       ↑user    ↑pass      ↑host    ↑port  ↑database
+
+# Dentro Docker Compose, i container usano:
+# DATABASE_URL=postgresql://postgres:postgres@postgres:5432/influencerai
+# (service name 'postgres' e porta interna 5432)
 ```
 
 ### Migration fallisce
@@ -206,8 +247,12 @@ pnpm --filter worker dev
 
 2. **Redis non connesso**:
 ```bash
-# Verifica REDIS_URL in .env
-REDIS_URL=redis://localhost:6379
+# Verifica REDIS_URL in .env (per accesso da host)
+# NOTA: Usa porta 6380 (custom di InfluencerAI)
+REDIS_URL=redis://localhost:6380
+
+# Dentro Docker Compose:
+# REDIS_URL=redis://redis:6379
 ```
 
 3. **Concurrency saturo**:

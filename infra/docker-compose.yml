@@ -1,53 +1,117 @@
+# ============================================================================
+# InfluencerAI Monorepo - Docker Compose Configuration
+# ============================================================================
+#
+# Questo file configura l'infrastruttura di sviluppo locale per InfluencerAI.
+# Include isolamento completo per evitare conflitti con altri progetti Docker.
+#
+# ISOLAMENTO:
+# - Project name: influencerai (evita conflitti con altri progetti)
+# - Network: influencerai-network (isolato da altri progetti)
+# - Volumi: prefix influencerai_ (no sovrapposizioni)
+# - Container names: prefix influencerai- (identificazione univoca)
+# - Porte custom: 5433, 6380 per evitare conflitti con servizi standard
+#
+# SERVIZI:
+# - postgres: Database principale (porta 5433)
+# - redis: Cache e code BullMQ (porta 6380)
+# - minio: Object storage S3-compatible (porte 9000, 9001)
+# - n8n: Workflow orchestration (porta 5678)
+# - api: NestJS backend (porta 3001)
+# - worker: BullMQ consumer per async jobs
+# - web: Next.js dashboard (porta 3000)
+#
+# COMANDI UTILI:
+# - docker compose -f infra/docker-compose.yml up -d       # Avvia tutti i servizi
+# - docker compose -f infra/docker-compose.yml down        # Ferma i servizi
+# - docker compose -f infra/docker-compose.yml logs -f     # Visualizza logs
+# - docker compose -f infra/docker-compose.yml ps          # Lista servizi attivi
+#
+# Per più informazioni: docs/architecture/deployment.md
+# ============================================================================
+
+name: influencerai
+
 services:
+  # ==========================================================================
+  # DATABASE: PostgreSQL 16
+  # ==========================================================================
   postgres:
     image: postgres:16
+    container_name: influencerai-postgres
+    restart: unless-stopped
     environment:
       POSTGRES_PASSWORD: postgres
       POSTGRES_USER: postgres
       POSTGRES_DB: influencerai
     volumes:
-      - pg_data:/var/lib/postgresql/data
+      - influencerai_pg_data:/var/lib/postgresql/data
     ports:
+      # NOTA: Porta 5433 invece di 5432 per evitare conflitti con altri progetti
       - "5433:5432"
+    networks:
+      - influencerai-network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
       timeout: 5s
       retries: 5
 
+  # ==========================================================================
+  # CACHE & QUEUE: Redis 7
+  # ==========================================================================
   redis:
     image: redis:7-alpine
+    container_name: influencerai-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - influencerai_redis_data:/data
     ports:
+      # NOTA: Porta 6380 invece di 6379 per evitare conflitti con altri progetti
       - "6380:6379"
+    networks:
+      - influencerai-network
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
 
+  # ==========================================================================
+  # OBJECT STORAGE: MinIO (S3-compatible)
+  # ==========================================================================
   minio:
     image: minio/minio:latest
+    container_name: influencerai-minio
+    restart: unless-stopped
     command: server /data --console-address ":9001"
     environment:
       MINIO_ROOT_USER: minio
       MINIO_ROOT_PASSWORD: minio12345
     volumes:
-      - minio_data:/data
+      - influencerai_minio_data:/data
     ports:
-      - "9000:9000"
-      - "9001:9001"
+      # NOTA: Porte standard 9000/9001 - verificare se altri progetti le usano
+      - "9000:9000"   # API endpoint
+      - "9001:9001"   # Web Console UI
+    networks:
+      - influencerai-network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
       interval: 30s
       timeout: 20s
       retries: 3
 
+  # ==========================================================================
+  # MINIO INIT: Crea bucket assets se non esiste
+  # ==========================================================================
   minio-init:
     image: minio/mc:latest
+    container_name: influencerai-minio-init
     depends_on:
       minio:
         condition: service_healthy
-    # Use a single shell command to avoid 'set' being misparsed
     entrypoint: ["/bin/sh", "-c"]
     command: >-
       echo "Configuring MinIO client and creating bucket if missing..." &&
@@ -56,35 +120,52 @@ services:
       mc ls local &&
       echo "MinIO init complete."
     restart: "on-failure:3"
+    networks:
+      - influencerai-network
 
+  # ==========================================================================
+  # WORKFLOW ORCHESTRATION: n8n
+  # ==========================================================================
   n8n:
     image: n8nio/n8n:latest
+    container_name: influencerai-n8n
+    restart: unless-stopped
     environment:
       - N8N_HOST=localhost
       - N8N_PROTOCOL=http
       - WEBHOOK_URL=http://localhost:5678/
       - N8N_SECURE_COOKIE=false
-      # Vars used by workflow templates
+      # Variables used by workflow templates
       - API_BASE_URL=${API_BASE_URL:-http://api:3001}
       - API_TOKEN=${API_TOKEN:-dev-token}
     ports:
+      # NOTA: Porta 5678 - potenziale conflitto con meepleai-monorepo
+      # Se necessario, cambiare a 5679 e aggiornare .env
       - "5678:5678"
     volumes:
-      - ../apps/n8n:/home/node/.n8n
+      - influencerai_n8n_data:/home/node/.n8n
+      - ../apps/n8n:/home/node/.n8n/workflows:ro
+    networks:
+      - influencerai-network
     depends_on:
       - postgres
       - redis
       - api
 
+  # ==========================================================================
+  # API: NestJS Backend
+  # ==========================================================================
   api:
     build:
       context: ..
       dockerfile: apps/api/Dockerfile
+    container_name: influencerai-api
+    restart: unless-stopped
     env_file:
       - ../.env
     environment:
-      # Ensure Nest binds to all interfaces inside the container
       - PORT=3001
+      # IMPORTANTE: Usa hostname container per comunicazione interna
       - DATABASE_URL=${DATABASE_URL:-postgresql://postgres:postgres@postgres:5432/influencerai}
       - REDIS_URL=${REDIS_URL:-redis://redis:6379}
       - S3_ENDPOINT=${S3_ENDPOINT:-http://minio:9000}
@@ -93,6 +174,8 @@ services:
       - S3_BUCKET=${S3_BUCKET:-assets}
     ports:
       - "3001:3001"
+    networks:
+      - influencerai-network
     depends_on:
       postgres:
         condition: service_healthy
@@ -105,52 +188,96 @@ services:
       api-migrate:
         condition: service_completed_successfully
 
+  # ==========================================================================
+  # API MIGRATE: Esegue Prisma migrations all'avvio
+  # ==========================================================================
   api-migrate:
     build:
       context: ..
       dockerfile: apps/api/Dockerfile
+    container_name: influencerai-api-migrate
     env_file:
       - ../.env
     environment:
       - DATABASE_URL=${DATABASE_URL:-postgresql://postgres:postgres@postgres:5432/influencerai}
+    networks:
+      - influencerai-network
     depends_on:
       postgres:
         condition: service_healthy
-    # Run migrations once, then exit successfully
     command: ["sh", "-lc", "npx prisma migrate deploy"]
 
+  # ==========================================================================
+  # WORKER: BullMQ Consumer per async jobs
+  # ==========================================================================
   worker:
     build:
       context: ..
       dockerfile: apps/worker/Dockerfile
+    container_name: influencerai-worker
+    restart: unless-stopped
     env_file:
       - ../.env
     environment:
       - REDIS_URL=${REDIS_URL:-redis://redis:6379}
       - API_BASE_URL=${API_BASE_URL:-http://api:3001}
+    networks:
+      - influencerai-network
     depends_on:
       redis:
         condition: service_healthy
       api:
         condition: service_started
 
+  # ==========================================================================
+  # WEB: Next.js Dashboard Frontend
+  # ==========================================================================
   web:
     build:
       context: ..
       dockerfile: apps/web/Dockerfile
+    container_name: influencerai-web
+    restart: unless-stopped
     env_file:
       - ../.env
     environment:
-      # Next.js server listens on 3000 in the Dockerfile
       - NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL:-http://localhost:3001}
-      # Force Next.js to listen on 3000 despite PORT in ../.env
       - PORT=3000
     ports:
       - "3000:3000"
+    networks:
+      - influencerai-network
     depends_on:
       api:
         condition: service_started
 
+# ============================================================================
+# VOLUMI PERSISTENTI
+# ============================================================================
+# Tutti i volumi hanno il prefix 'influencerai_' per evitare conflitti.
+# Per backup/restore: docker volume inspect influencerai_<nome>
+# ============================================================================
 volumes:
-  pg_data:
-  minio_data:
+  influencerai_pg_data:
+    name: influencerai_pg_data
+    driver: local
+  influencerai_redis_data:
+    name: influencerai_redis_data
+    driver: local
+  influencerai_minio_data:
+    name: influencerai_minio_data
+    driver: local
+  influencerai_n8n_data:
+    name: influencerai_n8n_data
+    driver: local
+
+# ============================================================================
+# NETWORK ISOLATO
+# ============================================================================
+# Network dedicato per InfluencerAI, completamente isolato da altri progetti.
+# Subnet auto-assegnata da Docker (tipicamente 172.x.0.0/16).
+# ============================================================================
+networks:
+  influencerai-network:
+    name: influencerai-network
+    driver: bridge

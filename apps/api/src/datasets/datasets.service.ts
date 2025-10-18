@@ -90,7 +90,7 @@ export class DatasetsService {
     // Build orderBy clause from sortBy and sortOrder
     const sortBy = query.sortBy ?? 'createdAt';
     const sortOrder = query.sortOrder ?? 'desc';
-    const orderBy = { [sortBy]: sortOrder };
+    const orderBy: Record<string, 'asc' | 'desc'> = { [sortBy]: sortOrder };
 
     // Pagination parameters
     const take = query.take ?? 20;
