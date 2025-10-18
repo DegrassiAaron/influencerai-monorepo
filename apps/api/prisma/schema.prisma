@@ -51,6 +51,9 @@ model Dataset {
   updatedAt DateTime @updatedAt
 
   @@index([tenantId])
+  @@index([tenantId, status])
+  @@index([tenantId, kind])
+  @@index([tenantId, createdAt])
 }
 
 model Job {
