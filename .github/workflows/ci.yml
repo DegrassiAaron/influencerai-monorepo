@@ -223,7 +223,7 @@ jobs:
       CI: 'true'
       CI_BASE_SHA: ${{ needs.prepare.outputs.base_sha }}
       CI_HEAD_SHA: ${{ needs.prepare.outputs.head_sha }}
-      JEST_FORCE_ALL: 'true'
+      JEST_FORCE_ALL: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
       JEST_SHARD_INDEX: ${{ matrix.shard_index }}
       JEST_TOTAL_SHARDS: 2
       DATABASE_URL_TEST: postgresql://postgres:postgres@127.0.0.1:5432/influencerai

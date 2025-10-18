@@ -34,6 +34,13 @@ const totalShards = totalShardsRaw ? Number(totalShardsRaw) : NaN;
 const shouldShard =
   Number.isInteger(shardIndex) && Number.isInteger(totalShards) && totalShards > 1;
 
+if (!forceAll && shouldShard && shardIndex > 1) {
+  console.log(
+    `[jest-runner] Skipping targeted run on shard ${shardIndex}/${totalShards}; shard 1 handles selective execution.`
+  );
+  process.exit(0);
+}
+
 if (forceAll) {
   exitWith(runJest([...forwardArgs], { fullRun: true }));
 }
