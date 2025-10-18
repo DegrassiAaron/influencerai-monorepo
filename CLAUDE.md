@@ -198,3 +198,254 @@ Key models (Prisma):
 - `Asset` - Generated content (images/videos) linked to jobs
 
 All timestamps use `DateTime` with `@default(now())` for audit trails.
+
+## API Development Best Practices
+
+### NestJS Controller Patterns
+
+Follow these patterns when implementing CRUD API endpoints:
+
+#### Thin Controllers
+Controllers should ONLY handle:
+- Request validation with Zod
+- Response formatting
+- Error handling
+- Delegation to services
+
+```typescript
+@Post()
+@ApiOperation({ summary: 'Create resource' })
+@ApiResponse({ status: 201, description: 'Resource created' })
+@ApiResponse({ status: 400, description: 'Validation error' })
+async create(@Body() body: unknown) {
+  const parsed = CreateResourceSchema.safeParse(body);
+  if (!parsed.success) {
+    const formatted = parsed.error.flatten();
+    const errorMessage = Object.entries(formatted.fieldErrors)
+      .map(([field, errors]) => `${field}: ${errors?.join(', ')}`)
+      .join('; ') || formatted.formErrors.join('; ') || 'Validation error';
+    throw new BadRequestException(errorMessage);
+  }
+  return this.service.create(parsed.data);
+}
+```
+
+#### Fastify Response Headers
+Use `@Res({ passthrough: true })` for custom headers:
+
+```typescript
+@Get()
+async list(
+  @Query() query: ListQuery,
+  @Res({ passthrough: true }) res?: FastifyReply
+) {
+  const result = await this.service.list(query);
+  if (res) {
+    res.header('x-total-count', result.total.toString());
+  }
+  return result.data;  // Return data directly, not wrapped
+}
+```
+
+### Zod Validation Patterns
+
+#### Query Parameters with Coercion
+```typescript
+export const ListResourcesQuerySchema = z.object({
+  take: z.coerce.number().int().min(1).max(100).default(20).optional(),
+  skip: z.coerce.number().int().min(0).default(0).optional(),
+  sortBy: z.enum(['createdAt', 'updatedAt', 'name']).default('createdAt').optional(),
+  sortOrder: z.enum(['asc', 'desc']).default('desc').optional(),
+});
+```
+
+#### Command Schemas with Detailed Validation
+```typescript
+export const CreateResourceSchema = z.object({
+  name: z.string()
+    .min(1, 'Name is required')
+    .max(100, 'Name must be at most 100 characters')
+    .regex(/^[a-zA-Z0-9-_]+$/, 'Name must contain only letters, numbers, hyphens, and underscores'),
+  value: z.number().int().min(1).max(1000).default(100).optional(),
+});
+```
+
+### Prisma Service Patterns
+
+#### Parallel Queries for Performance
+```typescript
+async list(query: ListQuery): Promise<{ data: T[]; total: number; take: number; skip: number }> {
+  const ctx = getRequestContext();
+  const tenantId = ctx.tenantId;
+  if (!tenantId) throw new UnauthorizedException('Tenant context required');
+
+  const where = { tenantId, ...buildFilters(query) };
+  const orderBy = { [query.sortBy ?? 'createdAt']: query.sortOrder ?? 'desc' };
+  const take = query.take ?? 20;
+  const skip = query.skip ?? 0;
+
+  // Execute queries in parallel (50% faster than sequential)
+  const [data, total] = await Promise.all([
+    this.prisma.model.findMany({ where, orderBy, take, skip }),
+    this.prisma.model.count({ where }),
+  ]);
+
+  return { data, total, take, skip };
+}
+```
+
+#### Defensive Security Check
+```typescript
+async getById(id: string): Promise<T> {
+  const ctx = getRequestContext();
+  const tenantId = ctx.tenantId;
+  if (!tenantId) throw new UnauthorizedException('Tenant context required');
+
+  const resource = await this.prisma.model.findUnique({ where: { id } });
+  if (!resource) throw new NotFoundException(`Resource ${id} not found`);
+
+  // Return 404 instead of 403 to avoid information disclosure (OWASP best practice)
+  if (resource.tenantId !== tenantId) {
+    throw new NotFoundException(`Resource ${id} not found`);
+  }
+
+  return resource;
+}
+```
+
+#### Unique Constraint Error Handling
+```typescript
+try {
+  return await this.prisma.model.create({ data: { ...input, tenantId } });
+} catch (error: any) {
+  if (error.code === 'P2002' && error.meta?.target?.includes('name')) {
+    throw new ConflictException(`Resource with name "${input.name}" already exists`);
+  }
+  throw error;
+}
+```
+
+### Prisma Schema Patterns
+
+#### Resource Model Template
+```prisma
+model Resource {
+  id          String   @id @default(cuid())
+  tenantId    String
+  name        String
+  description String?
+
+  // Resource-specific fields
+  value       Int      @default(100)
+
+  // Flexible metadata (JSONB)
+  metadata    Json?    @default("{}")
+
+  // Relations
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // Timestamps
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Indexes for performance
+  @@index([tenantId])
+  @@index([tenantId, name])
+  @@unique([tenantId, name])  // Prevent duplicates per tenant
+}
+```
+
+#### Migration Naming Convention
+```bash
+# Use descriptive, lowercase names with underscores and action verbs
+npx prisma migrate dev --name add_resource_model
+npx prisma migrate dev --name update_resource_add_value_field
+npx prisma migrate dev --name remove_deprecated_resource_status
+
+# For complex migrations requiring manual SQL editing
+npx prisma migrate dev --name add_resource_model --create-only
+# Edit SQL in migrations/ directory
+npx prisma migrate dev
+```
+
+### OpenAPI Documentation Patterns
+
+Use comprehensive decorators for auto-generated API documentation:
+
+```typescript
+@ApiTags('resources')  // Groups endpoints in Swagger UI
+@Controller('resources')
+export class ResourcesController {
+  @Post()
+  @ApiOperation({
+    summary: 'Create resource',
+    description: 'Creates a new resource with validation. Resource names must be unique per tenant.'
+  })
+  @ApiResponse({ status: 201, description: 'Resource successfully created' })
+  @ApiResponse({ status: 400, description: 'Validation error - invalid parameters' })
+  @ApiResponse({ status: 401, description: 'Unauthorized - missing tenant context' })
+  @ApiResponse({ status: 409, description: 'Conflict - resource name already exists' })
+  async create(@Body() body: unknown) { ... }
+}
+```
+
+### Testing Patterns
+
+#### E2E Test Template with Fastify
+```typescript
+describe('Resources (e2e)', () => {
+  let app: INestApplication;
+  let prismaMock: any;
+
+  beforeAll(async () => {
+    prismaMock = {
+      onModuleInit: jest.fn(),
+      resource: {
+        create: jest.fn(async ({ data }) => ({ id: 'res_1', ...data, createdAt: new Date(), updatedAt: new Date() })),
+        findMany: jest.fn(async () => []),
+        count: jest.fn(async () => 0),
+      },
+    };
+
+    const moduleFixture = await Test.createTestingModule({ imports: [AppModule] })
+      .overrideProvider(PrismaService)
+      .useValue(prismaMock)
+      .compile();
+
+    app = moduleFixture.createNestApplication(new FastifyAdapter());
+    await app.init();
+    await (app.getHttpAdapter().getInstance() as any).ready();  // CRITICAL for Fastify
+  });
+
+  afterAll(async () => { await app.close(); });
+
+  it('should create resource with valid data', async () => {
+    const res = await request(app.getHttpServer())
+      .post('/resources')
+      .set(getAuthHeader())
+      .send({ name: 'test-resource', value: 100 })
+      .expect(201);
+
+    expect(res.body).toMatchObject({ id: expect.any(String), name: 'test-resource' });
+  });
+
+  it('should return 404 for cross-tenant access (security)', async () => {
+    prismaMock.resource.findUnique.mockResolvedValue({
+      id: 'res_other',
+      tenantId: 't_2',  // Different tenant
+    });
+
+    await request(app.getHttpServer())
+      .get('/resources/res_other')
+      .set(getAuthHeader())  // tenant_1 in auth
+      .expect(404);
+  });
+});
+```
+
+### Reference Implementation
+
+For complete implementation examples, see:
+- `apps/api/src/datasets/` - Full CRUD API with pagination, filtering, sorting
+- `docs/tecnic/research-lora-config-api-best-practices.md` - Comprehensive research and patterns
+- `apps/api/test/datasets.e2e-spec.ts` - E2E testing patterns with Fastify
