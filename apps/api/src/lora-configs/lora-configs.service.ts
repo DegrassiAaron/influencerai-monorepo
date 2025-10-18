@@ -114,8 +114,8 @@ export class LoraConfigsService {
     };
 
     // Build ORDER BY clause
-    const orderBy: Record<string, 'asc' | 'desc'> = {
-      [sortBy as string]: sortOrder,
+    const orderBy = {
+      [sortBy as string]: sortOrder as 'asc' | 'desc',
     };
 
     // Execute count and data queries in parallel for performance

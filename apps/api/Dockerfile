@@ -18,8 +18,8 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 # Ensure local node_modules symlinks for workspace packages that need devDeps (tsc)
 RUN pnpm -C packages/core-schemas install --frozen-lockfile --prod=false
-# Explicitly generate Prisma client inside the API package
-RUN cd apps/api && npx prisma generate
+# Explicitly generate Prisma client inside the API package using local binary
+RUN cd apps/api && ../../node_modules/.bin/prisma generate
 RUN pnpm --filter @influencerai/api build
 
 FROM base AS runner
