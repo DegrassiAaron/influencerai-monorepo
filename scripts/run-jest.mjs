@@ -84,7 +84,8 @@ if (sourceFiles.length > 0) {
       '\n  - '
     )}`
   );
-  exitCode = runJest([...forwardArgs, '--findRelatedTests', ...sourceFiles], {
+  // Use --passWithNoTests to avoid failure when test files were already run in previous step
+  exitCode = runJest([...forwardArgs, '--findRelatedTests', '--passWithNoTests', ...sourceFiles], {
     fullRun: false,
   });
 }
