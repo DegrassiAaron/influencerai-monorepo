@@ -147,7 +147,9 @@ function runJest(args, options = {}) {
     finalArgs.push(`--shard=${shardIndex}/${totalShards}`);
   }
 
-  const result = spawnSync('./node_modules/.bin/jest', finalArgs, {
+  // Use path relative to package directory to reach workspace root node_modules
+  const jestBin = resolve(packageDir, '../../node_modules/.bin/jest');
+  const result = spawnSync(jestBin, finalArgs, {
     cwd: packageDir,
     stdio: 'inherit',
     env: {
