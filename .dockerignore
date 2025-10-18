@@ -1,0 +1,26 @@
+# Ignore node_modules to ensure clean install in Docker
+node_modules
+**/node_modules
+
+# Ignore build outputs
+dist
+**/dist
+*.tsbuildinfo
+
+# Ignore development files
+.git
+.github
+.vscode
+*.log
+.env
+.env.local
+
+# Ignore test files
+**/*.spec.ts
+**/*.test.ts
+coverage
+
+# Ignore temporary files
+*.tmp
+*.temp
+.DS_Store
