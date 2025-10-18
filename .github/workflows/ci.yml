@@ -277,7 +277,7 @@ jobs:
             ${{ runner.os }}-turbo-integration-
 
       - name: Wait for dependent services
-        run: pnpm exec wait-on tcp:127.0.0.1:5432 tcp:127.0.0.1:6379 http://127.0.0.1:9000/minio/health/live
+        run: pnpm exec wait-on --timeout 180000 --interval 1000 tcp:127.0.0.1:5432 tcp:127.0.0.1:6379 http://127.0.0.1:9000/minio/health/live
 
       - name: Reset integration database
         run: pnpm --filter @influencerai/api run test:e2e:db:reset
