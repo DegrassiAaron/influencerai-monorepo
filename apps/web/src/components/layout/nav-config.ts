@@ -31,6 +31,12 @@ export const mainNav: NavItem[] = [
     description: 'Wizard per generare, approvare e archiviare i piani editoriali.',
   },
   {
+    title: 'Datasets',
+    href: '/dashboard/datasets',
+    icon: 'database',
+    description: 'Gestisci dataset di training per LoRA e personaggi.',
+  },
+  {
     title: 'Library',
     href: '/library',
     icon: 'library',

@@ -1,4 +1,4 @@
-import type { ListJobsParams } from '../index';
+import type { ListJobsParams, ListDatasetsParams } from '../index';
 
 const JOBS_ROOT = ['influencerai', 'jobs'] as const;
 const DATASETS_ROOT = ['influencerai', 'datasets'] as const;
@@ -14,6 +14,23 @@ function normalizeJobsFilters(filters?: ListJobsParams) {
   ] as const;
 }
 
+/**
+ * Normalizes dataset filter parameters into a stable query key format
+ *
+ * @param params - Optional dataset query parameters
+ * @returns Normalized tuple of filter values for cache key stability
+ */
+function normalizeDatasetsFilters(params?: ListDatasetsParams) {
+  return [
+    params?.status ?? null,
+    params?.kind ?? null,
+    params?.take ?? null,
+    params?.skip ?? null,
+    params?.sortBy ?? null,
+    params?.sortOrder ?? null,
+  ] as const;
+}
+
 export const influencerAIQueryKeys = {
   jobs: {
     root: JOBS_ROOT,
@@ -23,7 +40,9 @@ export const influencerAIQueryKeys = {
   },
   datasets: {
     root: DATASETS_ROOT,
-    list: () => [...DATASETS_ROOT, 'list'] as const,
+    list: (params?: ListDatasetsParams) =>
+      [...DATASETS_ROOT, 'list', ...normalizeDatasetsFilters(params)] as const,
+    detail: (id: string) => [...DATASETS_ROOT, 'detail', id] as const,
   },
   queues: {
     root: QUEUES_ROOT,

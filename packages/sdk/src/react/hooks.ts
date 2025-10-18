@@ -15,6 +15,7 @@ import type {
   JobResponse,
   QueueSummary,
   ContentPlanEnvelope,
+  ListDatasetsParams,
 } from '../types';
 import type { JobSpec, ContentPlan } from '../core-schemas';
 import type { ListJobsParams, UpdateJobInput } from '../index';
@@ -55,6 +56,7 @@ async function runMutationSuccess<TData, TVariables, TContext>(
 export type UseJobsOptions = QueryOptions<JobResponse[]>;
 export type UseJobOptions = QueryOptions<JobResponse>;
 export type UseDatasetsOptions = QueryOptions<Dataset[]>;
+export type UseDatasetOptions = QueryOptions<Dataset>;
 export type UseQueuesSummaryOptions = QueryOptions<QueueSummary>;
 export type UseContentPlanOptions = QueryOptions<ContentPlanEnvelope>;
 export type UseCreateJobOptions<TContext = unknown> = MutationOptions<
@@ -65,6 +67,12 @@ export type UseCreateJobOptions<TContext = unknown> = MutationOptions<
 export type UseCreateDatasetOptions<TContext = unknown> = MutationOptions<
   CreateDatasetResponse,
   CreateDatasetInput,
+  TContext
+>;
+export type DeleteDatasetVariables = { id: string };
+export type UseDeleteDatasetOptions<TContext = unknown> = MutationOptions<
+  void,
+  DeleteDatasetVariables,
   TContext
 >;
 export type UpdateJobVariables = { id: string; update: UpdateJobInput };
@@ -106,14 +114,69 @@ export function useJob(
   });
 }
 
+/**
+ * Fetches a list of datasets with optional filtering and pagination
+ *
+ * @param params - Query parameters for filtering, pagination, and sorting
+ * @param options - TanStack Query options
+ * @returns Query result containing array of datasets
+ *
+ * @example
+ * ```tsx
+ * // Basic usage
+ * const { data: datasets, isLoading } = useDatasets();
+ *
+ * // With pagination and filters
+ * const { data: readyDatasets } = useDatasets({
+ *   status: 'ready',
+ *   take: 20,
+ *   skip: 0,
+ *   sortBy: 'createdAt',
+ *   sortOrder: 'desc'
+ * });
+ * ```
+ */
 export function useDatasets(
+  params?: ListDatasetsParams,
   options?: UseDatasetsOptions
 ): UseQueryResult<Dataset[], InfluencerAIAPIError> {
   const client = useInfluencerAIClient();
 
   return useQuery<Dataset[], InfluencerAIAPIError>({
-    queryKey: influencerAIQueryKeys.datasets.list(),
-    queryFn: () => client.listDatasets(),
+    queryKey: influencerAIQueryKeys.datasets.list(params),
+    queryFn: () => client.listDatasets(params ?? {}),
+    ...options,
+  });
+}
+
+/**
+ * Fetches a single dataset by ID
+ *
+ * @param id - Dataset ID to fetch
+ * @param options - TanStack Query options
+ * @returns Query result containing the dataset
+ *
+ * @example
+ * ```tsx
+ * const { data: dataset, isLoading, error } = useDataset('ds_123');
+ *
+ * // With custom options
+ * const { data } = useDataset('ds_123', {
+ *   enabled: !!datasetId,
+ *   refetchOnWindowFocus: false
+ * });
+ * ```
+ */
+export function useDataset(
+  id: string,
+  options?: UseDatasetOptions
+): UseQueryResult<Dataset, InfluencerAIAPIError> {
+  const client = useInfluencerAIClient();
+
+  return useQuery<Dataset, InfluencerAIAPIError>({
+    queryKey: influencerAIQueryKeys.datasets.detail(id),
+    queryFn: () => client.getDataset(id),
+    enabled: options?.enabled ?? Boolean(id),
     ...options,
   });
 }
@@ -199,6 +262,61 @@ export function useCreateDataset<TContext = unknown>(
     mutationFn: (input) => client.createDataset(input),
     async onSuccess(data, variables, context) {
       await queryClient.invalidateQueries({ queryKey: influencerAIQueryKeys.datasets.root });
+      await runMutationSuccess(onSuccess, data, variables, context, meta);
+    },
+    meta,
+    ...rest,
+  });
+}
+
+/**
+ * Deletes a dataset and invalidates related queries
+ *
+ * @param options - TanStack Query mutation options
+ * @returns Mutation result for deleting a dataset
+ *
+ * @example
+ * ```tsx
+ * const deleteDataset = useDeleteDataset({
+ *   onSuccess: () => {
+ *     toast.success('Dataset deleted successfully');
+ *     navigate('/datasets');
+ *   },
+ *   onError: (error) => {
+ *     toast.error(`Failed to delete: ${error.message}`);
+ *   }
+ * });
+ *
+ * // Use in a component
+ * <Button onClick={() => deleteDataset.mutate({ id: 'ds_123' })}>
+ *   Delete
+ * </Button>
+ *
+ * // Or with async/await
+ * try {
+ *   await deleteDataset.mutateAsync({ id: 'ds_123' });
+ * } catch (error) {
+ *   console.error('Delete failed:', error);
+ * }
+ * ```
+ */
+export function useDeleteDataset<TContext = unknown>(
+  options?: UseDeleteDatasetOptions<TContext>
+): UseMutationResult<void, InfluencerAIAPIError, DeleteDatasetVariables, TContext> {
+  const client = useInfluencerAIClient();
+  const queryClient = useQueryClient();
+  const { onSuccess, meta, ...rest } = options ?? {};
+
+  return useMutation<void, InfluencerAIAPIError, DeleteDatasetVariables, TContext>({
+    mutationFn: ({ id }) => client.deleteDataset(id),
+    async onSuccess(data, variables, context) {
+      // Invalidate both list and detail queries
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: influencerAIQueryKeys.datasets.root }),
+        queryClient.invalidateQueries({
+          queryKey: influencerAIQueryKeys.datasets.detail(variables.id),
+        }),
+      ]);
       await runMutationSuccess(onSuccess, data, variables, context, meta);
     },
     meta,
