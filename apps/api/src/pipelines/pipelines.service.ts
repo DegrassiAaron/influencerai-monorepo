@@ -41,7 +41,7 @@ export class PipelinesService {
           executionId: input.executionId,
           workflowId: input.workflowId,
           tenantId,
-          payload: input.payload,
+          payload: input.payload as any, // Prisma JsonValue type
           totalStages: input.totalStages ?? 6,
           status: 'STARTED',
           stagesCompleted: 0,
