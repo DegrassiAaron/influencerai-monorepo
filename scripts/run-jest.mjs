@@ -147,9 +147,9 @@ function runJest(args, options = {}) {
     finalArgs.push(`--shard=${shardIndex}/${totalShards}`);
   }
 
-  // Use node to run jest CLI directly from workspace root node_modules
-  const jestCli = resolve(packageDir, '../../node_modules/jest/bin/jest.js');
-  const result = spawnSync('node', [jestCli, ...finalArgs], {
+  // Use pnpm exec to run jest with proper pnpm workspace resolution
+  // This handles pnpm's virtual store and symlink structure correctly
+  const result = spawnSync('pnpm', ['exec', 'jest', ...finalArgs], {
     cwd: packageDir,
     stdio: 'inherit',
     env: {
