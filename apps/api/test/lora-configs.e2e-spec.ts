@@ -143,8 +143,8 @@ describe('LoRA Configs (e2e)', () => {
       } as any,
       job: {
         count: jest.fn(async ({ where }: any) => {
-          // Simulate active jobs check
-          if (where?.meta?.path?.[0] === 'loraConfigId' && where?.meta?.equals === 'lora_with_jobs') {
+          // Simulate active jobs check (jobs store config ID in payload.configId)
+          if (where?.payload?.path?.[0] === 'configId' && where?.payload?.equals === 'lora_with_jobs') {
             return 2; // Has active jobs
           }
           return 0; // No active jobs

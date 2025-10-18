@@ -260,13 +260,12 @@ export class LoraConfigsService {
     const config = await this.getById(id);
 
     // Check for active jobs using this config
+    // Jobs store config ID in payload.configId (see LoraTrainingPayload type in worker)
     const activeJobsCount = await this.prisma.job.count({
       where: {
         tenantId,
-        // Note: Assuming Job model has loraConfigId field referencing LoraConfig
-        // and status field with values 'pending', 'running', 'completed', 'failed'
-        meta: {
-          path: ['loraConfigId'],
+        payload: {
+          path: ['configId'],
           equals: id,
         },
         status: {
