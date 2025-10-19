@@ -11,6 +11,7 @@
  * Uses React Testing Library and mocked SDK hooks
  */
 
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -19,23 +20,25 @@ import { useJobs } from '@influencerai/sdk';
 import type { Job } from '@influencerai/core-schemas';
 
 // Mock SDK hook
-jest.mock('@influencerai/sdk', () => ({
-  useJobs: jest.fn(),
+vi.mock('@influencerai/sdk', () => ({
+  useJobs: vi.fn(),
 }));
 
 // Mock Next.js router
-const mockPush = jest.fn();
+const mockPush = vi.fn();
 const mockRouter = {
   push: mockPush,
   pathname: '/lora-training',
   query: {},
 };
 
-jest.mock('next/navigation', () => ({
+vi.mock('next/navigation', () => ({
   useRouter: () => mockRouter,
+  usePathname: () => '/lora-training',
+  useSearchParams: () => new URLSearchParams(),
 }));
 
-const mockedUseJobs = useJobs as jest.MockedFunction<typeof useJobs>;
+const mockedUseJobs = vi.mocked(useJobs);
 
 describe('JobsTable', () => {
   let queryClient: QueryClient;
@@ -138,10 +141,10 @@ describe('JobsTable', () => {
       },
       isLoading: false,
       error: null,
-      refetch: jest.fn(),
+      refetch: vi.fn(),
     } as any);
 
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   const renderTable = (filters?: any) => {
@@ -578,7 +581,7 @@ describe('JobsTable', () => {
     });
 
     it('should show retry button when fetch fails', () => {
-      const mockRefetch = jest.fn();
+      const mockRefetch = vi.fn();
       mockedUseJobs.mockReturnValue({
         data: undefined,
         isLoading: false,
@@ -594,7 +597,7 @@ describe('JobsTable', () => {
 
     it('should call refetch when retry is clicked', async () => {
       const user = userEvent.setup();
-      const mockRefetch = jest.fn();
+      const mockRefetch = vi.fn();
 
       mockedUseJobs.mockReturnValue({
         data: undefined,

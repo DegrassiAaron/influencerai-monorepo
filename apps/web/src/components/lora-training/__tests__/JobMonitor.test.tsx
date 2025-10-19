@@ -12,23 +12,42 @@
  * Uses React Testing Library and mocked SDK hooks
  */
 
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { JobMonitor } from '../JobMonitor';
-import { useJob } from '@influencerai/sdk';
+import { useJob, useDataset, useLoraConfig } from '@influencerai/sdk';
 import type { Job } from '@influencerai/core-schemas';
 
-// Mock SDK hook
-jest.mock('@influencerai/sdk', () => ({
-  useJob: jest.fn(),
+// Mock SDK hooks
+vi.mock('@influencerai/sdk', () => ({
+  useJob: vi.fn(),
+  useDataset: vi.fn(),
+  useLoraConfig: vi.fn(),
 }));
 
-const mockedUseJob = useJob as jest.MockedFunction<typeof useJob>;
+const mockedUseJob = vi.mocked(useJob);
+const mockedUseDataset = vi.mocked(useDataset);
+const mockedUseLoraConfig = vi.mocked(useLoraConfig);
+
+// Mock Next.js router
+const mockPush = vi.fn();
+const mockRouter = {
+  push: mockPush,
+  pathname: '/lora-training',
+  query: {},
+};
+
+vi.mock('next/navigation', () => ({
+  useRouter: () => mockRouter,
+  usePathname: () => '/lora-training',
+  useSearchParams: () => new URLSearchParams(),
+}));
 
 // Mock usePresignedUrl hook
-jest.mock('../../../hooks/usePresignedUrl', () => ({
-  usePresignedUrl: jest.fn((expiryDate: string | null | undefined) => {
+vi.mock('../../../hooks/usePresignedUrl', () => ({
+  usePresignedUrl: vi.fn((expiryDate: string | null | undefined) => {
     if (!expiryDate) {
       return { isExpired: true, minutesRemaining: 0, needsRefresh: false };
     }
@@ -133,7 +152,22 @@ describe('JobMonitor', () => {
       },
     });
 
-    jest.clearAllMocks();
+    // Mock useDataset and useLoraConfig to return default values
+    mockedUseDataset.mockReturnValue({
+      data: { id: 'dataset_001', name: 'Test Dataset' },
+      isLoading: false,
+      error: null,
+      refetch: vi.fn(),
+    } as any);
+
+    mockedUseLoraConfig.mockReturnValue({
+      data: { id: 'config_001', name: 'Test Config' },
+      isLoading: false,
+      error: null,
+      refetch: vi.fn(),
+    } as any);
+
+    vi.clearAllMocks();
   });
 
   const renderMonitor = (jobId: string) => {
@@ -150,7 +184,7 @@ describe('JobMonitor', () => {
         data: mockRunningJob,
         isLoading: false,
         error: null,
-        refetch: jest.fn(),
+        refetch: vi.fn(),
       } as any);
     });
 
@@ -195,7 +229,7 @@ describe('JobMonitor', () => {
         data: jobWithETA,
         isLoading: false,
         error: null,
-        refetch: jest.fn(),
+        refetch: vi.fn(),
       } as any);
 
       renderMonitor('job_running');
@@ -217,7 +251,7 @@ describe('JobMonitor', () => {
         data: jobWithEpoch,
         isLoading: false,
         error: null,
-        refetch: jest.fn(),
+        refetch: vi.fn(),
       } as any);
 
       renderMonitor('job_running');
@@ -238,7 +272,7 @@ describe('JobMonitor', () => {
         data: mockSucceededJob,
         isLoading: false,
         error: null,
-        refetch: jest.fn(),
+        refetch: vi.fn(),
       } as any);
     });
 
@@ -282,7 +316,7 @@ describe('JobMonitor', () => {
       const user = userEvent.setup();
 
       // Mock window.open
-      const mockOpen = jest.fn();
+      const mockOpen = vi.fn();
       global.window.open = mockOpen;
 
       renderMonitor('job_succeeded');
@@ -342,7 +376,7 @@ describe('JobMonitor', () => {
         data: jobWithExpiringUrl,
         isLoading: false,
         error: null,
-        refetch: jest.fn(),
+        refetch: vi.fn(),
       } as any);
 
       renderMonitor('job_succeeded');
@@ -372,7 +406,7 @@ describe('JobMonitor', () => {
         data: jobWithExpiredUrl,
         isLoading: false,
         error: null,
-        refetch: jest.fn(),
+        refetch: vi.fn(),
       } as any);
 
       renderMonitor('job_succeeded');
@@ -402,7 +436,7 @@ describe('JobMonitor', () => {
         data: jobWithExpiredUrl,
         isLoading: false,
         error: null,
-        refetch: jest.fn(),
+        refetch: vi.fn(),
       } as any);
 
       renderMonitor('job_succeeded');
@@ -433,7 +467,7 @@ describe('JobMonitor', () => {
         data: jobWithExpiredUrl,
         isLoading: false,
         error: null,
-        refetch: jest.fn(),
+        refetch: vi.fn(),
       } as any);
 
       renderMonitor('job_succeeded');
@@ -444,7 +478,7 @@ describe('JobMonitor', () => {
 
     it('should refetch job when refresh URL is clicked', async () => {
       const user = userEvent.setup();
-      const mockRefetch = jest.fn();
+      const mockRefetch = vi.fn();
 
       const jobWithExpiredUrl: Job = {
         ...mockSucceededJob,
@@ -485,7 +519,7 @@ describe('JobMonitor', () => {
         data: mockFailedJob,
         isLoading: false,
         error: null,
-        refetch: jest.fn(),
+        refetch: vi.fn(),
       } as any);
     });
 
@@ -547,7 +581,7 @@ describe('JobMonitor', () => {
         data: mockPendingJob,
         isLoading: false,
         error: null,
-        refetch: jest.fn(),
+        refetch: vi.fn(),
       } as any);
     });
 
@@ -578,7 +612,7 @@ describe('JobMonitor', () => {
         data: undefined,
         isLoading: true,
         error: null,
-        refetch: jest.fn(),
+        refetch: vi.fn(),
       } as any);
 
       renderMonitor('job_running');
@@ -591,7 +625,7 @@ describe('JobMonitor', () => {
         data: undefined,
         isLoading: false,
         error: new Error('Failed to fetch job'),
-        refetch: jest.fn(),
+        refetch: vi.fn(),
       } as any);
 
       renderMonitor('job_running');
@@ -600,7 +634,7 @@ describe('JobMonitor', () => {
     });
 
     it('should show retry button when fetch fails', () => {
-      const mockRefetch = jest.fn();
+      const mockRefetch = vi.fn();
       mockedUseJob.mockReturnValue({
         data: undefined,
         isLoading: false,
@@ -616,7 +650,7 @@ describe('JobMonitor', () => {
 
     it('should call refetch when retry button is clicked', async () => {
       const user = userEvent.setup();
-      const mockRefetch = jest.fn();
+      const mockRefetch = vi.fn();
 
       mockedUseJob.mockReturnValue({
         data: undefined,
@@ -640,7 +674,7 @@ describe('JobMonitor', () => {
         data: mockRunningJob,
         isLoading: false,
         error: null,
-        refetch: jest.fn(),
+        refetch: vi.fn(),
       } as any);
 
       renderMonitor('job_running');
@@ -656,7 +690,7 @@ describe('JobMonitor', () => {
         data: mockPendingJob,
         isLoading: false,
         error: null,
-        refetch: jest.fn(),
+        refetch: vi.fn(),
       } as any);
 
       renderMonitor('job_pending');
@@ -671,7 +705,7 @@ describe('JobMonitor', () => {
         data: mockSucceededJob,
         isLoading: false,
         error: null,
-        refetch: jest.fn(),
+        refetch: vi.fn(),
       } as any);
 
       renderMonitor('job_succeeded');
@@ -687,7 +721,7 @@ describe('JobMonitor', () => {
         data: mockRunningJob,
         isLoading: false,
         error: null,
-        refetch: jest.fn(),
+        refetch: vi.fn(),
       } as any);
 
       const { rerender } = renderMonitor('job_running');
@@ -700,7 +734,7 @@ describe('JobMonitor', () => {
         data: mockSucceededJob,
         isLoading: false,
         error: null,
-        refetch: jest.fn(),
+        refetch: vi.fn(),
       } as any);
 
       rerender(
@@ -750,7 +784,7 @@ describe('JobMonitor', () => {
         data: jobWithMultipleArtifacts,
         isLoading: false,
         error: null,
-        refetch: jest.fn(),
+        refetch: vi.fn(),
       } as any);
 
       renderMonitor('job_succeeded');
@@ -769,7 +803,7 @@ describe('JobMonitor', () => {
         data: mockRunningJob,
         isLoading: false,
         error: null,
-        refetch: jest.fn(),
+        refetch: vi.fn(),
       } as any);
 
       renderMonitor('job_running');
@@ -783,7 +817,7 @@ describe('JobMonitor', () => {
         data: mockRunningJob,
         isLoading: false,
         error: null,
-        refetch: jest.fn(),
+        refetch: vi.fn(),
       } as any);
 
       renderMonitor('job_running');
@@ -797,7 +831,7 @@ describe('JobMonitor', () => {
         data: mockFailedJob,
         isLoading: false,
         error: null,
-        refetch: jest.fn(),
+        refetch: vi.fn(),
       } as any);
 
       renderMonitor('job_failed');
