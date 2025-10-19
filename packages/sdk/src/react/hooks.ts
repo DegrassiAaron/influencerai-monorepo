@@ -16,6 +16,8 @@ import type {
   QueueSummary,
   ContentPlanEnvelope,
   ListDatasetsParams,
+  LoraConfig,
+  ListLoraConfigsParams,
 } from '../types';
 import type { JobSpec, ContentPlan } from '../core-schemas';
 import type { ListJobsParams, UpdateJobInput } from '../index';
@@ -100,17 +102,69 @@ export function useJobs(
   });
 }
 
+/**
+ * Extended options for useJob hook with polling support
+ */
+export interface UseJobOptionsExtended extends UseJobOptions {
+  /** Enable automatic polling for active jobs (default: false) */
+  polling?: boolean;
+  /** Custom polling interval in milliseconds (default: 2000) */
+  refetchInterval?: number;
+}
+
+/**
+ * Fetches a single job by ID with optional polling support
+ *
+ * @param id - Job ID to fetch
+ * @param options - Query options including polling configuration
+ * @returns Query result containing the job
+ *
+ * @example
+ * ```tsx
+ * // Basic usage
+ * const { data: job } = useJob('job_123');
+ *
+ * // With polling for active jobs
+ * const { data: job } = useJob('job_123', {
+ *   polling: true,
+ *   refetchInterval: 2000  // Poll every 2 seconds
+ * });
+ *
+ * // Polling automatically stops when job reaches terminal state
+ * ```
+ */
 export function useJob(
   id: string,
-  options?: UseJobOptions
+  options?: UseJobOptionsExtended
 ): UseQueryResult<JobResponse, InfluencerAIAPIError> {
   const client = useInfluencerAIClient();
+  const { polling, refetchInterval: customInterval, ...queryOptions } = options ?? {};
 
   return useQuery<JobResponse, InfluencerAIAPIError>({
     queryKey: influencerAIQueryKeys.jobs.detail(id),
     queryFn: () => client.getJob(id),
-    enabled: options?.enabled ?? Boolean(id),
-    ...options,
+    enabled: queryOptions?.enabled ?? Boolean(id),
+    refetchOnWindowFocus: polling ? true : queryOptions?.refetchOnWindowFocus,
+    refetchInterval: (query) => {
+      // Only poll if polling is explicitly enabled
+      if (!polling) {
+        return false;
+      }
+
+      const job = query.state.data;
+      if (!job) {
+        return false;
+      }
+
+      // Poll active jobs (pending or running status)
+      if (job.status === 'pending' || job.status === 'running') {
+        return customInterval ?? 2000;
+      }
+
+      // Stop polling for terminal states (succeeded, failed, completed)
+      return false;
+    },
+    ...queryOptions,
   });
 }
 
@@ -349,5 +403,80 @@ export function useCreateContentPlan<TContext = unknown>(
     },
     meta,
     ...rest,
+  });
+}
+
+// LoRA Config Hooks
+
+export type UseLoraConfigsOptions = QueryOptions<LoraConfig[]>;
+export type UseLoraConfigOptions = QueryOptions<LoraConfig>;
+
+/**
+ * Fetches a list of LoRA configurations with optional filtering and pagination
+ *
+ * @param params - Query parameters for filtering, pagination, and sorting
+ * @param options - TanStack Query options
+ * @returns Query result containing array of LoRA configurations
+ *
+ * @example
+ * ```tsx
+ * // Basic usage
+ * const { data: configs, isLoading } = useLoraConfigs();
+ *
+ * // Get default config
+ * const { data: defaultConfig } = useLoraConfigs({ isDefault: true, take: 1 });
+ *
+ * // With pagination and sorting
+ * const { data: configs } = useLoraConfigs({
+ *   modelName: 'sd15',
+ *   take: 20,
+ *   skip: 0,
+ *   sortBy: 'createdAt',
+ *   sortOrder: 'desc'
+ * });
+ * ```
+ */
+export function useLoraConfigs(
+  params?: ListLoraConfigsParams,
+  options?: UseLoraConfigsOptions
+): UseQueryResult<LoraConfig[], InfluencerAIAPIError> {
+  const client = useInfluencerAIClient();
+
+  return useQuery<LoraConfig[], InfluencerAIAPIError>({
+    queryKey: influencerAIQueryKeys.loraConfigs.list(params),
+    queryFn: () => client.listLoraConfigs(params ?? {}),
+    ...options,
+  });
+}
+
+/**
+ * Fetches a single LoRA configuration by ID
+ *
+ * @param id - LoRA configuration ID to fetch
+ * @param options - TanStack Query options
+ * @returns Query result containing the LoRA configuration
+ *
+ * @example
+ * ```tsx
+ * const { data: config, isLoading, error } = useLoraConfig('lc_123');
+ *
+ * // With custom options
+ * const { data } = useLoraConfig('lc_123', {
+ *   enabled: !!configId,
+ *   refetchOnWindowFocus: false
+ * });
+ * ```
+ */
+export function useLoraConfig(
+  id: string,
+  options?: UseLoraConfigOptions
+): UseQueryResult<LoraConfig, InfluencerAIAPIError> {
+  const client = useInfluencerAIClient();
+
+  return useQuery<LoraConfig, InfluencerAIAPIError>({
+    queryKey: influencerAIQueryKeys.loraConfigs.detail(id),
+    queryFn: () => client.getLoraConfig(id),
+    enabled: options?.enabled ?? Boolean(id),
+    ...options,
   });
 }
