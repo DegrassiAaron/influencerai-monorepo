@@ -122,6 +122,8 @@ export const envSchema = z
     AWS_REGION: z.string().min(1).default('us-east-1'),
     SKIP_S3_INIT: booleanLike,
     JWT_SECRET: z.string().min(1).default('dev_jwt_secret_change_me'),
+    PIPELINE_WEBHOOK_SECRET: z.string().min(1).optional(),
+    WEBHOOK_HMAC_SECRET: z.string().min(1).optional(),
   })
   .superRefine((config, ctx) => {
     const trimmedKey = config.OPENROUTER_API_KEY.trim();
@@ -148,6 +150,8 @@ export const envSchema = z
       SKIP_S3_INIT: skipS3Init,
       BULL_ENABLED: bullEnabled,
       OPENROUTER_API_KEY: openRouterApiKey,
+      PIPELINE_WEBHOOK_SECRET: config.PIPELINE_WEBHOOK_SECRET,
+      WEBHOOK_HMAC_SECRET: config.WEBHOOK_HMAC_SECRET,
     };
   });
 

@@ -54,12 +54,15 @@ IMAGE_MAX_ITERATIONS=40              # 40 × 15s = 10 min
 VIDEO_MAX_ITERATIONS=80              # 80 × 15s = 20 min
 
 # Notifications
-WEBHOOK_NOTIFICATION_URL=https://your-app.com/api/webhooks/pipeline-progress
+WEBHOOK_NOTIFICATION_URL=http://api:3001/webhooks/pipeline/progress
 SLACK_WEBHOOK_URL=https://hooks.slack.com/services/YOUR/WEBHOOK/URL
 
 # Security
 PIPELINE_WEBHOOK_SECRET=your-secret-token-here
 ```
+- Tips:
+  - Ensure `executionId` matches the n8n execution (`{{$execution.id}}`).
+  - Remove empty keys from `updates` (e.g., via Code/Set node) because the API requires at least one progress field.
 
 ---
 
@@ -549,11 +552,19 @@ return [{
 - Body:
 ```json
 {
+  "tenantId": "={{ $json.metadata.tenantId || $env.DEFAULT_TENANT_ID }}",
+  "executionId": "={{ $json.metadata.executionId }}",
   "severity": "={{ $json.severity }}",
   "title": "={{ $json.title }}",
   "message": "={{ $json.message }}",
   "metadata": "={{ $json.metadata }}",
-  "timestamp": "={{ new Date().toISOString() }}"
+  "timestamp": "={{ new Date().toISOString() }}",
+  "updates": {
+    "status": "={{ $json.metadata.status }}",
+    "currentStage": "={{ $json.metadata.stage }}",
+    "progressPercent": "={{ $json.metadata.progressPercent }}",
+    "stagesCompleted": "={{ $json.metadata.stagesCompleted }}"
+  }
 }
 ```
 - Timeout: `10s`

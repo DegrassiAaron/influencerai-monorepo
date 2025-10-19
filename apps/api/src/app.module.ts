@@ -16,6 +16,7 @@ import { AuthModule } from './auth/auth.module';
 import { DatasetsModule } from './datasets/datasets.module';
 import { LoraConfigsModule } from './lora-configs/lora-configs.module';
 import { PipelinesModule } from './pipelines/pipelines.module';
+import { WebhooksModule } from './webhooks/webhooks.module';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { AppConfig, computeBullEnabled, validateEnv } from './config/env.validation';
 
@@ -72,6 +73,7 @@ const extraImports = enableBull
     DatasetsModule,
     LoraConfigsModule,
     PipelinesModule,
+    WebhooksModule,
   ],
   controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: JwtAuthGuard }],
