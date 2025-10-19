@@ -36,6 +36,8 @@ Comprendi il design del sistema:
 - **[Panoramica Architettura](./architecture/panoramica.md)** ⭐ - Diagramma sistema, componenti, tech stack
 - **[Flusso Dati](./architecture/flusso-dati.md)** - Lifecycle richieste, pattern elaborazione
 - **[Deployment](./architecture/deployment.md)** - Docker Compose, infrastruttura, scaling
+- **[ComfyUI Workflow Templates](./architecture/comfyui-workflow-templates-architecture.md)** - Design templates JSON per generazione immagini
+- **[ComfyUI Templates Summary](./architecture/comfyui-workflow-templates-summary.md)** - Quick reference architettura templates
 
 **Per chi**: Nuovi developer, architetti, chi vuole capire il big picture
 
@@ -78,8 +80,10 @@ Guide specifiche per funzionalità:
 - Configurazione kohya_ss
 
 #### Content Generation
+- **[ComfyUI Workflow Research](./tecnic/research-comfyui-workflow-templates.md)** - Research completo workflow JSON
+- **[ComfyUI Quick Reference](./tecnic/comfyui-workflow-quick-reference.md)** - Cheatsheet nodes e patterns
+- **[ComfyUI Templates Architecture](./architecture/comfyui-workflow-templates-architecture.md)** - Design templates sistema
 - Pipeline completa generazione contenuti
-- Integrazione ComfyUI
 - Workflow n8n
 
 **Per chi**: Feature developers, product managers
