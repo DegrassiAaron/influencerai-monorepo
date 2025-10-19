@@ -36,6 +36,8 @@ Comprendi il design del sistema:
 - **[Panoramica Architettura](./architecture/panoramica.md)** ⭐ - Diagramma sistema, componenti, tech stack
 - **[Flusso Dati](./architecture/flusso-dati.md)** - Lifecycle richieste, pattern elaborazione
 - **[Deployment](./architecture/deployment.md)** - Docker Compose, infrastruttura, scaling
+- **[ComfyUI Workflow Templates](./architecture/comfyui-workflow-templates-architecture.md)** - Design templates JSON per generazione immagini
+- **[ComfyUI Templates Summary](./architecture/comfyui-workflow-templates-summary.md)** - Quick reference architettura templates
 
 **Per chi**: Nuovi developer, architetti, chi vuole capire il big picture
 
@@ -86,12 +88,17 @@ Guide specifiche per funzionalità:
 - **[BDD: Dataset GET Endpoints](./bdd/feature-174-dataset-get-endpoints.md)** - Specification
 
 #### LoRA Training
-- Guida training personalizzati (TODO: link quando creato)
-- Configurazione kohya_ss
+- **[Getting Started Guide](./guide/training/GETTING-STARTED.md)** ⭐ - Complete training workflow (0 to trained LoRA in 30 min)
+- **[API Reference](./guide/training/API-REFERENCE.md)** - Programmatic training with cURL and TypeScript examples
+- **[Dataset Structure Guide](./guide/training/examples/datasets.md)** - How to organize and prepare training datasets
+- **[Troubleshooting](./guide/training/TROUBLESHOOTING.md)** - Common issues and solutions
+- **[Example Dataset](./guide/training/examples/portrait-demo/)** - Demo dataset with captions
 
 #### Content Generation
+- **[ComfyUI Workflow Research](./tecnic/research-comfyui-workflow-templates.md)** - Research completo workflow JSON
+- **[ComfyUI Quick Reference](./tecnic/comfyui-workflow-quick-reference.md)** - Cheatsheet nodes e patterns
+- **[ComfyUI Templates Architecture](./architecture/comfyui-workflow-templates-architecture.md)** - Design templates sistema
 - Pipeline completa generazione contenuti
-- Integrazione ComfyUI
 - Workflow n8n
 
 **Per chi**: Feature developers, product managers
@@ -167,6 +174,10 @@ Configurare n8n workflow                    → apps/n8n/README.md
 Implementare test E2E                       → TESTING.md
 Vedere esempi codice verificati             → tecnic/research-lora-config-api-*
 Deploy in produzione                        → architecture/deployment.md
+Trainare LoRA personalizzato                → guide/training/GETTING-STARTED.md
+Preparare dataset per training              → guide/training/examples/datasets.md
+Usare API training programmaticamente       → guide/training/API-REFERENCE.md
+Risolvere problemi training                 → guide/training/TROUBLESHOOTING.md
 ```
 
 ---

@@ -97,11 +97,17 @@ vi.mock('bullmq', () => {
 });
 
 const contentDeps: any[] = [];
+const imageDeps: any[] = [];
 const loraDeps: any[] = [];
 const videoDeps: any[] = [];
 
 const createContentGenerationProcessorMock = vi.fn((deps) => {
   contentDeps.push(deps);
+  return vi.fn().mockResolvedValue({ ok: true });
+});
+
+const createImageGenerationProcessorMock = vi.fn((deps) => {
+  imageDeps.push(deps);
   return vi.fn().mockResolvedValue({ ok: true });
 });
 
@@ -128,6 +134,10 @@ const createMonitoringServerMock = vi.fn(() => monitoringInstance);
 
 vi.mock('./processors/contentGeneration', () => ({
   createContentGenerationProcessor: createContentGenerationProcessorMock,
+}));
+
+vi.mock('./processors/imageGeneration', () => ({
+  createImageGenerationProcessor: createImageGenerationProcessorMock,
 }));
 
 vi.mock('./processors/loraTraining', () => ({
@@ -237,18 +247,25 @@ describe('createWorkers', () => {
       })
     );
     expect(monitoringInstance.start).toHaveBeenCalledTimes(1);
-    const expectedQueues = ['content-generation', 'lora-training', 'video-generation'];
+    const expectedQueues = [
+      'content-generation',
+      'image-generation',
+      'lora-training',
+      'video-generation',
+    ];
     expect(queueInstances.map((queue) => queue.name).sort()).toEqual(expectedQueues);
     const monitoringArgs = createMonitoringServerMock.mock.calls[0]?.[0];
     expect(monitoringArgs.queues.map((entry: any) => entry.name).sort()).toEqual(expectedQueues);
 
     expect(workers.contentWorker).toBeDefined();
+    expect(workers.imageWorker).toBeDefined();
     expect(workers.loraWorker).toBeDefined();
     expect(workers.videoWorker).toBeDefined();
 
-    expect(workerInstances).toHaveLength(3);
+    expect(workerInstances).toHaveLength(4);
     expect(workerInstances.map((instance) => instance.queueName).sort()).toEqual([
       'content-generation',
+      'image-generation',
       'lora-training',
       'video-generation',
     ]);
@@ -261,6 +278,7 @@ describe('createWorkers', () => {
     });
 
     expect(createContentGenerationProcessorMock).toHaveBeenCalledTimes(1);
+    expect(createImageGenerationProcessorMock).toHaveBeenCalledTimes(1);
     expect(createLoraTrainingProcessorMock).toHaveBeenCalledTimes(1);
     expect(createVideoGenerationProcessorMock).toHaveBeenCalledTimes(1);
 

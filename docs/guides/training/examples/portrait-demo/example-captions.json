@@ -1,0 +1,172 @@
+{
+  "dataset_info": {
+    "name": "portrait-demo",
+    "trigger_word": "ohwx woman",
+    "total_images": 15,
+    "resolution": "1024x1024",
+    "format": "PNG or JPG",
+    "license": "CC0 or properly licensed stock photos"
+  },
+  "caption_guidelines": {
+    "structure": "[TRIGGER_WORD] [subject description], [context/location], [lighting/mood]",
+    "include": [
+      "Clothing and accessories",
+      "Location and background",
+      "Lighting conditions",
+      "Pose and activity",
+      "Mood and atmosphere",
+      "ALWAYS the trigger word"
+    ],
+    "exclude": [
+      "Facial features (eyes, nose, lips)",
+      "Skin tone or ethnicity",
+      "Hairstyle specifics",
+      "Body shape",
+      "Features you want the LoRA to learn"
+    ]
+  },
+  "example_captions": [
+    {
+      "filename": "image_001.png",
+      "caption": "ohwx woman wearing professional black business suit in modern office, natural window lighting, confident pose",
+      "context": "Professional/corporate setting",
+      "pose": "Standing, front view",
+      "lighting": "Natural daylight"
+    },
+    {
+      "filename": "image_002.png",
+      "caption": "ohwx woman in casual white summer dress at outdoor cafe, relaxed sitting pose, soft afternoon light",
+      "context": "Casual/lifestyle setting",
+      "pose": "Sitting, 3/4 view",
+      "lighting": "Soft natural light"
+    },
+    {
+      "filename": "image_003.png",
+      "caption": "ohwx woman with winter coat and knit scarf in snowy park, walking pose, overcast lighting",
+      "context": "Outdoor/winter setting",
+      "pose": "Walking, side view",
+      "lighting": "Overcast/diffused"
+    },
+    {
+      "filename": "image_004.png",
+      "caption": "ohwx woman in elegant evening gown at upscale restaurant, seated at table, warm ambient lighting",
+      "context": "Formal/evening setting",
+      "pose": "Sitting, front view",
+      "lighting": "Warm indoor lighting"
+    },
+    {
+      "filename": "image_005.png",
+      "caption": "ohwx woman wearing athletic activewear in modern gym, standing near equipment, bright fluorescent lighting",
+      "context": "Fitness/athletic setting",
+      "pose": "Standing, 3/4 view",
+      "lighting": "Bright artificial"
+    },
+    {
+      "filename": "image_006.png",
+      "caption": "ohwx woman in denim jacket and jeans on city street, walking pose, golden hour sunset lighting",
+      "context": "Urban/street setting",
+      "pose": "Walking, full body",
+      "lighting": "Golden hour"
+    },
+    {
+      "filename": "image_007.png",
+      "caption": "ohwx woman wearing cozy sweater in home library, reading book in armchair, soft lamp lighting",
+      "context": "Indoor/cozy setting",
+      "pose": "Sitting, relaxed",
+      "lighting": "Warm lamp light"
+    },
+    {
+      "filename": "image_008.png",
+      "caption": "ohwx woman in swimsuit on tropical beach, standing near ocean waves, bright midday sunlight",
+      "context": "Beach/vacation setting",
+      "pose": "Standing, front view",
+      "lighting": "Bright sunlight"
+    },
+    {
+      "filename": "image_009.png",
+      "caption": "ohwx woman wearing leather jacket in urban alley, leaning against brick wall, dramatic side lighting",
+      "context": "Urban/edgy setting",
+      "pose": "Leaning, side view",
+      "lighting": "Dramatic side light"
+    },
+    {
+      "filename": "image_010.png",
+      "caption": "ohwx woman in professional chef attire in restaurant kitchen, working at counter, bright overhead lighting",
+      "context": "Professional/culinary setting",
+      "pose": "Standing, working",
+      "lighting": "Bright kitchen lights"
+    },
+    {
+      "filename": "image_011.png",
+      "caption": "ohwx woman wearing hiking gear on mountain trail, walking with backpack, natural outdoor lighting",
+      "context": "Outdoor/adventure setting",
+      "pose": "Walking, full body",
+      "lighting": "Natural daylight"
+    },
+    {
+      "filename": "image_012.png",
+      "caption": "ohwx woman in vintage dress at antique bookstore, browsing shelves, soft natural window light",
+      "context": "Vintage/bookstore setting",
+      "pose": "Standing, browsing",
+      "lighting": "Soft window light"
+    },
+    {
+      "filename": "image_013.png",
+      "caption": "ohwx woman wearing lab coat in modern laboratory, working with equipment, bright fluorescent lighting",
+      "context": "Professional/scientific setting",
+      "pose": "Standing, working",
+      "lighting": "Bright artificial"
+    },
+    {
+      "filename": "image_014.png",
+      "caption": "ohwx woman in bohemian outfit at outdoor music festival, dancing pose, warm evening lighting",
+      "context": "Festival/event setting",
+      "pose": "Dancing, dynamic",
+      "lighting": "Warm evening light"
+    },
+    {
+      "filename": "image_015.png",
+      "caption": "ohwx woman wearing business casual attire in home office, working at desk, natural window lighting",
+      "context": "Work-from-home setting",
+      "pose": "Sitting at desk",
+      "lighting": "Natural window light"
+    }
+  ],
+  "prompt_testing_suggestions": [
+    {
+      "test_prompt": "ohwx woman in formal business attire, corporate boardroom background, professional lighting",
+      "expected_result": "Should show your trained subject in business context not in training data"
+    },
+    {
+      "test_prompt": "ohwx woman at sunset beach, flowing summer dress, golden hour lighting, photorealistic",
+      "expected_result": "Should generalize to beach setting with appropriate styling"
+    },
+    {
+      "test_prompt": "ohwx woman in winter clothing, snowy forest, soft natural light, high quality",
+      "expected_result": "Should work with winter/outdoor context"
+    },
+    {
+      "test_prompt": "ohwx woman portrait, studio lighting, professional photography, detailed",
+      "expected_result": "Clean studio portrait showing character consistency"
+    },
+    {
+      "test_prompt": "ohwx woman in cafe, reading newspaper, cozy atmosphere, warm lighting, realistic",
+      "expected_result": "Casual lifestyle scene, should maintain character identity"
+    }
+  ],
+  "usage_instructions": {
+    "step_1": "Create .txt files with same name as images (image_001.txt, image_002.txt, etc.)",
+    "step_2": "Copy the caption text from this JSON into each .txt file",
+    "step_3": "Verify all captions include the trigger word 'ohwx woman'",
+    "step_4": "Place images and captions in data/datasets/portrait-demo/",
+    "step_5": "Follow GETTING-STARTED.md to create training job"
+  },
+  "quality_checklist": [
+    "All captions start with trigger word 'ohwx woman'",
+    "Captions describe clothing, location, lighting - NOT facial features",
+    "1-2 sentence length, specific and descriptive",
+    "Consistent phrasing across all captions",
+    "Diverse contexts (indoor/outdoor, casual/formal, various lighting)",
+    "No duplicate or near-duplicate image descriptions"
+  ]
+}
