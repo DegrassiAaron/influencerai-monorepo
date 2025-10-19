@@ -5,7 +5,12 @@ export const QueueSummarySchema = SharedQueueSummarySchema;
 
 export type QueueSummaryDto = z.infer<typeof QueueSummarySchema>;
 
-export const JobTypeSchema = z.enum(['content-generation', 'lora-training', 'video-generation']);
+export const JobTypeSchema = z.enum([
+  'content-generation',
+  'image-generation',
+  'lora-training',
+  'video-generation',
+]);
 
 export const JobStatusSchema = z.enum(['pending', 'running', 'succeeded', 'failed', 'completed']);
 

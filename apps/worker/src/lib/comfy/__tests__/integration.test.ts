@@ -310,7 +310,7 @@ describe('submitWorkflowToComfyUI', () => {
         clientId: 'test-client',
         fetch: mockFetch,
       })
-    ).rejects.toThrow('ComfyUI is not reachable at http://localhost:9999');
+    ).rejects.toThrow('ComfyUI unreachable at http://localhost:9999');
   });
 
   // BDD Scenario: Retry submission on transient errors
