@@ -12,6 +12,8 @@ export class QueuesController {
   constructor(
     @InjectQueue('content-generation')
     private readonly contentGenerationQueue: Queue,
+    @InjectQueue('image-generation')
+    private readonly imageGenerationQueue: Queue,
     @InjectQueue('lora-training')
     private readonly loraTrainingQueue: Queue,
     @InjectQueue('video-generation')
@@ -25,13 +27,14 @@ export class QueuesController {
     description: 'Aggregated counts for active, waiting and failed jobs',
   })
   async summary(): Promise<QueueSummaryDto> {
-    const [content, lora, video] = await Promise.all([
+    const [content, image, lora, video] = await Promise.all([
       this.contentGenerationQueue.getJobCounts(),
+      this.imageGenerationQueue.getJobCounts(),
       this.loraTrainingQueue.getJobCounts(),
       this.videoGenerationQueue.getJobCounts(),
     ]);
 
-    const aggregate = [content, lora, video].reduce<QueueSummaryDto>(
+    const aggregate = [content, image, lora, video].reduce<QueueSummaryDto>(
       (totals, counts) => ({
         active: totals.active + (counts.active ?? 0),
         waiting: totals.waiting + (counts.waiting ?? 0),

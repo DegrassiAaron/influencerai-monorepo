@@ -19,6 +19,10 @@ describe('QueuesController', () => {
           useValue: createQueueMock({ active: 1, waiting: 2, failed: 3 }),
         },
         {
+          provide: getQueueToken('image-generation'),
+          useValue: createQueueMock({ active: 2, waiting: 1, failed: 0 }),
+        },
+        {
           provide: getQueueToken('lora-training'),
           useValue: createQueueMock({ active: 4, waiting: 5, failed: 6 }),
         },
@@ -33,6 +37,6 @@ describe('QueuesController', () => {
 
     const result = await controller.summary();
 
-    expect(result).toEqual({ active: 12, waiting: 15, failed: 18 });
+    expect(result).toEqual({ active: 14, waiting: 16, failed: 18 });
   });
 });

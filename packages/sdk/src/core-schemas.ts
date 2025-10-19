@@ -8,7 +8,7 @@ export const QueueSummarySchema = z.object({
 export type QueueSummary = z.infer<typeof QueueSummarySchema>;
 
 export const JobSpecSchema = z.object({
-  type: z.enum(['content-generation', 'lora-training', 'video-generation']),
+  type: z.enum(['content-generation', 'image-generation', 'lora-training', 'video-generation']),
   priority: z.number().min(0).max(10).default(5),
   payload: z.record(z.any()),
 });

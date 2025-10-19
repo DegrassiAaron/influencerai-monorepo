@@ -28,6 +28,14 @@ describe('core schemas', () => {
     ).toThrowError();
   });
 
+  it('accepts image-generation job type', () => {
+    const spec = JobSpecSchema.parse({
+      type: 'image-generation',
+      payload: { prompt: 'portrait', checkpoint: 'sdxl_base.safetensors' },
+    });
+    expect(spec.type).toBe('image-generation');
+  });
+
   it('validates content plan structure', () => {
     const plan = ContentPlanSchema.parse({
       influencerId: 'abc',

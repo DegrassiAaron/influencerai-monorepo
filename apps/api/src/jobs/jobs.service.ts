@@ -7,13 +7,14 @@ import { ConfigService } from '@nestjs/config';
 import { AppConfig } from '../config/env.validation';
 import { toInputJson } from '../lib/json';
 
-type JobType = 'content-generation' | 'lora-training' | 'video-generation';
+type JobType = 'content-generation' | 'image-generation' | 'lora-training' | 'video-generation';
 
 @Injectable()
 export class JobsService {
   constructor(
     private readonly prisma: PrismaService,
     @InjectQueue('content-generation') private readonly contentQueue: Queue,
+    @InjectQueue('image-generation') private readonly imageQueue: Queue,
     @InjectQueue('lora-training') private readonly loraQueue: Queue,
     @InjectQueue('video-generation') private readonly videoQueue: Queue,
     private readonly config: ConfigService<AppConfig, true>,
@@ -228,6 +229,21 @@ export class JobsService {
           message: 'Dry-run: Image generation completed instantly with mock results',
         };
 
+      case 'image-generation':
+        return {
+          success: true,
+          dryRun: true,
+          prompt: 'Dry-run mock prompt',
+          seed: 123456,
+          cfgScale: 7.5,
+          steps: 20,
+          loraUsed: ['models/loras/mock_lora.safetensors'],
+          s3Key: `mock/images/${mockId}.png`,
+          s3Url: `https://example.com/mock/images/${mockId}.png`,
+          assetId: `asset_${mockId}`,
+          message: 'Dry-run: Standalone image generation completed instantly with mock results',
+        };
+
       case 'video-generation':
         return {
           success: true,
@@ -264,6 +280,8 @@ export class JobsService {
     switch (type) {
       case 'content-generation':
         return this.contentQueue;
+      case 'image-generation':
+        return this.imageQueue;
       case 'lora-training':
         return this.loraQueue;
       case 'video-generation':

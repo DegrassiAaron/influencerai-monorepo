@@ -20,7 +20,10 @@ function createConfigService(overrides: Partial<AppConfig> = {}): ConfigService<
 describe('JobsService', () => {
   let prismaMock: { job: { create: jest.Mock }; $queryRawUnsafe: jest.Mock };
   let service: JobsService;
-  let queueMock: Pick<Queue, 'add' | 'getJobCounts'>;
+  let contentQueueMock: Pick<Queue, 'add' | 'getJobCounts'>;
+  let imageQueueMock: Pick<Queue, 'add' | 'getJobCounts'>;
+  let loraQueueMock: Pick<Queue, 'add' | 'getJobCounts'>;
+  let videoQueueMock: Pick<Queue, 'add' | 'getJobCounts'>;
 
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -28,18 +31,26 @@ describe('JobsService', () => {
       job: { create: jest.fn().mockResolvedValue({ id: 'j1', type: 'content-generation' }) },
       $queryRawUnsafe: jest.fn().mockResolvedValue([]),
     } as any;
-    queueMock = {
-      add: jest.fn().mockResolvedValue(null),
-      getJobCounts: jest.fn().mockResolvedValue({ active: 0, waiting: 0, failed: 0 }),
-    } as unknown as Pick<Queue, 'add' | 'getJobCounts'>;
+
+    const createQueueMock = () =>
+      ({
+        add: jest.fn().mockResolvedValue(null),
+        getJobCounts: jest.fn().mockResolvedValue({ active: 0, waiting: 0, failed: 0 }),
+      }) as unknown as Pick<Queue, 'add' | 'getJobCounts'>;
+
+    contentQueueMock = createQueueMock();
+    imageQueueMock = createQueueMock();
+    loraQueueMock = createQueueMock();
+    videoQueueMock = createQueueMock();
 
     const moduleRef = await Test.createTestingModule({
       providers: [
         JobsService,
         { provide: PrismaService, useValue: prismaMock },
-        { provide: 'BullQueue_content-generation', useValue: queueMock },
-        { provide: 'BullQueue_lora-training', useValue: queueMock },
-        { provide: 'BullQueue_video-generation', useValue: queueMock },
+        { provide: 'BullQueue_content-generation', useValue: contentQueueMock },
+        { provide: 'BullQueue_image-generation', useValue: imageQueueMock },
+        { provide: 'BullQueue_lora-training', useValue: loraQueueMock },
+        { provide: 'BullQueue_video-generation', useValue: videoQueueMock },
         { provide: ConfigService, useValue: createConfigService() },
       ],
     }).compile();
@@ -55,13 +66,28 @@ describe('JobsService', () => {
     const job = await service.createJob({ type: 'content-generation', payload: { foo: 'bar' } });
 
     expect(job.id).toBe('j1');
-    expect(queueMock.add).toHaveBeenCalledWith(
+    expect(contentQueueMock.add).toHaveBeenCalledWith(
       'content-generation',
       expect.objectContaining({ jobId: 'j1', payload: { foo: 'bar' } }),
       expect.objectContaining({
         attempts: 3,
         backoff: expect.objectContaining({ delay: 5000 }),
       })
+    );
+  });
+
+  it('routes image-generation jobs to the image queue', async () => {
+    await service.createJob({ type: 'image-generation', payload: { prompt: 'test', checkpoint: 'mock.ckpt' } });
+
+    expect(imageQueueMock.add).toHaveBeenCalledWith(
+      'image-generation',
+      expect.objectContaining({ payload: { prompt: 'test', checkpoint: 'mock.ckpt' } }),
+      expect.any(Object)
+    );
+    expect(contentQueueMock.add).not.toHaveBeenCalledWith(
+      'image-generation',
+      expect.anything(),
+      expect.anything()
     );
   });
 

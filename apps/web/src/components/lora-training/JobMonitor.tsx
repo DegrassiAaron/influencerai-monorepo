@@ -9,6 +9,7 @@
 'use client';
 
 import * as React from 'react';
+import Link from 'next/link';
 import { useJob } from '@influencerai/sdk';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent } from '@/components/ui/card';
@@ -132,6 +133,9 @@ export function JobMonitor({ jobId }: JobMonitorProps) {
     );
   }
 
+  const normalizedStatus =
+    typeof job.status === 'string' ? job.status.toLowerCase() : '';
+
   return (
     <div className="container mx-auto py-8">
       <div className="max-w-4xl mx-auto space-y-8">
@@ -139,7 +143,7 @@ export function JobMonitor({ jobId }: JobMonitorProps) {
         <JobHeader job={job} />
 
         {/* Pending State */}
-        {job.status === 'pending' && (
+        {normalizedStatus === 'pending' && (
           <>
             <PendingJobMessage />
             <JobProgress job={job} showLogs={false} />
@@ -148,7 +152,7 @@ export function JobMonitor({ jobId }: JobMonitorProps) {
         )}
 
         {/* Running State */}
-        {job.status === 'running' && (
+        {normalizedStatus === 'running' && (
           <>
             <JobProgress job={job} showLogs={true} />
             <JobMetadata job={job} />
@@ -156,8 +160,25 @@ export function JobMonitor({ jobId }: JobMonitorProps) {
         )}
 
         {/* Succeeded State */}
-        {job.status === 'succeeded' && (
+        {(normalizedStatus === 'succeeded' || normalizedStatus === 'completed') && (
           <>
+            <div className="rounded-lg border border-brand-200 bg-brand-50/80 p-4 text-sm text-brand-900">
+              <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                <div className="space-y-1">
+                  <p className="font-medium text-brand-900">
+                    Pronto per generare immagini con questo modello?
+                  </p>
+                  <p className="text-xs text-brand-700">
+                    Apri il playground dedicato per creare preview a partire dal LoRA addestrato.
+                  </p>
+                </div>
+                <Button asChild>
+                  <Link href={`/dashboard/lora-training/${job.id}/generate`}>
+                    Apri playground
+                  </Link>
+                </Button>
+              </div>
+            </div>
             <JobProgress job={job} showLogs={false} />
             <JobArtifacts job={job} refetch={refetch} />
             <JobMetadata job={job} />
@@ -165,7 +186,7 @@ export function JobMonitor({ jobId }: JobMonitorProps) {
         )}
 
         {/* Failed State */}
-        {job.status === 'failed' && (
+        {normalizedStatus === 'failed' && (
           <>
             <JobError job={job} />
             <JobMetadata job={job} />
