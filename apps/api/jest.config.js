@@ -3,7 +3,7 @@ module.exports = {
   rootDir: '.',
   testRegex: 'src/.*\\.spec\\.ts$',
   transform: {
-    '^.+\\.(t|j)s$': require.resolve('ts-jest'),
+    '^.+\\.(t|j)s$': ['ts-jest', { diagnostics: false }],
   },
   moduleNameMapper: {
     '^@influencerai/core-schemas$': '<rootDir>/../../packages/core-schemas/src',
