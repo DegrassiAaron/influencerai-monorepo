@@ -20,7 +20,11 @@ export class JobsService {
     @Optional() private readonly logger?: LoggerService
   ) {}
 
-  async createJob(input: { type: JobType; payload: unknown; priority?: number }) {
+  async createJob(input: { type: JobType; payload: unknown; priority?: number; dryRun?: boolean }) {
+    // Check if dry-run mode is enabled (from payload or parameter)
+    const payloadData = input.payload as any;
+    const isDryRun = input.dryRun || payloadData?.dryRun || false;
+
     const job = await this.prisma.job.create({
       data: {
         type: input.type,
@@ -29,6 +33,34 @@ export class JobsService {
       },
     });
 
+    // If dry-run mode, immediately mark job as succeeded with mock results
+    if (isDryRun) {
+      if (typeof this.logger?.debug === 'function') {
+        this.logger.debug('Dry-run mode: Instantly completing job with mock results', {
+          jobId: job.id,
+          type: input.type,
+        });
+      }
+
+      // Generate mock results based on job type
+      const mockResult = this.generateMockResult(input.type);
+
+      // Update job to succeeded status with mock result
+      const completedJob = await this.prisma.job.update({
+        where: { id: job.id },
+        data: {
+          status: 'succeeded',
+          result: mockResult,
+          costTok: 0, // No cost for dry-run
+          startedAt: new Date(),
+          finishedAt: new Date(),
+        },
+      });
+
+      return completedJob;
+    }
+
+    // Normal processing: enqueue job to BullMQ
     const queue = this.getQueue(input.type);
     if (typeof this.logger?.debug === 'function') {
       this.logger.debug('Enqueueing job', { jobId: job.id, type: input.type });
@@ -144,6 +176,87 @@ export class JobsService {
       }
       // Prisma throws if record not found
       return null;
+    }
+  }
+
+  /**
+   * Generate mock results for dry-run mode
+   * Returns realistic-looking mock data without actually processing the job
+   *
+   * @param type - Job type (lora-training, content-generation, video-generation)
+   * @returns Mock result object matching expected job result schema
+   */
+  private generateMockResult(type: JobType): Record<string, unknown> {
+    const timestamp = new Date().toISOString();
+    const mockId = `mock_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+
+    switch (type) {
+      case 'lora-training':
+        return {
+          success: true,
+          dryRun: true,
+          artifacts: [
+            {
+              type: 'lora',
+              name: `mock_lora_${mockId}.safetensors`,
+              url: `mock/loras/mock_lora_${mockId}.safetensors`,
+              path: `data/loras/mock_lora_${mockId}.safetensors`,
+              size: 144000000, // ~144MB (realistic LoRA size)
+            },
+          ],
+          duration: 1000, // 1 second instead of 30-60 minutes
+          completedAt: timestamp,
+          message: 'Dry-run: LoRA training completed instantly with mock results',
+        };
+
+      case 'content-generation':
+        return {
+          success: true,
+          dryRun: true,
+          assets: [
+            {
+              id: `asset_${mockId}`,
+              type: 'image',
+              url: `mock/images/mock_image_${mockId}.png`,
+              width: 512,
+              height: 768,
+              format: 'png',
+            },
+          ],
+          duration: 500, // 0.5 seconds instead of 5-10 minutes
+          completedAt: timestamp,
+          message: 'Dry-run: Image generation completed instantly with mock results',
+        };
+
+      case 'video-generation':
+        return {
+          success: true,
+          dryRun: true,
+          assets: [
+            {
+              id: `asset_${mockId}`,
+              type: 'video',
+              url: `mock/videos/mock_video_${mockId}.mp4`,
+              width: 512,
+              height: 768,
+              duration: 3,
+              fps: 24,
+              format: 'mp4',
+            },
+          ],
+          duration: 800, // 0.8 seconds instead of 10-20 minutes
+          completedAt: timestamp,
+          message: 'Dry-run: Video generation completed instantly with mock results',
+        };
+
+      default:
+        return {
+          success: true,
+          dryRun: true,
+          duration: 100,
+          completedAt: timestamp,
+          message: `Dry-run: Job type ${type} completed instantly with mock results`,
+        };
     }
   }
 
