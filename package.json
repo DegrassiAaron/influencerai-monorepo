@@ -33,6 +33,13 @@
     "node": ">=20.0.0",
     "pnpm": ">=9.0.0"
   },
+  "pnpm": {
+    "overrides": {
+      "@vitejs/plugin-react": "4.3.4",
+      "@vitejs/plugin-react>vite": "5.4.20",
+      "vite": "5.4.20"
+    }
+  },
   "dependencies": {
     "jsonwebtoken": "^9.0.2",
     "node-fetch": "^3.3.2"
