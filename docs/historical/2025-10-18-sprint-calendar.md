@@ -141,7 +141,7 @@
 
 ### Week 5 ✅
 - [ ] #164 Autoposting su 3+ piattaforme
-- [ ] #165 n8n workflow completo (plan → post)
+- [x] #165 n8n workflow completo (plan → post)
 - [ ] Test stress con job concorrenti
 - [ ] Performance tuning completato
 

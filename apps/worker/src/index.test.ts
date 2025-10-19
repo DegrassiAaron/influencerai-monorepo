@@ -444,6 +444,7 @@ describe('createWorkers', () => {
     expect(startMonitoringArgs.logger).toBe(logger);
     expect(startMonitoringArgs.queues.map((q: any) => q.name).sort()).toEqual([
       'content-generation',
+      'image-generation',
       'lora-training',
       'video-generation',
     ]);

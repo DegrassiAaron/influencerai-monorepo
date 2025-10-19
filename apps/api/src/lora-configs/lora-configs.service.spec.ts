@@ -476,8 +476,8 @@ describe('LoraConfigsService', () => {
       expect(prisma.job.count).toHaveBeenCalledWith({
         where: {
           tenantId: mockTenantId,
-          meta: {
-            path: ['loraConfigId'],
+          payload: {
+            path: ['configId'],
             equals: 'config-1',
           },
           status: {

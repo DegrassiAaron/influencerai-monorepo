@@ -419,7 +419,7 @@ Implementabili rapidamente per momentum:
 **Obiettivo**: Sistema production-ready
 
 ✅ **Criteri di Successo**:
-- [ ] n8n webhook receivers (#165) processano callback ComfyUI
+- [x] n8n webhook receivers (#165) processano callback ComfyUI
 - [ ] Pipeline end-to-end: dataset upload → training → generation → publish
 - [ ] Load testing: 100 concurrent users su dashboard (k6 or Artillery)
 - [ ] Security audit: no critical vulnerabilities (npm audit, Snyk)

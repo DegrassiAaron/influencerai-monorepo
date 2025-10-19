@@ -16,5 +16,5 @@ Issue,Title,Area,Type,Priority,Status,Owner,Effort (days),Start Day,End Day,Depe
 171,Video generation enhancements,worker,feat,P1,Todo,Dev B,3,D17,D19,,,Sprint 3,Automation
 173,Real-time monitoring dashboard,web,feat,P1,Todo,Dev C,2,D19,D20,168,,Sprint 3,Automation
 164,Autoposting processor,worker,feat,P0,Todo,Dev B,5,D23,D25,169,165,Sprint 3,Social Media
-165,Complete n8n workflow orchestration,n8n,feat,P0,Todo,Dev E,5,D26,D28,"164,178",,Sprint 3,Social Media
+165,Complete n8n workflow orchestration,n8n,feat,P0,Done,Dev E,5,D26,D28,"164,178",,Sprint 3,Social Media
 129,Upgrade logging & queue libs,api+worker,chore,P2,Todo,Dev E,1,D26,D27,,,Sprint 3,Production
