@@ -32,9 +32,12 @@ export const DatasetSchema = z.object({
   kind: z.string(),
   path: z.string(),
   status: z.string(),
+  name: z.string(),
+  description: z.string().optional(),
+  imageCount: z.number().int(),
   meta: z.record(z.unknown()).optional(),
-  createdAt: z.string().datetime().optional(),
-  updatedAt: z.string().datetime().optional(),
+  createdAt: z.string(),
+  updatedAt: z.string().optional(),
 });
 
 export type Dataset = z.infer<typeof DatasetSchema>;
@@ -79,3 +82,72 @@ export const ContentPlanEnvelopeSchema = z.object({
 });
 
 export type ContentPlanEnvelope = z.infer<typeof ContentPlanEnvelopeSchema>;
+
+/**
+ * LoRA Configuration Schema
+ *
+ * Represents a LoRA training configuration with all hyperparameters.
+ */
+export const LoraConfigSchema = z.object({
+  id: z.string(),
+  tenantId: z.string(),
+  name: z.string(),
+  description: z.string().optional(),
+  modelName: z.string(),
+  epochs: z.number().int(),
+  learningRate: z.number(),
+  batchSize: z.number().int(),
+  resolution: z.number().int(),
+  networkDim: z.number().int(),
+  networkAlpha: z.number().int(),
+  outputPath: z.string().optional(),
+  meta: z.record(z.unknown()),
+  isDefault: z.boolean(),
+  createdAt: z.string().datetime().optional(),
+  updatedAt: z.string().datetime().optional(),
+});
+
+export type LoraConfig = z.infer<typeof LoraConfigSchema>;
+
+export const LoraConfigListSchema = z.array(LoraConfigSchema);
+
+/**
+ * Query parameters for listing LoRA configurations
+ */
+export const ListLoraConfigsParamsSchema = z.object({
+  isDefault: z.boolean().optional(),
+  modelName: z.string().optional(),
+  take: z.number().int().min(1).max(100).optional(),
+  skip: z.number().int().min(0).optional(),
+  sortBy: z.enum(['createdAt', 'updatedAt', 'name']).optional(),
+  sortOrder: z.enum(['asc', 'desc']).optional(),
+});
+
+export type ListLoraConfigsParams = z.infer<typeof ListLoraConfigsParamsSchema>;
+
+/**
+ * Input for creating a LoRA configuration
+ */
+export const CreateLoraConfigInputSchema = z.object({
+  name: z.string().min(1).max(100),
+  description: z.string().max(500).optional(),
+  modelName: z.string().min(1).max(50),
+  epochs: z.number().int().min(1).max(1000).optional(),
+  learningRate: z.number().min(0.000001).max(1).optional(),
+  batchSize: z.number().int().min(1).max(64).optional(),
+  resolution: z.number().int().min(128).max(2048).optional(),
+  networkDim: z.number().int().min(1).max(512).optional(),
+  networkAlpha: z.number().int().min(1).max(512).optional(),
+  outputPath: z.string().max(255).optional(),
+  meta: z.record(z.unknown()).optional(),
+  isDefault: z.boolean().optional(),
+});
+
+export type CreateLoraConfigInput = z.infer<typeof CreateLoraConfigInputSchema>;
+
+/**
+ * Input for updating a LoRA configuration (partial)
+ */
+export const UpdateLoraConfigInputSchema = CreateLoraConfigInputSchema.partial();
+
+export type UpdateLoraConfigInput = z.infer<typeof UpdateLoraConfigInputSchema>;

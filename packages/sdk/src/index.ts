@@ -8,6 +8,10 @@ import {
   DatasetCreationSchema,
   ContentPlanEnvelopeSchema,
   CreateDatasetInputSchema,
+  LoraConfigSchema,
+  LoraConfigListSchema,
+  CreateLoraConfigInputSchema,
+  UpdateLoraConfigInputSchema,
 } from './types';
 import type {
   JobResponse,
@@ -17,6 +21,10 @@ import type {
   CreateDatasetResponse,
   ContentPlanEnvelope,
   ListDatasetsParams,
+  LoraConfig,
+  ListLoraConfigsParams,
+  CreateLoraConfigInput,
+  UpdateLoraConfigInput,
 } from './types';
 import { QueueSummarySchema, JobSpec, ContentPlan, DatasetSpec, LoRAConfig } from './core-schemas';
 
@@ -248,6 +256,141 @@ export class InfluencerAIClient {
   async getContentPlan(id: string): Promise<ContentPlanEnvelope> {
     return this.request({ path: `/content-plans/${id}`, schema: ContentPlanEnvelopeSchema });
   }
+
+  /**
+   * List LoRA configurations with optional filtering and pagination
+   *
+   * @param params - Query parameters for filtering, pagination, and sorting
+   * @returns Array of LoRA configurations matching the criteria
+   *
+   * @example
+   * ```typescript
+   * // List all LoRA configs
+   * const configs = await client.listLoraConfigs();
+   *
+   * // List default config only
+   * const defaultConfig = await client.listLoraConfigs({ isDefault: true });
+   *
+   * // List with pagination
+   * const configs = await client.listLoraConfigs({
+   *   take: 20,
+   *   skip: 0,
+   *   sortBy: 'createdAt',
+   *   sortOrder: 'desc'
+   * });
+   * ```
+   */
+  async listLoraConfigs(params: ListLoraConfigsParams = {}): Promise<LoraConfig[]> {
+    const query: Record<string, QueryValue> = {
+      isDefault: params.isDefault,
+      modelName: params.modelName,
+      take: params.take,
+      skip: params.skip,
+      sortBy: params.sortBy,
+      sortOrder: params.sortOrder,
+    };
+    return this.request({ path: '/lora-configs', query, schema: LoraConfigListSchema });
+  }
+
+  /**
+   * Get a single LoRA configuration by ID
+   *
+   * @param id - LoRA configuration ID
+   * @returns LoRA configuration record
+   * @throws APIError if configuration is not found or unauthorized
+   *
+   * @example
+   * ```typescript
+   * const config = await client.getLoraConfig('lc_123');
+   * console.log(config.epochs); // 20
+   * ```
+   */
+  async getLoraConfig(id: string): Promise<LoraConfig> {
+    return this.request({ path: `/lora-configs/${id}`, schema: LoraConfigSchema });
+  }
+
+  /**
+   * Create a new LoRA configuration
+   *
+   * @param input - LoRA configuration parameters
+   * @returns Created LoRA configuration with generated ID
+   * @throws APIError if validation fails or name already exists
+   *
+   * @example
+   * ```typescript
+   * const config = await client.createLoraConfig({
+   *   name: 'My Influencer Style',
+   *   modelName: 'sd15',
+   *   epochs: 20,
+   *   learningRate: 0.0001,
+   *   batchSize: 2,
+   *   resolution: 512
+   * });
+   * ```
+   */
+  async createLoraConfig(input: CreateLoraConfigInput): Promise<LoraConfig> {
+    const parsedInput = CreateLoraConfigInputSchema.safeParse(input);
+    if (!parsedInput.success) {
+      throw new APIError('Invalid LoRA config payload', {
+        status: 400,
+        body: parsedInput.error.flatten(),
+      });
+    }
+    return this.request({
+      path: '/lora-configs',
+      method: 'POST',
+      body: parsedInput.data,
+      schema: LoraConfigSchema,
+    });
+  }
+
+  /**
+   * Update an existing LoRA configuration
+   *
+   * @param id - LoRA configuration ID
+   * @param input - Fields to update (partial)
+   * @returns Updated LoRA configuration
+   * @throws APIError if not found, validation fails, or name conflicts
+   *
+   * @example
+   * ```typescript
+   * const updated = await client.updateLoraConfig('lc_123', {
+   *   epochs: 30,
+   *   learningRate: 0.00015
+   * });
+   * ```
+   */
+  async updateLoraConfig(id: string, input: UpdateLoraConfigInput): Promise<LoraConfig> {
+    const parsedInput = UpdateLoraConfigInputSchema.safeParse(input);
+    if (!parsedInput.success) {
+      throw new APIError('Invalid LoRA config update payload', {
+        status: 400,
+        body: parsedInput.error.flatten(),
+      });
+    }
+    return this.request({
+      path: `/lora-configs/${id}`,
+      method: 'PATCH',
+      body: parsedInput.data,
+      schema: LoraConfigSchema,
+    });
+  }
+
+  /**
+   * Delete a LoRA configuration
+   *
+   * @param id - LoRA configuration ID to delete
+   * @returns void
+   * @throws APIError if not found, unauthorized, or active jobs exist
+   *
+   * @example
+   * ```typescript
+   * await client.deleteLoraConfig('lc_123');
+   * ```
+   */
+  async deleteLoraConfig(id: string): Promise<void> {
+    await this.request({ path: `/lora-configs/${id}`, method: 'DELETE' });
+  }
 }
 
 export type { JobSpec, ContentPlan, DatasetSpec, LoRAConfig } from './core-schemas';
@@ -259,5 +402,9 @@ export type {
   CreateDatasetResponse,
   ContentPlanEnvelope,
   ListDatasetsParams,
+  LoraConfig,
+  ListLoraConfigsParams,
+  CreateLoraConfigInput,
+  UpdateLoraConfigInput,
 } from './types';
 export { APIError as InfluencerAIAPIError } from './fetch-utils';
