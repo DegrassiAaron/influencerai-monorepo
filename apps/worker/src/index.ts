@@ -20,6 +20,11 @@ import {
   type VideoGenerationJobData,
   type VideoGenerationResult,
 } from './processors/videoGeneration';
+import {
+  createImageGenerationProcessor,
+  type ImageGenerationJobData,
+  type ImageGenerationResult,
+} from './processors/imageGeneration';
 import { HTTPError, callOpenRouter, fetchWithTimeout, safeReadBody, sleep } from './httpClient';
 import { createFfmpegRunner } from './ffmpeg';
 import { startMonitoring } from './monitoring';
@@ -164,6 +169,7 @@ export function createWorkers(deps: WorkerDependencies) {
 
   const queueOptions = { connection, prefix: process.env.BULL_PREFIX };
   const contentQueue = new Queue('content-generation', queueOptions);
+  const imageQueue = new Queue('image-generation', queueOptions);
   const loraQueue = new Queue('lora-training', queueOptions);
   const videoQueue = new Queue('video-generation', queueOptions);
 
@@ -194,6 +200,23 @@ export function createWorkers(deps: WorkerDependencies) {
     workerOptions
   );
 
+  const imageWorker = new Worker<ImageGenerationJobData, ImageGenerationResult, 'image-generation'>(
+    'image-generation',
+    createImageGenerationProcessor({
+      logger: depLogger,
+      patchJobStatus,
+      s3,
+      comfy: {
+        baseUrl: comfyBaseUrl,
+        clientId: comfyClientId,
+        fetch: (url: string, init?: RequestInit) => fetchWithTimeout(url, init, comfyTimeoutMs),
+        pollIntervalMs: comfyPollIntervalMs,
+        maxPollAttempts: comfyMaxPollAttempts,
+      },
+    }),
+    workerOptions
+  );
+
   const monitorUsername = process.env.WORKER_BULL_BOARD_USER;
   const monitorPassword = process.env.WORKER_BULL_BOARD_PASSWORD;
   const monitorPortValue = Number(process.env.WORKER_MONITOR_PORT ?? '');
@@ -211,6 +234,7 @@ export function createWorkers(deps: WorkerDependencies) {
       logger: depLogger,
       queues: [
         { name: 'content-generation', queue: contentQueue },
+        { name: 'image-generation', queue: imageQueue },
         { name: 'lora-training', queue: loraQueue },
         { name: 'video-generation', queue: videoQueue },
       ],
@@ -303,6 +327,25 @@ export function createWorkers(deps: WorkerDependencies) {
     void failureAlerter.handleFailure('video-generation', job, err);
   });
 
+  imageWorker.on('completed', (job) => {
+    recordMonitoringCompletion('image-generation', job);
+    depLogger.info({ id: job.id }, 'Image generation job completed successfully');
+    failureAlerter.resetFailures('image-generation');
+  });
+
+  imageWorker.on('failed', (job, err) => {
+    recordMonitoringFailure('image-generation', job, err);
+    depLogger.error({ id: job?.id, err }, 'Image generation job failed');
+    const jobId = (job?.data as any)?.jobId as string | undefined;
+    if (jobId) {
+      patchJobStatus(jobId, {
+        status: 'failed',
+        result: { message: (err as any)?.message, stack: (err as any)?.stack },
+      }).catch(() => {});
+    }
+    void failureAlerter.handleFailure('image-generation', job, err);
+  });
+
   const metricsPrefix = process.env.WORKER_METRICS_PREFIX || 'influencerai_worker_';
   const bullBoardPort = parseInt(process.env.BULL_BOARD_PORT || '3030', 10);
   const bullBoardHost = process.env.BULL_BOARD_HOST || '0.0.0.0';
@@ -313,6 +356,7 @@ export function createWorkers(deps: WorkerDependencies) {
     logger: depLogger,
     queues: [
       { name: 'content-generation', queue: contentQueue, worker: contentWorker },
+      { name: 'image-generation', queue: imageQueue, worker: imageWorker },
       { name: 'lora-training', queue: loraQueue, worker: loraWorker },
       { name: 'video-generation', queue: videoQueue, worker: videoWorker },
     ],
@@ -338,7 +382,7 @@ export function createWorkers(deps: WorkerDependencies) {
 
   depLogger.info('Workers started and listening for jobs...');
 
-  return { contentWorker, loraWorker, videoWorker };
+  return { contentWorker, imageWorker, loraWorker, videoWorker };
 }
 
 if (process.env.NODE_ENV !== 'test') {

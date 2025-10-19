@@ -172,15 +172,15 @@ export async function submitWorkflowToComfyUI(
     } catch (error: any) {
       lastError = error;
 
-      // Check if it's a connection error
-      if (error.message?.includes('ECONNREFUSED') || error.message?.includes('fetch failed')) {
-        throw new Error(`ComfyUI is not reachable at ${config.baseUrl}`);
-      }
-
-      // Retry on other errors if attempts remain
+      // Retry on errors if attempts remain
       if (attempt < retries) {
         await new Promise((resolve) => setTimeout(resolve, retryDelayMs));
         continue;
+      }
+
+      // After exhausting retries, throw appropriate error
+      if (error.message?.includes('ECONNREFUSED') || error.message?.includes('fetch failed')) {
+        throw new Error(`ComfyUI unreachable at ${config.baseUrl}: ${error.code || 'ECONNREFUSED'}`);
       }
 
       throw error;
@@ -209,7 +209,7 @@ export function createComfyImageClient(config: ComfyClientConfig) {
       for (let attempt = 0; attempt < maxPollAttempts; attempt++) {
         await new Promise((resolve) => setTimeout(resolve, pollIntervalMs));
 
-        const historyResponse = await config.fetch(`${config.baseUrl}/history/${promptId}`);
+        const historyResponse = await config.fetch(`${config.baseUrl}/history/${promptId}`, undefined);
         if (!historyResponse.ok) {
           throw new Error(`Failed to fetch job status: ${historyResponse.status}`);
         }
@@ -221,7 +221,7 @@ export function createComfyImageClient(config: ComfyClientConfig) {
           continue; // Job not in history yet
         }
 
-        const status = jobHistory.status?.status_str || 'unknown';
+        const status = jobHistory.status?.status_str || jobHistory.status?.status || 'unknown';
 
         if (status === 'success' || jobHistory.status?.completed) {
           return {
@@ -232,7 +232,20 @@ export function createComfyImageClient(config: ComfyClientConfig) {
         }
 
         if (status === 'error') {
-          throw new Error(`ComfyUI job failed: ${jobHistory.status?.error || 'Unknown error'}`);
+          // Extract error message from multiple possible locations
+          let errorMessage = jobHistory.status?.error || 'Unknown error';
+
+          // Check for error in messages array (ComfyUI format)
+          if (jobHistory.status?.messages && Array.isArray(jobHistory.status.messages)) {
+            for (const message of jobHistory.status.messages) {
+              if (Array.isArray(message) && message[0] === 'error' && message[1]?.exception_message) {
+                errorMessage = message[1].exception_message;
+                break;
+              }
+            }
+          }
+
+          throw new Error(`ComfyUI job failed: ${errorMessage}`);
         }
 
         // Continue polling for 'running' or other statuses
