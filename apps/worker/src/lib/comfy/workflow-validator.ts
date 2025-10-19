@@ -134,7 +134,25 @@ export function validateWorkflow(workflow: unknown): ValidationResult {
     }
   }
 
-  // If we already have errors from manual validation, return them
+  // Check for node references (basic connection validation)
+  // Do this before Zod validation to accumulate all errors
+  const nodeIds = new Set(Object.keys(workflowObj));
+  for (const [nodeId, node] of Object.entries(workflowObj)) {
+    if (typeof node === 'object' && node !== null && node.inputs) {
+      for (const [inputKey, inputValue] of Object.entries(node.inputs)) {
+        if (Array.isArray(inputValue) && inputValue.length === 2) {
+          const [sourceNodeId] = inputValue;
+          if (!nodeIds.has(sourceNodeId)) {
+            errors.push(
+              `Node ${nodeId}, inputs.${inputKey}: References non-existent node '${sourceNodeId}'`
+            );
+          }
+        }
+      }
+    }
+  }
+
+  // If we have errors, return them (don't bother with Zod validation)
   if (errors.length > 0) {
     return { valid: false, errors };
   }
@@ -142,7 +160,6 @@ export function validateWorkflow(workflow: unknown): ValidationResult {
   // Now validate with Zod for additional checks
   const schemaResult = ComfyWorkflowSchema.safeParse(workflow);
   if (!schemaResult.success) {
-    // Only add Zod errors if we don't already have manual errors
     schemaResult.error.issues.forEach((issue) => {
       const path = issue.path.join('.');
       if (path) {
@@ -156,9 +173,12 @@ export function validateWorkflow(workflow: unknown): ValidationResult {
 
   const validWorkflow = schemaResult.data;
 
-  // Check for required node types
+  // Check for SaveImage node if this looks like a complete generation workflow
+  // (has KSampler or VAEDecode which generate outputs)
   const nodeTypes = Object.values(validWorkflow).map((node) => node.class_type);
-  if (!nodeTypes.includes('SaveImage')) {
+  const hasGenerator = nodeTypes.includes('KSampler') || nodeTypes.includes('VAEDecode');
+
+  if (hasGenerator && !nodeTypes.includes('SaveImage')) {
     errors.push('Workflow must contain a SaveImage node');
   }
 
@@ -196,7 +216,7 @@ export function validateConnections(workflow: ComfyWorkflow): ValidationResult {
         // Validate source node exists
         if (!nodeIds.has(sourceNodeId)) {
           errors.push(
-            `Node ${nodeId}, inputs.${inputKey}: References non-existent node '${sourceNodeId}'`
+            `Node ${nodeId}, inputs.${inputKey}: references non-existent node '${sourceNodeId}'`
           );
           continue;
         }

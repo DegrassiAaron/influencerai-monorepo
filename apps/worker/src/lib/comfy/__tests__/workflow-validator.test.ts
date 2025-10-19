@@ -258,7 +258,7 @@ describe('validateConnections', () => {
     expect(result.valid).toBe(false);
     if (!result.valid) {
       expect(result.errors[0]).toContain("Node 2");
-      expect(result.errors[0]).toContain("References non-existent node '99'");
+      expect(result.errors[0]).toContain("references non-existent node '99'");
     }
   });
 
