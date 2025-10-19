@@ -1,4 +1,10 @@
 import '@testing-library/jest-dom/vitest';
+import { vi } from 'vitest';
+
+// Provide Jest compatibility layer for legacy mocks
+if (!(globalThis as { jest?: typeof vi }).jest) {
+  (globalThis as { jest?: typeof vi }).jest = vi;
+}
 
 // Polyfill for Radix UI components (Select, DropdownMenu, etc.) in JSDOM
 if (typeof Element.prototype.hasPointerCapture === 'undefined') {

@@ -83,6 +83,16 @@ export const ContentPlanEnvelopeSchema = z.object({
 
 export type ContentPlanEnvelope = z.infer<typeof ContentPlanEnvelopeSchema>;
 
+export const ContentPlanListSchema = z.array(ContentPlanEnvelopeSchema);
+
+export const ListContentPlansParamsSchema = z.object({
+  influencerId: z.string().min(1).optional(),
+  take: z.number().int().min(1).max(100).optional(),
+  skip: z.number().int().min(0).optional(),
+});
+
+export type ListContentPlansParams = z.infer<typeof ListContentPlansParamsSchema>;
+
 /**
  * LoRA Configuration Schema
  *

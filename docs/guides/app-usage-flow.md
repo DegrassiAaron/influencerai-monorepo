@@ -48,7 +48,9 @@ Percorso: `http://localhost:3000/dashboard`
 
 ## 4. Flusso Content Plan Wizard
 
-Percorso: `http://localhost:3000/dashboard/content-plans`
+Percorso: `http://localhost:3000/dashboard/content-plans/new`
+
+> Nota: la pagina `http://localhost:3000/dashboard/content-plans` elenca lo storico dei piani generati con filtri e link rapidi per aprire il wizard.
 
 1. **Step Persona**: inserisci `Influencer ID` (deve esistere nel DB Prisma) e un riassunto della persona. Cambiare questi campi azzera eventuali risultati precedenti.
 2. **Step Parametri**: definisci il `Theme` della campagna e seleziona le piattaforme target (Instagram, TikTok, YouTube Shorts).
@@ -101,4 +103,4 @@ In caso di congestione:
 - **UI per selezione influencer**: il wizard richiede un `Influencer ID` testuale (`ContentPlanWizard`, riga ~70) ma non offre autocompletamento via API; serve una lista filtrabile dagli influencer registrati.
 - **Persona non inviata all'API**: il campo `personaSummary` raccolto al passo 1 non viene incluso nella richiesta (`createContentPlan` in `apps/web/src/lib/content-plans.ts`), quindi il prompt usa solo i dati salvati in Prisma; allineare front-end e API.
 - **Metriche home statiche**: le card nella home (`apps/web/src/app/page.tsx`, costante `highlights`) mostrano numeri fissi; creare integrazione con API reali o rimuovere i placeholder.
-- **Storico piani editoriali**: esiste l'endpoint `GET /content-plans` ma manca una vista UI per elencare e riaprire i piani generati; aggiungere una pagina tabellare sotto `/dashboard/content-plans`.
+- ~~**Storico piani editoriali**: esiste l'endpoint `GET /content-plans` ma manca una vista UI per elencare e riaprire i piani generati; aggiungere una pagina tabellare sotto `/dashboard/content-plans`.~~ Completato con la vista `/dashboard/content-plans` che mostra lo storico e lo stato di approvazione.

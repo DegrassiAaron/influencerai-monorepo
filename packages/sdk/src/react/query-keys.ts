@@ -1,4 +1,9 @@
-import type { ListJobsParams, ListDatasetsParams, ListLoraConfigsParams } from '../index';
+import type {
+  ListJobsParams,
+  ListDatasetsParams,
+  ListContentPlansParams,
+  ListLoraConfigsParams,
+} from '../index';
 
 const JOBS_ROOT = ['influencerai', 'jobs'] as const;
 const DATASETS_ROOT = ['influencerai', 'datasets'] as const;
@@ -49,6 +54,14 @@ function normalizeLoraConfigsFilters(params?: ListLoraConfigsParams) {
   ] as const;
 }
 
+function normalizeContentPlansFilters(params?: ListContentPlansParams) {
+  return [
+    params?.influencerId ?? null,
+    params?.take ?? null,
+    params?.skip ?? null,
+  ] as const;
+}
+
 export const influencerAIQueryKeys = {
   jobs: {
     root: JOBS_ROOT,
@@ -68,6 +81,8 @@ export const influencerAIQueryKeys = {
   },
   contentPlans: {
     root: CONTENT_PLANS_ROOT,
+    list: (params?: ListContentPlansParams) =>
+      [...CONTENT_PLANS_ROOT, 'list', ...normalizeContentPlansFilters(params)] as const,
     detail: (id: string) => [...CONTENT_PLANS_ROOT, 'detail', id] as const,
   },
   loraConfigs: {

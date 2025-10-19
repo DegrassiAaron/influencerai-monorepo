@@ -119,6 +119,8 @@ describe('InfluencerAIClient', () => {
         id: 'ds-1',
         kind: 'lora-training',
         path: 'datasets/tenant/ds-1/file.zip',
+        name: 'Campaign shots',
+        imageCount: 24,
         status: 'pending',
         createdAt: '2024-01-01T00:00:00.000Z',
         updatedAt: '2024-01-01T00:00:00.000Z',
@@ -186,5 +188,41 @@ describe('InfluencerAIClient', () => {
       'http://api.test/content-plans/plan-1',
       expect.objectContaining({ method: 'GET' })
     );
+  });
+
+  it('lists content plans with optional filters and validates shape', async () => {
+    const plans = [
+      {
+        id: 'plan-1',
+        plan: {
+          influencerId: 'inf-1',
+          theme: 'summer vibes',
+          targetPlatforms: ['instagram', 'tiktok'],
+          posts: [{ caption: 'hello', hashtags: ['#summer'] }],
+          createdAt: '2024-01-01T00:00:00.000Z',
+        },
+      },
+    ];
+    const mockResponse = createMockResponse(plans);
+    const mockFetch = vi.fn().mockResolvedValue(mockResponse);
+    vi.stubGlobal('fetch', mockFetch);
+
+    const client = new InfluencerAIClient('http://api.test');
+    const result = await client.listContentPlans({ influencerId: 'inf-1', take: 5 });
+
+    expect(result).toEqual(plans);
+    expect(mockFetch).toHaveBeenCalledWith(
+      'http://api.test/content-plans?influencerId=inf-1&take=5',
+      expect.objectContaining({ method: 'GET' })
+    );
+  });
+
+  it('throws when content plan list response has unexpected shape', async () => {
+    const mockResponse = createMockResponse({});
+    const mockFetch = vi.fn().mockResolvedValue(mockResponse);
+    vi.stubGlobal('fetch', mockFetch);
+
+    const client = new InfluencerAIClient('http://api.test');
+    await expect(client.listContentPlans()).rejects.toBeInstanceOf(APIError);
   });
 });

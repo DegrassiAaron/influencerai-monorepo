@@ -7,6 +7,7 @@ import {
   DatasetListSchema,
   DatasetCreationSchema,
   ContentPlanEnvelopeSchema,
+  ContentPlanListSchema,
   CreateDatasetInputSchema,
   LoraConfigSchema,
   LoraConfigListSchema,
@@ -20,6 +21,7 @@ import type {
   CreateDatasetInput,
   CreateDatasetResponse,
   ContentPlanEnvelope,
+  ListContentPlansParams,
   ListDatasetsParams,
   LoraConfig,
   ListLoraConfigsParams,
@@ -164,6 +166,33 @@ export class InfluencerAIClient {
       method: 'POST',
       body: plan,
       schema: ContentPlanEnvelopeSchema,
+    });
+  }
+
+  /**
+   * List content plans with optional filtering and pagination.
+   *
+   * @param params - Optional filters for influencer ID and pagination
+   * @returns Array of content plan envelopes
+   *
+   * @example
+   * ```typescript
+   * const plans = await client.listContentPlans({ take: 10 });
+   * const influencerPlans = await client.listContentPlans({ influencerId: 'inf_123' });
+   * ```
+   */
+  async listContentPlans(
+    params: ListContentPlansParams = {}
+  ): Promise<ContentPlanEnvelope[]> {
+    const query: Record<string, QueryValue> = {
+      influencerId: params.influencerId,
+      take: params.take,
+      skip: params.skip,
+    };
+    return this.request({
+      path: '/content-plans',
+      query,
+      schema: ContentPlanListSchema,
     });
   }
 
@@ -401,6 +430,7 @@ export type {
   CreateDatasetInput,
   CreateDatasetResponse,
   ContentPlanEnvelope,
+  ListContentPlansParams,
   ListDatasetsParams,
   LoraConfig,
   ListLoraConfigsParams,

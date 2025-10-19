@@ -1,12 +1,12 @@
-import { Metadata } from 'next';
+import type { Metadata } from 'next';
 
-import { ContentPlanWizard } from '@/components/content-plans/ContentPlanWizard';
+import { ContentPlansListPage } from '@/components/content-plans/ContentPlansListPage';
 
 export const metadata: Metadata = {
-  title: 'Content Plans Wizard',
-  description: 'Configura, genera e approva piani editoriali guidati.',
+  title: 'Content Plans',
+  description: 'Monitora e gestisci i content plan generati dal team.',
 };
 
 export default function ContentPlansPage() {
-  return <ContentPlanWizard />;
+  return <ContentPlansListPage />;
 }

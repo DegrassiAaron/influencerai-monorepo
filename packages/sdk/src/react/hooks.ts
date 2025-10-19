@@ -20,7 +20,7 @@ import type {
   ListLoraConfigsParams,
 } from '../types';
 import type { JobSpec, ContentPlan } from '../core-schemas';
-import type { ListJobsParams, UpdateJobInput } from '../index';
+import type { ListJobsParams, ListContentPlansParams, UpdateJobInput } from '../index';
 import type { APIError as InfluencerAIAPIError } from '../fetch-utils';
 import { useInfluencerAIClient } from './provider';
 import { influencerAIQueryKeys } from './query-keys';
@@ -60,6 +60,7 @@ export type UseJobOptions = QueryOptions<JobResponse>;
 export type UseDatasetsOptions = QueryOptions<Dataset[]>;
 export type UseDatasetOptions = QueryOptions<Dataset>;
 export type UseQueuesSummaryOptions = QueryOptions<QueueSummary>;
+export type UseContentPlansOptions = QueryOptions<ContentPlanEnvelope[]>;
 export type UseContentPlanOptions = QueryOptions<ContentPlanEnvelope>;
 export type UseCreateJobOptions<TContext = unknown> = MutationOptions<
   JobResponse,
@@ -243,6 +244,20 @@ export function useQueuesSummary(
   return useQuery<QueueSummary, InfluencerAIAPIError>({
     queryKey: influencerAIQueryKeys.queues.summary(),
     queryFn: () => client.getQueuesSummary(),
+    ...options,
+  });
+}
+
+export function useContentPlans(
+  params: ListContentPlansParams = {},
+  options?: UseContentPlansOptions
+): UseQueryResult<ContentPlanEnvelope[], InfluencerAIAPIError> {
+  const client = useInfluencerAIClient();
+  const filters = params ?? {};
+
+  return useQuery<ContentPlanEnvelope[], InfluencerAIAPIError>({
+    queryKey: influencerAIQueryKeys.contentPlans.list(filters),
+    queryFn: () => client.listContentPlans(filters),
     ...options,
   });
 }
