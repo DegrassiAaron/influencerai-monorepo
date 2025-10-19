@@ -8,8 +8,8 @@
     "start": "next start",
     "lint": "eslint ./src --ext .js,.jsx,.ts,.tsx",
     "test": "pnpm run test:unit",
-    "test:unit": "node ../../scripts/run-vitest.mjs --config vitest.config.ts",
-    "test:watch": "vitest watch --config vitest.config.ts"
+    "test:unit": "node ../../scripts/run-vitest.mjs --config vitest.config.mts",
+    "test:watch": "vitest watch --config vitest.config.mts"
   },
   "dependencies": {
     "@fontsource-variable/inter": "^5.2.8",
