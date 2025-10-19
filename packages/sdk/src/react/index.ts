@@ -12,6 +12,8 @@ export type {
   CreateDatasetResponse,
   ContentPlanEnvelope,
   ListDatasetsParams,
+  LoraConfig,
+  ListLoraConfigsParams,
 } from '../types';
 export type { JobSpec, ContentPlan, DatasetSpec, LoRAConfig } from '../core-schemas';
 export {
@@ -26,6 +28,8 @@ export {
   useCreateDataset,
   useDeleteDataset,
   useCreateContentPlan,
+  useLoraConfigs,
+  useLoraConfig,
 } from './hooks';
 export type {
   UseJobsOptions,
@@ -41,4 +45,6 @@ export type {
   UseDeleteDatasetOptions,
   DeleteDatasetVariables,
   UseCreateContentPlanOptions,
+  UseLoraConfigsOptions,
+  UseLoraConfigOptions,
 } from './hooks';

@@ -58,21 +58,35 @@ describe('LoRATrainingWizard', () => {
   const mockConfigs = [
     {
       id: 'config_001',
+      tenantId: 'tenant_1',
       name: 'Quick Training',
       description: 'Fast training for testing',
-      maxTrainEpochs: 10,
+      modelName: 'sd15',
+      epochs: 10,
+      learningRate: 0.0001,
+      batchSize: 1,
+      resolution: 512,
       networkDim: 32,
       networkAlpha: 16,
-      learningRate: 0.0001,
+      meta: {},
+      isDefault: false,
+      createdAt: '2024-01-01T00:00:00Z',
     },
     {
       id: 'config_002',
+      tenantId: 'tenant_1',
       name: 'Production Training',
       description: 'High-quality production training',
-      maxTrainEpochs: 50,
+      modelName: 'sd15',
+      epochs: 50,
+      learningRate: 0.00005,
+      batchSize: 2,
+      resolution: 768,
       networkDim: 64,
       networkAlpha: 32,
-      learningRate: 0.00005,
+      meta: {},
+      isDefault: false,
+      createdAt: '2024-01-02T00:00:00Z',
     },
   ];
 
@@ -441,7 +455,7 @@ describe('LoRATrainingWizard', () => {
 
       expect(mockCreateJobMutate).toHaveBeenCalledWith(
         {
-          type: 'lora_training',
+          type: 'lora-training',
           name: 'Production Training Run',
           spec: {
             datasetId: 'dataset_001',
